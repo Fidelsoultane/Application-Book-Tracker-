@@ -17,11 +17,11 @@
 - **Outils :** Git, GitHub  
 
 ## 🚀 Installation et utilisation  
+
  1️⃣  Cloner le projet  
 ```sh
 git clone https://github.com/Fidelsoultane/book-tracker.git
 cd book-tracker
-
 
 2️⃣ Installer les dépendances
  npm install
