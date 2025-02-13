@@ -17,10 +17,24 @@
 - **Outils :** Git, GitHub  
 
 ## 🚀 Installation et utilisation  
-### 1️⃣ Cloner le projet  
+ 1️⃣  Cloner le projet  
 ```sh
 git clone https://github.com/Fidelsoultane/book-tracker.git
 cd book-tracker
+
+
+2️⃣ Installer les dépendances
+ npm install
+
+3️⃣ Configurer la base de données
+Créer un fichier .env à la racine et ajouter :
+
+MONGO_URI=mongodb://localhost:27017/booktracker
+PORT=3000
+
+4️⃣ Lancer l’application
+npm start
+Puis ouvrir http://localhost:3000 dans un navigateur.
 
 📌 Améliorations prévues
 🚀 Ajout d'une fonctionnalité spéciale pour rendre l’application unique.
@@ -28,12 +42,3 @@ cd book-tracker
 
 📄 Licence
 Ce projet est sous licence MIT.
-
-
----  
-
-Tu peux modifier ce fichier selon tes besoins et le pousser sur GitHub avec :  
-```sh
-git add README.md
-git commit -m "Ajout du README"
-git push origin main
