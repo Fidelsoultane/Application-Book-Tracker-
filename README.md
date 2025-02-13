@@ -1,4 +1,4 @@
-# ApplicationBook-Tracker
+# Application-Book-Tracker
 
 ## Description  
 **Book Tracker** est une application web permettant aux utilisateurs de suivre leurs lectures, organiser leur bibliothèque personnelle et gérer leurs livres facilement. Cette première version met en place les fonctionnalités de base avec une API backend et une interface simple.
