@@ -1,12 +1,12 @@
 {
-  "name": "application-book-tracker-",
+  "name": "book-tracker",
   "version": "1.0.0",
   "description": "**Book Tracker** est une application web permettant aux utilisateurs de suivre leurs lectures, organiser leur bibliothèque personnelle et gérer leurs livres facilement. Cette première version met en place les fonctionnalités de base avec une API backend et une interface simple.",
   "main": "index.js",
   "scripts": {
     "start": "node src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:css": "npx tailwindcss -i ./public/css/styles.css -o ./public/css/output.css --watch"
+    "build:css": "npx tailwindcss -i ./public/tailwind.css -o ./public/css/output.css --watch"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +21,6 @@
   "devDependencies": {
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.2",
-    "tailwindcss": "^4.0.6"
+    "tailwindcss": "^4.0.7"
   }
 }
