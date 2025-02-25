@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Book Tracker</title>
   <!-- Inclusion de Tailwind CSS pour le style -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-gray-100">
 
@@ -21,7 +21,7 @@
     </select>
     <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Ajouter</button>
   </form>
-
+  <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
   <!-- Zone d'affichage des livres -->
   <div id="book-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
 
