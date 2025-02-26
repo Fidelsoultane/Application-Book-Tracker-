@@ -1,8 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
     const bookList = document.getElementById('book-list');
     const bookForm = document.getElementById('book-form');
+    const filterButtons = document.querySelectorAll('.filter-button');
+    let allBooks = [];
+    let currentFilterStatus = 'Tous';
 
-    // Fonction pour afficher la couleur du statut en Tailwind CSS
+    // Fonction pour obtenir la classe de couleur Tailwind CSS pour le statut
     function getStatusColorClass(status) {
         switch (status) {
             case 'À lire':
@@ -12,70 +15,125 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'Terminé':
                 return 'text-green-500';
             case 'Souhaité':
-                return 'text-gray-500'; // ou une autre couleur pour "Souhaité"
+                return 'text-gray-500';
             default:
                 return 'text-gray-600';
         }
     }
 
-    // Fonction pour récupérer et afficher les livres
-    function fetchBooks() {
-        fetch('/api/books')
-            .then(response => response.json())
-            .then(books => {
-                bookList.innerHTML = ''; // Efface la liste de livres actuelle
-                books.forEach(book => {
-                    const bookCard = document.createElement('div');
-                    bookCard.className = "bg-white rounded-lg overflow-hidden shadow-md book-card hover:shadow-lg transition-shadow duration-200 flex flex-col";
+    // Fonction pour mettre à jour le style des boutons de filtre actifs
+    function updateFilterButtonStyles(statusActif) {
+        filterButtons.forEach(button => {
+            if (button.dataset.status === statusActif) {
+                button.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+                button.classList.add('bg-blue-500', 'hover:bg-blue-600', 'text-white');
+            } else {
+                button.classList.remove('bg-blue-500', 'hover:bg-blue-600', 'text-white');
+                button.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+            }
+        });
+    }
 
-                    const statusColor = getStatusColorClass(book.status);
+    // Fonction pour filtrer et afficher les livres par statut
+    function filterBooksByStatus(status) {
+        console.log(`Début de filterBooksByStatus(${status})`);
+        currentFilterStatus = status;
+        console.log(`filterBooksByStatus : currentFilterStatus mis à jour à : ${currentFilterStatus}`);
 
-                    bookCard.innerHTML = `
-                        <div class="flex flex-col h-full">
-                            <img src="${book.coverUrl || '/images/default-book-cover.png'}" alt="${book.title} Cover" class="book-cover w-full h-48 object-cover rounded-t-lg">
-                            <div class="p-4 flex flex-col flex-grow">
-                                <h2 class="text-xl font-semibold book-title mb-2">${book.title}</h2>
-                                <p class="text-gray-700 book-author mb-2">${book.author}</p>
-                                <div class="mt-auto">
-                                    <p class="font-bold ${statusColor} book-status inline-block px-2 py-1 rounded-full text-sm bg-opacity-75" style="background-color: rgba(255, 255, 255, 0.8);">
-                                        ${book.status}
-                                    </p>
-                                    <div class="mt-2 actions">
-                                        <button class="edit-button bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded text-sm" data-id="${book._id}">Modifier</button>
-                                        <button class="delete-button bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm" data-id="${book._id}">Supprimer</button>
-                                    </div>
-                                </div>
+        bookList.innerHTML = '';
+        console.log("filterBooksByStatus : bookList.innerHTML vidé");
+
+        let filteredBooks = allBooks;
+        if (status !== 'Tous') {
+            filteredBooks = allBooks.filter(book => book.status === status);
+        }
+        console.log("filterBooksByStatus : Livres filtrés:", filteredBooks);
+
+        filteredBooks.forEach(book => {
+            console.log('Objet book dans filterBooksByStatus:', book);
+            const bookCard = document.createElement('div');
+            bookCard.className = "bg-white rounded-lg overflow-hidden shadow-md book-card hover:shadow-lg transition-shadow duration-200 flex flex-col";
+
+            bookCard.innerHTML = `
+                <img src="${book.coverUrl || '/images/default-book-cover.png'}" alt="${book.title} Cover" class="book-cover w-full h-48 object-cover rounded-t-lg">
+                <div class="p-4 flex flex-col justify-between h-full">
+                    <div>
+                        <h2 class="text-xl font-semibold book-title mb-2">${book.title}</h2>
+                        <p class="text-gray-700 book-author mb-4">${book.author}</p>
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="font-bold ${getStatusColorClass(book.status)} book-status inline-block px-2 py-1 rounded-full text-sm bg-opacity-75">${book.status}</span>
+                        <div class="space-x-2">
+                            <button data-id="${book._id}" class="edit-button inline-block bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200">Modifier</button>
+                            <button data-id="${book._id}" class="delete-button inline-block bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200">Supprimer</button>
+                        </div>
+                    </div>
+                    <div class="edit-form hidden mt-4">
+                        <form class="book-edit-form">
+                            <div class="mb-2">
+                                <label for="edit-title-${book._id}" class="block text-gray-700 text-sm font-bold mb-1">Titre:</label>
+                                <input type="text" id="edit-title-${book._id}" name="edit-title" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline edit-title" value="${book.title}">
                             </div>
-                            <div class="edit-form hidden mt-4 p-4 bg-gray-50 rounded-b-lg">
-                                <input type="text" class="edit-title shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-2" placeholder="Titre" value="${book.title}">
-                                <input type="text" class="edit-author shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-2" placeholder="Auteur" value="${book.author}">
-                                <input type="text" class="edit-coverUrl shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-2" placeholder="URL de la couverture" value="${book.coverUrl || ''}">
-                                <select class="edit-status shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-2">
+                            <div class="mb-2">
+                                <label for="edit-author-${book._id}" class="block text-gray-700 text-sm font-bold mb-1">Auteur:</label>
+                                <input type="text" id="edit-author-${book._id}" name="edit-author" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline edit-author" value="${book.author}">
+                            </div>
+                            <div class="mb-2">
+                                <label for="edit-status-${book._id}" class="block text-gray-700 text-sm font-bold mb-1">Statut:</label>
+                                <select id="edit-status-${book._id}" name="edit-status" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline edit-status">
                                     <option value="À lire" ${book.status === 'À lire' ? 'selected' : ''}>À lire</option>
                                     <option value="En cours" ${book.status === 'En cours' ? 'selected' : ''}>En cours</option>
                                     <option value="Terminé" ${book.status === 'Terminé' ? 'selected' : ''}>Terminé</option>
                                     <option value="Souhaité" ${book.status === 'Souhaité' ? 'selected' : ''}>Souhaité</option>
                                 </select>
-                                <div class="flex justify-end">
-                                    <button class="save-edit-button bg-green-500 text-white px-3 py-1 rounded mr-2" data-id="${book._id}">Sauvegarder</button>
-                                    <button class="cancel-edit-button bg-gray-400 text-white px-3 py-1 rounded">Annuler</button>
-                                </div>
                             </div>
-                        </div>
-                    `;
+                             <div class="mb-2">
+                                <label for="edit-coverUrl-${book._id}" class="block text-gray-700 text-sm font-bold mb-1">URL de Couverture:</label>
+                                <input type="text" id="edit-coverUrl-${book._id}" name="edit-coverUrl" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline edit-coverUrl" value="${book.coverUrl}">
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="button" data-id="${book._id}" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 save-button">Sauvegarder</button>
+                                <button type="button" class="cancel-button ml-2 px-4 py-2 rounded-md text-sm font-semibold">Annuler</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            bookList.appendChild(bookCard);
+        });
 
-                    bookList.appendChild(bookCard);
-                });
-
-                // Gestion des événements après l'ajout des cartes de livres (délégation d'événements)
-                attachBookCardEventListeners();
-
-
-            })
-            .catch(error => console.error('Erreur lors de la récupération des livres:', error));
+        // **SUPPRIMÉ : attachBookCardEventListeners() n'est plus appelé ici**
+        console.log(`Fin de filterBooksByStatus(${status})`);
     }
 
-    function attachBookCardEventListeners() {
+
+    // Fonction pour récupérer les livres depuis l'API et afficher la liste (MODIFIÉE pour appeler setupEventListeners une seule fois)
+    function fetchBooks() {
+        console.log("Début de l'exécution de la fonction fetchBooks()");
+
+        fetch('/api/books')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP dans fetchBooks! statut: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(books => {
+                console.log("fetchBooks() : Données des livres récupérées du serveur:", books);
+                allBooks = books;
+                console.log("fetchBooks() : allBooks mis à jour:", allBooks);
+                filterBooksByStatus(currentFilterStatus);
+            })
+            .catch(error => {
+                console.error('Erreur DANS fetchBooks() lors de la récupération des livres:', error);
+                alert('Erreur lors du chargement initial des livres.');
+            });
+        console.log("Fin de la fonction fetchBooks() (avant la réponse du serveur)");
+    }
+
+
+    // **NOUVELLE fonction pour initialiser les écouteurs d'événements (appelée une seule fois au démarrage)**
+    function setupEventListeners() {
         bookList.addEventListener('click', function(event) {
             if (event.target.classList.contains('delete-button')) {
                 const bookIdToDelete = event.target.dataset.id;
@@ -84,18 +142,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 const bookCard = event.target.closest('.book-card');
                 const editForm = bookCard.querySelector('.edit-form');
                 editForm.classList.toggle('hidden');
-            } else if (event.target.classList.contains('cancel-edit-button')) {
+            } else if (event.target.classList.contains('cancel-button')) {
                 const bookCard = event.target.closest('.book-card');
                 const editForm = bookCard.querySelector('.edit-form');
                 editForm.classList.add('hidden');
-            } else if (event.target.classList.contains('save-edit-button')) {
+            } else if (event.target.classList.contains('save-button')) {
                 const bookIdToEdit = event.target.dataset.id;
                 const bookCard = event.target.closest('.book-card');
                 const title = bookCard.querySelector('.edit-title').value.trim();
                 const author = bookCard.querySelector('.edit-author').value.trim();
                 const status = bookCard.querySelector('.edit-status').value;
                 const coverUrl = bookCard.querySelector('.edit-coverUrl').value.trim();
-
 
                 if (!title || !author) {
                     alert('Titre et auteur sont obligatoires pour la modification.');
@@ -104,69 +161,128 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateBook(bookIdToEdit, { title, author, status, coverUrl });
             }
         });
-    }
 
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const statusToFilter = this.dataset.status;
+                filterBooksByStatus(statusToFilter);
+                updateFilterButtonStyles(statusToFilter); // Mettre à jour les styles des boutons de filtre
+            });
+        });
 
-    // Fonction pour ajouter un livre
-    bookForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const title = document.getElementById("title").value.trim();
-        const author = document.getElementById("author").value.trim();
-        const status = document.getElementById("status").value;
-        const coverUrl = document.getElementById("coverUrl").value.trim();
+        bookForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const title = document.getElementById('book-title').value.trim();
+            const author = document.getElementById('book-author').value.trim();
+            const status = document.getElementById('book-status').value;
+            const coverUrl = document.getElementById('book-coverUrl').value.trim();
 
+            if (!title || !author) {
+                alert('Titre et auteur sont obligatoires.');
+                return;
+            }
 
-        if (!title || !author) {
-            alert("Veuillez remplir tous les champs obligatoires (Titre et Auteur).");
-            return;
-        }
+            const newBook = { title, author, status, coverUrl };
 
-        fetch("/api/books", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, author, status, coverUrl })
-        })
-            .then(response => response.json())
-            .then(() => {
+            fetch('/api/books', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newBook),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(book => {
+                console.log('Livre ajouté:', book);
+                alert('Livre ajouté avec succès!');
                 bookForm.reset();
+                console.log("Appel à fetchBooks() après l'ajout du livre");
                 fetchBooks();
             })
-            .catch(err => console.error(err));
-    });
+            .catch(error => {
+                console.error('Erreur lors de l\'ajout du livre:', error);
+                alert('Erreur lors de l\'ajout du livre.');
+            });
+        });
+    }
+
 
     // Fonction pour supprimer un livre
     function deleteBook(id) {
         fetch(`/api/books/${id}`, {
             method: "DELETE"
         })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erreur lors de la suppression du livre');
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 404) {
+                    alert('Livre non trouvé sur le serveur.');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                fetchBooks(); // Actualise la liste des livres après suppression
-            })
-            .catch(error => console.error('Erreur:', error));
+            }
+            return response.text();
+        })
+        .then(message => {
+            console.log('Livre supprimé avec succès:', message);
+            alert('Livre supprimé avec succès!');
+            console.log("Appel à fetchBooks() après la suppression du livre");
+            fetchBooks();
+        })
+        .catch(error => {
+            console.error('Erreur lors de la suppression du livre:', error);
+            alert('Erreur lors de la suppression du livre.');
+        });
     }
 
     // Fonction pour mettre à jour un livre
     function updateBook(id, bookData) {
         fetch(`/api/books/${id}`, {
-            method: 'PUT',
+            method: "PUT",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify(bookData),
         })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erreur lors de la mise à jour du livre');
-                }
-                fetchBooks(); // Actualiser la liste des livres après la mise à jour
-            })
-            .catch(error => console.error('Erreur:', error));
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(updatedBook => {
+            console.log('Livre mis à jour:', updatedBook);
+            const bookCard = document.querySelector(`.book-card .edit-button[data-id="${id}"]`).closest('.book-card');
+            if (bookCard) {
+                bookCard.querySelector('.book-title').textContent = updatedBook.title;
+                bookCard.querySelector('.book-author').textContent = updatedBook.author;
+                bookCard.querySelector('.book-status').textContent = updatedBook.status;
+                bookCard.querySelector('.book-status').className = `font-bold ${getStatusColorClass(updatedBook.status)} book-status inline-block px-2 py-1 rounded-full text-sm bg-opacity-75`;
+                bookCard.querySelector('.book-cover').src = updatedBook.coverUrl || '/images/default-book-cover.png';
+
+                const editForm = bookCard.querySelector('.edit-form');
+                editForm.classList.add('hidden');
+            }
+            alert('Livre mis à jour avec succès!');
+            console.log("Appel à fetchBooks() après la mise à jour du livre");
+            fetchBooks();
+        })
+        .catch(error => {
+            console.error('Erreur lors de la mise à jour du livre:', error);
+            alert('Erreur lors de la mise à jour du livre.');
+        });
     }
 
 
-    // Chargement initial des livres au démarrage de la page
+    // Initialisation : récupérer les livres et configurer les écouteurs d'événements au chargement de la page
     fetchBooks();
+    setupEventListeners(); // **Appeler setupEventListeners une seule fois au démarrage**
+    updateFilterButtonStyles('Tous'); // Sélectionner 'Tous' par défaut visuellement
+
 });
+
+  

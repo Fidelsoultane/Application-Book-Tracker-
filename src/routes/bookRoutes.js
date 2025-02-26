@@ -11,7 +11,6 @@ router.post('/books', async (req, res) => {
 
       const newBook = new Book({ title, author, status, coverUrl }); // **Inclure 'coverUrl' lors de la création**
       const savedBook = await newBook.save();
-
       res.status(201).json(savedBook);
   } catch (error) {
       res.status(400).json({ message: error.message });
@@ -34,7 +33,6 @@ router.put('/books/:id', async (req, res) => {
       const bookId = req.params.id;
       // **Récupérer également 'coverUrl' depuis req.body, en plus de title, author et status**
       const { title, author, status, coverUrl } = req.body;
-
       // **Mettre à jour le livre dans la base de données, en incluant 'coverUrl'**
       const updatedBook = await Book.findByIdAndUpdate(
           bookId,

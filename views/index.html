@@ -15,19 +15,19 @@
     <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Ajouter un nouveau livre</h2>
     <div class="mb-4">
         <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Titre:</label>
-        <input type="text" id="title" placeholder="Titre du livre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        <input type="text" id="book-title" placeholder="Titre du livre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
     </div>
     <div class="mb-4">
         <label for="author" class="block text-gray-700 text-sm font-bold mb-2">Auteur:</label>
-        <input type="text" id="author" placeholder="Auteur du livre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        <input type="text" id="book-author" placeholder="Auteur du livre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
     </div>
     <div class="mb-4">
         <label for="coverUrl" class="block text-gray-700 text-sm font-bold mb-2">URL de la couverture (optionnel):</label>
-        <input type="text" id="coverUrl" placeholder="URL de l'image de couverture" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        <input type="text" id="book-coverUrl" placeholder="URL de l'image de couverture" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
     </div>
     <div class="mb-6">
         <label for="status" class="block text-gray-700 text-sm font-bold mb-2">Statut de lecture:</label>
-        <select id="status" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        <select id="book-status" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             <option value="À lire">À lire</option>
             <option value="En cours">En cours</option>
             <option value="Terminé">Terminé</option>
@@ -42,6 +42,15 @@
 </form>
 
   <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
+
+  <div class="mb-4 flex justify-center space-x-2">
+    <button id="filter-status-tous" class="filter-button bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold" data-status="Tous">Tous</button>
+    <button id="filter-status-a-lire" class="filter-button bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-full text-sm font-semibold" data-status="À lire">À lire</button>
+    <button id="filter-status-en-cours" class="filter-button bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold" data-status="En cours">En cours</button>
+    <button id="filter-status-termine" class="filter-button bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full text-sm font-semibold" data-status="Terminé">Terminé</button>
+    <button id="filter-status-souhaite" class="filter-button bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold" data-status="Souhaité">Souhaité</button>  </div>
+
+
   <!-- Zone d'affichage des livres -->
   <div id="book-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 md:px-6 lg:px-8 max-w-screen-lg mx-auto mt-8">
   </div>
