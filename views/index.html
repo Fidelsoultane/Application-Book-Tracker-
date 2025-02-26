@@ -11,20 +11,40 @@
     <h1 class="text-3xl font-bold underline">Bienvenue sur Book Tracker</h1>
 
   <!-- Formulaire d'ajout de livre -->
-  <form id="book-form" class="mb-6">
-    <input type="text" id="title" placeholder="Titre" required class="border p-2 mr-2">
-    <input type="text" id="author" placeholder="Auteur" required class="border p-2 mr-2">
-    <select id="status" class="border p-2 mr-2">
-      <option value="À lire">À lire</option>
-      <option value="En cours">En cours</option>
-      <option value="Terminé">Terminé</option>
-    </select>
-    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Ajouter</button>
-  </form>
+  <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Ajouter un nouveau livre</h2>
+    <div class="mb-4">
+        <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Titre:</label>
+        <input type="text" id="title" placeholder="Titre du livre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+    </div>
+    <div class="mb-4">
+        <label for="author" class="block text-gray-700 text-sm font-bold mb-2">Auteur:</label>
+        <input type="text" id="author" placeholder="Auteur du livre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+    </div>
+    <div class="mb-4">
+        <label for="coverUrl" class="block text-gray-700 text-sm font-bold mb-2">URL de la couverture (optionnel):</label>
+        <input type="text" id="coverUrl" placeholder="URL de l'image de couverture" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+    </div>
+    <div class="mb-6">
+        <label for="status" class="block text-gray-700 text-sm font-bold mb-2">Statut de lecture:</label>
+        <select id="status" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <option value="À lire">À lire</option>
+            <option value="En cours">En cours</option>
+            <option value="Terminé">Terminé</option>
+            <option value="Souhaité">Souhaité</option>
+        </select>
+    </div>
+    <div class="flex items-center justify-center">
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+            Ajouter un livre
+        </button>
+    </div>
+</form>
+
   <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
   <!-- Zone d'affichage des livres -->
-  <div id="book-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-
+  <div id="book-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 md:px-6 lg:px-8 max-w-screen-lg mx-auto mt-8">
+  </div>
 
     <script src="/js/index.js"></script>
 </body>

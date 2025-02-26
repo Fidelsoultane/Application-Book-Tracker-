@@ -34,7 +34,7 @@ app.get('/', (req, res) => {
 });
 
 // Routes pour les livres
-app.use('/api/books', bookRoutes);
+app.use('/api', bookRoutes);
 
 app.listen(PORT, () => {
     console.log(`Serveur démarré sur le port ${PORT}`);
