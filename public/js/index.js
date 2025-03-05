@@ -25,11 +25,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateFilterButtonStyles(statusActif) {
         filterButtons.forEach(button => {
             if (button.dataset.status === statusActif) {
-                button.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
-                button.classList.add('bg-blue-500', 'hover:bg-blue-600', 'text-white');
+                button.classList.remove('bg-[#E5C0A2]', 'hover:bg-[#D0B09D]', 'text-[#7B685E]'); // Supprimer le style inactif (beige)
+                button.classList.add('bg-[#A8786A]', 'hover:bg-[#7B685E]', 'text-[#E5C0A2]'); // Ajouter le style actif (brun)
             } else {
-                button.classList.remove('bg-blue-500', 'hover:bg-blue-600', 'text-white');
-                button.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+                button.classList.remove('bg-[#A8786A]', 'hover:bg-[#7B685E]', 'text-[#E5C0A2]'); // Supprimer le style actif (brun)
+                button.classList.add('bg-[#E5C0A2]', 'hover:bg-[#D0B09D]', 'text-[#7B685E]'); // Ajouter le style inactif (beige)
             }
         });
     }
@@ -58,14 +58,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 <img src="${book.coverUrl || '/images/default-book-cover.png'}" alt="${book.title} Cover" class="book-cover w-full h-48 object-cover rounded-t-lg">
                 <div class="p-4 flex flex-col justify-between h-full">
                     <div>
-                        <h2 class="text-xl font-semibold book-title mb-2">${book.title}</h2>
-                        <p class="text-gray-700 book-author mb-4">${book.author}</p>
+                        <h2 class="text-[#4E342E] text-xl font-semibold book-title mb-2">${book.title}</h2>
+                        <p class="text-[#7B685E] book-author mb-4">${book.author}</p>
                     </div>
                     <div class="flex justify-between items-center mt-2">
                         <span class="font-bold ${getStatusColorClass(book.status)} book-status inline-block px-2 py-1 rounded-full text-sm bg-opacity-75">${book.status}</span>
                         <div class="space-x-2">
                             <button data-id="${book._id}" class="edit-button inline-block bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200">Modifier</button>
-                            <button data-id="${book._id}" class="delete-button inline-block bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200">Supprimer</button>
+                            <button type="button" data-id="${book._id}" class="bg-[#BFA094] hover:bg-[#A8786A] text-[#E5C0A2] font-semibold py-2 px-4 rounded-lg transition-colors duration-200 delete-button">Supprimer</button>
                         </div>
                     </div>
                     <div class="edit-form hidden mt-4">
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <input type="text" id="edit-coverUrl-${book._id}" name="edit-coverUrl" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline edit-coverUrl" value="${book.coverUrl}">
                             </div>
                             <div class="flex justify-end">
-                                <button type="button" data-id="${book._id}" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 save-button">Sauvegarder</button>
+                                <button type="button" data-id="${book._id}" class="bg-[#A8786A] hover:bg-[#7B685E] text-[#E5C0A2] font-semibold py-2 px-4 rounded-lg transition-colors duration-200 save-button">Sauvegarder</button>
                                 <button type="button" class="cancel-button ml-2 px-4 py-2 rounded-md text-sm font-semibold">Annuler</button>
                             </div>
                         </form>
@@ -283,6 +283,82 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners(); // **Appeler setupEventListeners une seule fois au démarrage**
     updateFilterButtonStyles('Tous'); // Sélectionner 'Tous' par défaut visuellement
 
-});
 
-  
+    const menuItems = [
+        {
+            nom: "Livres",
+            lien: "#livres",
+            icone: "icone_livre"
+        },
+        {
+            nom: "Recherche",
+            lien: "#recherche",
+            icone: "icone_recherche"
+        },
+        {
+            nom: "Étagères", // Nouvelle entrée pour la section "Étagères"
+            lien: "#etagères",
+            icone: "icone_etagere"
+        },
+
+    ];
+
+    const menuElement = document.getElementById('menu-etagere');
+
+    if (menuElement) {
+        menuItems.forEach(item => {
+            const menuItem = document.createElement('ul');
+            const menuLink = document.createElement('a');
+            menuLink.href = item.lien;
+            menuLink.textContent = item.nom;
+            // --- Classes Tailwind CSS pour le style du lien de menu ---
+            menuLink.className = 'block py-2 px-4 hover:bg-gray-700 text-gray-100'; // Style épuré et moderne
+
+            // --- Optionnel : Ajouter une icône si vous utilisez des icônes ---
+            if (item.icone) {
+                const iconSpan = document.createElement('span');
+                iconSpan.className = item.icone;
+                menuLink.prepend(iconSpan);
+            }
+            // --- Fin Optionnel ---
+
+            menuItem.appendChild(menuLink);
+            menuElement.appendChild(menuItem);
+
+            menuLink.addEventListener('click', function(event) {
+                event.preventDefault();
+                afficherSectionContenu(item.lien);
+            });
+        });
+    } else {
+        console.error("Élément de menu etagere non trouvé (ID: 'menu-etagere')");
+    }
+
+
+    function afficherSectionContenu(sectionLien) {
+        const contenuPrincipalElement = document.getElementById('contenu-principal');
+        if (contenuPrincipalElement) {
+            contenuPrincipalElement.innerHTML = "";
+
+            if (sectionLien === "#livres") {
+                contenuPrincipalElement.textContent = "Contenu de la section Livres (à implémenter)";
+            } else if (sectionLien === "#recherche") {
+                contenuPrincipalElement.textContent = "Contenu de la section Recherche (à implémenter)";
+            } else if (sectionLien === "#etagères") {
+                // --- Pour la section "Étagères", on appelle la fonction de bookshelf.js ---
+                afficherSectionEtagere(contenuPrincipalElement);
+            } else {
+                contenuPrincipalElement.textContent = "Section non implémentée";
+            }
+        } else {
+            console.error("Zone de contenu principal non trouvée (ID: 'contenu-principal')");
+        }
+    }
+
+    function initialiserAffichage() {
+        afficherSectionContenu("#livres");
+    }
+
+    initialiserAffichage();
+
+});

@@ -6,13 +6,47 @@
   <!-- Inclusion de Tailwind CSS pour le style -->
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-[#F5F0EC]">
+
+  <div id="contenu-principal-global" class="flex">  <nav id="menu-lateral" class="w-64 bg-gray-800 text-gray-100 h-screen">  <div class="p-4">
+    <h2 class="text-[#A8786A] text-2xl font-bold">Étagères</h2> <ul id="menu-etagere" class="py-4">
+      </ul>
+  </div>
+</nav>
+
+<main id="contenu-principal" class="flex-1 p-5"> 
+   <h1 class="text-[#A8786A] text-2xl font-bold">Bienvenue sur Book Tracker</h1>
+  <p>Contenu de la section Recherche (à implémenter)</p>
+
+  <div class="border p-4 rounded shadow-md bg-white">
+    <h2 class="text-[#A8786A] text-2xl font-bold">Ajouter un nouveau livre</h2>
+    <form>
+      <div class="mb-4">
+        <label for="titre" class="block text-gray-700 text-sm font-bold mb-2">Titre:</label>
+        <input type="text" id="titre" name="titre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+      </div>
+      <div class="mb-4">
+        <label for="auteur" class="block text-gray-700 text-sm font-bold mb-2">Auteur:</label>
+        <input type="text" id="auteur" name="auteur" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+      </div>
+      </form>
+  </div>
+
+  <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+    Ajouter un livre
+  </button>
+  <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+    Q Rechercher
+  </button>
+</main>
+
+</div>
 
     <h1 class="text-3xl font-bold underline">Bienvenue sur Book Tracker</h1>
 
   <!-- Formulaire d'ajout de livre -->
   <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Ajouter un nouveau livre</h2>
+    <h2 class="text-[#A8786A] text-2xl font-bold">Ajouter un nouveau livre</h2>
     <div class="mb-4">
         <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Titre:</label>
         <input type="text" id="book-title" placeholder="Titre du livre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
@@ -43,12 +77,11 @@
 
   <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
 
-  <div class="mb-4 flex justify-center space-x-2">
-    <button id="filter-status-tous" class="filter-button bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold" data-status="Tous">Tous</button>
-    <button id="filter-status-a-lire" class="filter-button bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-full text-sm font-semibold" data-status="À lire">À lire</button>
-    <button id="filter-status-en-cours" class="filter-button bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold" data-status="En cours">En cours</button>
-    <button id="filter-status-termine" class="filter-button bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full text-sm font-semibold" data-status="Terminé">Terminé</button>
-    <button id="filter-status-souhaite" class="filter-button bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold" data-status="Souhaité">Souhaité</button>  </div>
+  <div class="mb-4 flex justify-center space-x-2"><button data-status="Tous" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200">Tous</button>
+    <button id="filter-status-a-lire" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200" data-status="À lire">À lire</button>
+    <button id="filter-status-en-cours" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200" data-status="En cours">En cours</button>
+    <button id="filter-status-termine" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200" data-status="Terminé">Terminé</button>
+    <button id="filter-status-souhaite" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200" data-status="Souhaité">Souhaité</button>  </div>
 
 
   <!-- Zone d'affichage des livres -->
@@ -56,6 +89,7 @@
   </div>
 
     <script src="/js/index.js"></script>
+    <script src="/etagere/bookshelf.js"></script>
 </body>
 </html>
 
