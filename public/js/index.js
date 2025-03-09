@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filteredBooks.forEach(book => {
             console.log('Objet book dans filterBooksByStatus:', book);
             const bookCard = document.createElement('div');
-            bookCard.className = "bg-white rounded-lg overflow-hidden shadow-md book-card hover:shadow-lg transition-shadow duration-200 flex flex-col";
+            bookCard.className = "bg-opacity-50 bg-[#F5F0EC] rounded-lg overflow-hidden shadow-md book-card hover:shadow-lg transition-shadow duration-200 flex flex-col";
 
             bookCard.innerHTML = `
                 <img src="${book.coverUrl || '/images/default-book-cover.png'}" alt="${book.title} Cover" class="book-cover w-full h-48 object-cover rounded-t-lg">
@@ -64,23 +64,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="flex justify-between items-center mt-2">
                         <span class="font-bold ${getStatusColorClass(book.status)} book-status inline-block px-2 py-1 rounded-full text-sm bg-opacity-75">${book.status}</span>
                         <div class="space-x-2">
-                            <button data-id="${book._id}" class="edit-button inline-block bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200">Modifier</button>
+                            <button data-id="${book._id}" class="edit-button inline-block bg-[#E5C0A2] hover:bg-[#D0B09D] text-[#7B685E] font-semibold py-2 px-4 rounded-lg transition-colors duration-200">Modifier</button>
                             <button type="button" data-id="${book._id}" class="bg-[#BFA094] hover:bg-[#A8786A] text-[#E5C0A2] font-semibold py-2 px-4 rounded-lg transition-colors duration-200 delete-button">Supprimer</button>
                         </div>
                     </div>
                     <div class="edit-form hidden mt-4">
                         <form class="book-edit-form">
                             <div class="mb-2">
-                                <label for="edit-title-${book._id}" class="block text-gray-700 text-sm font-bold mb-1">Titre:</label>
-                                <input type="text" id="edit-title-${book._id}" name="edit-title" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline edit-title" value="${book.title}">
+                                <label for="edit-title-${book._id}" class="block text-[#4E342E] text-sm font-bold mb-1">Titre:</label>
+                                <input type="text" id="edit-title-${book._id}" name="edit-title" class="edit-title shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]" value="${book.title}">
                             </div>
                             <div class="mb-2">
-                                <label for="edit-author-${book._id}" class="block text-gray-700 text-sm font-bold mb-1">Auteur:</label>
-                                <input type="text" id="edit-author-${book._id}" name="edit-author" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline edit-author" value="${book.author}">
+                                <label for="edit-author-${book._id}" class="block text-[#4E342E] text-sm font-bold mb-1">Auteur:</label>
+                                <input type="text" id="edit-author-${book._id}" name="edit-author" class="edit-author shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]" value="${book.author}">
                             </div>
                             <div class="mb-2">
-                                <label for="edit-status-${book._id}" class="block text-gray-700 text-sm font-bold mb-1">Statut:</label>
-                                <select id="edit-status-${book._id}" name="edit-status" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline edit-status">
+                                <label for="edit-status-${book._id}" class="block text-[#4E342E] text-sm font-bold mb-1">Statut:</label>
+                                <select id="edit-status-${book._id}" name="edit-status" class="edit-status shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A] book-status">
                                     <option value="À lire" ${book.status === 'À lire' ? 'selected' : ''}>À lire</option>
                                     <option value="En cours" ${book.status === 'En cours' ? 'selected' : ''}>En cours</option>
                                     <option value="Terminé" ${book.status === 'Terminé' ? 'selected' : ''}>Terminé</option>
@@ -88,12 +88,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </select>
                             </div>
                              <div class="mb-2">
-                                <label for="edit-coverUrl-${book._id}" class="block text-gray-700 text-sm font-bold mb-1">URL de Couverture:</label>
-                                <input type="text" id="edit-coverUrl-${book._id}" name="edit-coverUrl" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline edit-coverUrl" value="${book.coverUrl}">
+                                <label for="edit-coverUrl-${book._id}" class="block text-[#4E342E] text-sm font-bold mb-1">URL de Couverture:</label>
+                                <input type="text" id="edit-coverUrl-${book._id}" name="edit-coverUrl" class="edit-coverUrl shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]" value="${book.coverUrl}">
                             </div>
                             <div class="flex justify-end">
                                 <button type="button" data-id="${book._id}" class="bg-[#A8786A] hover:bg-[#7B685E] text-[#E5C0A2] font-semibold py-2 px-4 rounded-lg transition-colors duration-200 save-button">Sauvegarder</button>
-                                <button type="button" class="cancel-button ml-2 px-4 py-2 rounded-md text-sm font-semibold">Annuler</button>
+                                <button type="button" class="bg-[#E5C0A2] hover:bg-[#D0B09D] text-[#7B685E] font-semibold py-2 px-4 rounded-lg transition-colors duration-200 cancel-button ml-2">Annuler</button>
                             </div>
                         </form>
                     </div>
@@ -286,9 +286,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const menuItems = [
         {
-            nom: "Livres",
-            lien: "#livres",
-            icone: "icone_livre"
+            nom: "Livres", // <--  NOUVEAU LIEN "Livres" AJOUTÉ ICI (au début)
+            lien: "#livres", // <-- Lien associé : "#livres"
+            icone: "icone_livre" // <-- Optionnel : icône
         },
         {
             nom: "Recherche",
@@ -297,22 +297,26 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         {
             nom: "Étagères", // Nouvelle entrée pour la section "Étagères"
-            lien: "#etagères",
+            lien: "#etageres",
             icone: "icone_etagere"
         },
 
     ];
 
-    const menuElement = document.getElementById('menu-etagere');
+    const menuElement = document.getElementById('menu-lateral');
+    console.log("Menu détecté :", menuElement); // <-- Vérifie si l'élément existe
+
 
     if (menuElement) {
         menuItems.forEach(item => {
-            const menuItem = document.createElement('ul');
+            console.log("Ajout du menu :", item.nom, "->", item.lien);
+
+            const menuItem = document.createElement('li');
             const menuLink = document.createElement('a');
             menuLink.href = item.lien;
             menuLink.textContent = item.nom;
             // --- Classes Tailwind CSS pour le style du lien de menu ---
-            menuLink.className = 'block py-2 px-4 hover:bg-gray-700 text-gray-100'; // Style épuré et moderne
+            menuLink.className = 'block py-2 px-4 text-[#E5C0A2] hover:bg-[#7B685E] hover:text-[#F5F0EC]'; // Style épuré et moderne
 
             // --- Optionnel : Ajouter une icône si vous utilisez des icônes ---
             if (item.icone) {
@@ -324,27 +328,66 @@ document.addEventListener('DOMContentLoaded', function() {
 
             menuItem.appendChild(menuLink);
             menuElement.appendChild(menuItem);
+            console.log("Ajouté au menu :", item.nom, "->", menuLink.href); 
 
             menuLink.addEventListener('click', function(event) {
                 event.preventDefault();
+                console.log("Clic sur le menu :", item.nom, "->", item.lien);
                 afficherSectionContenu(item.lien);
             });
         });
     } else {
-        console.error("Élément de menu etagere non trouvé (ID: 'menu-etagere')");
+        console.error("Élément de menu etagere non trouvé (ID: 'menu-lateral')");
     }
-
+    
 
     function afficherSectionContenu(sectionLien) {
         const contenuPrincipalElement = document.getElementById('contenu-principal');
-        if (contenuPrincipalElement) {
-            contenuPrincipalElement.innerHTML = "";
+        console.log("afficherSectionContenu() appelée avec :", sectionLien);
 
+        if (contenuPrincipalElement) {
+            contenuPrincipalElement.innerHTML = ""; // Vide le contenu de <main>
+            console.log("Contenu principal vidé, chargement de :", sectionLien);
+    
             if (sectionLien === "#livres") {
-                contenuPrincipalElement.textContent = "Contenu de la section Livres (à implémenter)";
+                // ---  NOUVEAU : Insérer le code HTML initial (titre et formulaire) pour le lien "#livres" ---
+                contenuPrincipalElement.innerHTML = `
+                    <h1 class="text-[#A8786A] text-2xl font-bold">Bienvenue sur Book Tracker</h1>
+                    <p>Contenu de la section Recherche (à implémenter)</p>
+    
+                    <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto">
+                        <h2 class="text-[#A8786A] text-2xl font-bold">Ajouter un nouveau livre</h2>
+                        <div class="mb-4">
+                            <label for="title" class="block text-[#4E342E] text-sm font-bold mb-1">Titre:</label>
+                            <input type="text" id="book-title" placeholder="Titre du livre" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]">
+                        </div>
+                        <div class="mb-4">
+                            <label for="author" class="block text-[#4E342E] text-sm font-bold mb-1">Auteur:</label>
+                            <input type="text" id="book-author" placeholder="Auteur du livre" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]">
+                        </div>
+                        <div class="mb-4">
+                            <label for="coverUrl" class="block text-[#4E342E] text-sm font-bold mb-1">URL de la couverture (optionnel):</label>
+                            <input type="text" id="book-coverUrl" placeholder="URL de l'image de couverture" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]">
+                        </div>
+                        <div class="mb-6">
+                            <label for="status" class="block text-[#4E342E] text-sm font-bold mb-1">Statut de lecture:</label>
+                            <select id="book-status" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A] book-status">
+                                <option value="À lire">À lire</option>
+                                <option value="En cours">En cours</option>
+                                <option value="Terminé">Terminé</option>
+                                <option value="Souhaité">Souhaité</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-center">
+                            <button class="bg-[#A8786A] hover:bg-[#7B685E] text-[#E5C0A2] font-semibold py-2 px-4 rounded-lg transition-colors duration-200" type="submit">
+                                Ajouter un livre
+                            </button>
+                        </div>
+                    </form>
+                `; // <-- Fin du code HTML initial inséré
             } else if (sectionLien === "#recherche") {
                 contenuPrincipalElement.textContent = "Contenu de la section Recherche (à implémenter)";
-            } else if (sectionLien === "#etagères") {
+            } else if (sectionLien === "#etageres") {
                 // --- Pour la section "Étagères", on appelle la fonction de bookshelf.js ---
                 afficherSectionEtagere(contenuPrincipalElement);
             } else {
@@ -355,10 +398,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
     function initialiserAffichage() {
         afficherSectionContenu("#livres");
     }
 
-    initialiserAffichage();
+    // initialiserAffichage();  <-- COMMENTER CETTE LIGNE
+
 
 });

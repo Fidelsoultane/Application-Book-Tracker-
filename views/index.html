@@ -8,72 +8,52 @@
 </head>
 <body class="bg-[#F5F0EC]">
 
-  <div id="contenu-principal-global" class="flex">  <nav id="menu-lateral" class="w-64 bg-gray-800 text-gray-100 h-screen">  <div class="p-4">
-    <h2 class="text-[#A8786A] text-2xl font-bold">Étagères</h2> <ul id="menu-etagere" class="py-4">
+  <div id="contenu-principal-global" class="flex">  
+    <nav id="menu-lateral" class="w-64 bg-gray-800 text-gray-100 h-screen">  
+      <div class="p-4">
+    <h2 class="text-[#A8786A] text-2xl font-bold">Étagères</h2> 
+    <ul id="menu-etagere" class="bg-[#4E342E]">
       </ul>
   </div>
 </nav>
 
-<main id="contenu-principal" class="flex-1 p-5"> 
+<main id="contenu-principal" class="flex-1 p-5">
    <h1 class="text-[#A8786A] text-2xl font-bold">Bienvenue sur Book Tracker</h1>
-  <p>Contenu de la section Recherche (à implémenter)</p>
-
-  <div class="border p-4 rounded shadow-md bg-white">
+   <p>Contenu de la section Recherche (à implémenter)</p>
+  
+   <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto">
     <h2 class="text-[#A8786A] text-2xl font-bold">Ajouter un nouveau livre</h2>
-    <form>
-      <div class="mb-4">
-        <label for="titre" class="block text-gray-700 text-sm font-bold mb-2">Titre:</label>
-        <input type="text" id="titre" name="titre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-      </div>
-      <div class="mb-4">
-        <label for="auteur" class="block text-gray-700 text-sm font-bold mb-2">Auteur:</label>
-        <input type="text" id="auteur" name="auteur" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-      </div>
-      </form>
-  </div>
-
-  <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-    Ajouter un livre
-  </button>
-  <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
-    Q Rechercher
-  </button>
+    <div class="mb-4">
+     <label for="title" class="block text-[#4E342E] text-sm font-bold mb-1">Titre:</label>
+     <input type="text" id="book-title" placeholder="Titre du livre" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]">
+    </div>
+    <div class="mb-4">
+     <label for="author" class="block text-[#4E342E] text-sm font-bold mb-1">Auteur:</label>
+     <input type="text" id="book-author" placeholder="Auteur du livre" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]">
+    </div>
+    <div class="mb-4">
+     <label for="coverUrl" class="block text-[#4E342E] text-sm font-bold mb-1">URL de la couverture (optionnel):</label>
+     <input type="text" id="book-coverUrl" placeholder="URL de l'image de couverture" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]">
+    </div>
+    <div class="mb-6">
+     <label for="status" class="block text-[#4E342E] text-sm font-bold mb-1">Statut de lecture:</label>
+     <select id="book-status" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A] book-status">
+       <option value="À lire">À lire</option>
+       <option value="En cours">En cours</option>
+       <option value="Terminé">Terminé</option>
+       <option value="Souhaité">Souhaité</option>
+     </select>
+    </div>
+    <div class="flex items-center justify-center">
+      <button class="bg-[#A8786A] hover:bg-[#7B685E] text-[#E5C0A2] font-semibold py-2 px-4 rounded-lg transition-colors duration-200" type="submit">
+       Ajouter un livre
+      </button>
+    </div>
+  </form>
+  
 </main>
 
 </div>
-
-    <h1 class="text-3xl font-bold underline">Bienvenue sur Book Tracker</h1>
-
-  <!-- Formulaire d'ajout de livre -->
-  <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto">
-    <h2 class="text-[#A8786A] text-2xl font-bold">Ajouter un nouveau livre</h2>
-    <div class="mb-4">
-        <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Titre:</label>
-        <input type="text" id="book-title" placeholder="Titre du livre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-    </div>
-    <div class="mb-4">
-        <label for="author" class="block text-gray-700 text-sm font-bold mb-2">Auteur:</label>
-        <input type="text" id="book-author" placeholder="Auteur du livre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-    </div>
-    <div class="mb-4">
-        <label for="coverUrl" class="block text-gray-700 text-sm font-bold mb-2">URL de la couverture (optionnel):</label>
-        <input type="text" id="book-coverUrl" placeholder="URL de l'image de couverture" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-    </div>
-    <div class="mb-6">
-        <label for="status" class="block text-gray-700 text-sm font-bold mb-2">Statut de lecture:</label>
-        <select id="book-status" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <option value="À lire">À lire</option>
-            <option value="En cours">En cours</option>
-            <option value="Terminé">Terminé</option>
-            <option value="Souhaité">Souhaité</option>
-        </select>
-    </div>
-    <div class="flex items-center justify-center">
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
-            Ajouter un livre
-        </button>
-    </div>
-</form>
 
   <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
 
