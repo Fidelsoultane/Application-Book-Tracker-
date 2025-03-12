@@ -283,6 +283,46 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners(); // **Appeler setupEventListeners une seule fois au démarrage**
     updateFilterButtonStyles('Tous'); // Sélectionner 'Tous' par défaut visuellement
 
+    function afficherMenuLateral(menuElement) {
+        // --- NOUVEAU : Récupérer le nombre d'étagères depuis etageresExemples (bookshelf.js) ---
+        const nombreEtageres = etageresExemples.length;
+        console.log(`Nombre d'étagères détecté : ${nombreEtageres}`);
+    
+        if (menuElement) {
+          menuItems.forEach(menuItem => {
+            console.log("Ajout du menu :", menuItem.nom, "->", menuItem.lien);
+    
+            const carteMenu = document.createElement('li'); // <-- correction : carteMenu au lieu de menuItem
+            let lienTextNode; // <-- Déclarer lienTextNode en dehors du if/else
+    
+            if (menuItem.nom === "Étagères") { // <-- CONDITION : SI le libellé est "Étagères" (correction : menuItem.nom au lieu de menuItem.label)
+              // --- Pour le lien "Étagères", ajouter le nombre d'étagères entre parenthèses ---
+              lienTextNode = document.createTextNode(`${menuItem.nom} (${nombreEtageres})`); // <-- MODIFICATION : Ajouter (${nombreEtageres}) (correction : menuItem.nom au lieu de menuItem.label)
+              console.log(`Texte du lien "Étagères" modifié : ${menuItem.nom} (${nombreEtageres})`);
+            } else {
+              // --- Pour les autres liens (Livres, Recherche), texte normal ---
+              lienTextNode = document.createTextNode(menuItem.nom); // <-- LAISSER CETTE LIGNE INTACTE pour les autres liens (correction : menuItem.nom au lieu de menuItem.label)
+            }
+    
+            const lienElement = document.createElement('a');
+            lienElement.href = `?${menuItem.lien}`;
+            lienElement.className = 'block py-2 px-4 hover:bg-gray-700 text-gray-100'; // <-- correction : text-gray-100
+            lienElement.appendChild(lienTextNode); // <-- Utiliser lienTextNode (déclaré et défini au-dessus)
+            carteMenu.appendChild(lienElement); // <-- correction : carteMenu au lieu de menuItem
+            menuElement.appendChild(carteMenu); // <-- correction : carteMenu au lieu de menuItem
+            console.log(`Ajouté au menu : ${menuItem.nom} -> ${lienElement.href}`);
+    
+            lienElement.addEventListener('click', function(event) {
+              event.preventDefault();
+             console.log("Clic sur le menu :", menuItem.nom, "->", menuItem.lien);
+              afficherSectionContenu(menuItem.lien);
+            });
+          });
+        } else {
+          console.error("Élément de menu latéral non trouvé (ID: 'menu-lateral')");
+        }
+      } // <-- AJOUTER CETTE accolade fermante pour fermer la fonction afficherMenuLateral
+
 
     const menuItems = [
         {
@@ -304,42 +344,44 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
 
     const menuElement = document.getElementById('menu-lateral');
+    afficherMenuLateral(menuElement);
     console.log("Menu détecté :", menuElement); // <-- Vérifie si l'élément existe
 
-
-    if (menuElement) {
-        menuItems.forEach(item => {
-            console.log("Ajout du menu :", item.nom, "->", item.lien);
-
-            const menuItem = document.createElement('li');
-            const menuLink = document.createElement('a');
-            menuLink.href = item.lien;
-            menuLink.textContent = item.nom;
-            // --- Classes Tailwind CSS pour le style du lien de menu ---
-            menuLink.className = 'block py-2 px-4 text-[#E5C0A2] hover:bg-[#7B685E] hover:text-[#F5F0EC]'; // Style épuré et moderne
-
-            // --- Optionnel : Ajouter une icône si vous utilisez des icônes ---
-            if (item.icone) {
-                const iconSpan = document.createElement('span');
-                iconSpan.className = item.icone;
-                menuLink.prepend(iconSpan);
-            }
-            // --- Fin Optionnel ---
-
-            menuItem.appendChild(menuLink);
-            menuElement.appendChild(menuItem);
-            console.log("Ajouté au menu :", item.nom, "->", menuLink.href); 
-
-            menuLink.addEventListener('click', function(event) {
-                event.preventDefault();
-                console.log("Clic sur le menu :", item.nom, "->", item.lien);
-                afficherSectionContenu(item.lien);
-            });
-        });
-    } else {
-        console.error("Élément de menu etagere non trouvé (ID: 'menu-lateral')");
-    }
-    
+    function creerCarteLivreHTML(livre) {
+          // Fonction pour créer le code HTML d'une carte de livre à partir des données d'un livre
+        
+          const carteLivre = document.createElement('div'); // DIV pour englober toute la carte
+          carteLivre.className = 'livre-carte p-4 rounded-md shadow-md bg-white hover:shadow-lg transition-shadow duration-200 flex'; // Classes Tailwind CSS pour la carte
+        
+          // --- Couverture du livre (image) ---
+          const couvertureElement = document.createElement('img');
+          couvertureElement.src = livre.coverUrl ? livre.coverUrl : "/images/default-book-cover.png";
+          couvertureElement.alt = `Couverture de ${livre.title}`; // Texte alternatif pour l'image
+          couvertureElement.className = 'livre-couverture w-24 h-32 object-cover rounded-md mr-4'; // Classes Tailwind CSS pour la couverture (taille, style...)
+        
+          // --- Conteneur pour les infos (titre, auteur...) ---
+          const infosElement = document.createElement('div');
+          infosElement.className = 'livre-infos flex-1'; // Prend l'espace restant dans la carte
+        
+          // --- Titre du livre ---
+          const titreElement = document.createElement('h3');
+          titreElement.textContent = livre.title; // <-- Assurez-vous que l'objet 'livre' a une propriété 'titre'
+          titreElement.className = 'livre-titre text-lg font-semibold text-[#4E342E] mb-1'; // Classes Tailwind CSS pour le titre
+        
+          // --- Auteur du livre ---
+          const auteurElement = document.createElement('p');
+          auteurElement.textContent = `Par ${livre.author}`; // <-- Assurez-vous que l'objet 'livre' a une propriété 'auteur'
+          auteurElement.className = 'livre-auteur text-sm text-gray-600'; // Classes Tailwind CSS pour l'auteur
+        
+          // --- Ajouter les éléments enfants à la carte ---
+          infosElement.appendChild(titreElement);
+          infosElement.appendChild(auteurElement);
+        
+          carteLivre.appendChild(couvertureElement);
+          carteLivre.appendChild(infosElement);
+        
+          return carteLivre; // Retourner l'élément HTML de la carte de livre
+        }
 
     function afficherSectionContenu(sectionLien) {
         const contenuPrincipalElement = document.getElementById('contenu-principal');
@@ -386,7 +428,52 @@ document.addEventListener('DOMContentLoaded', function() {
                     </form>
                 `; // <-- Fin du code HTML initial inséré
             } else if (sectionLien === "#recherche") {
-                contenuPrincipalElement.textContent = "Contenu de la section Recherche (à implémenter)";
+                contenuPrincipalElement.innerHTML = `
+          <h1 class="text-[#A8786A] text-2xl font-bold mb-4">Rechercher un livre</h1>
+          <div class="mb-4">
+         <input type="text" id="bt-search-input" placeholder="Titre ou auteur du livre..." class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]">
+          </div>
+          <div id="search-results" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      </div>
+                     `;
+
+                     // --- NOUVEAU : Récupérer l'élément input de recherche et ajouter un écouteur d'événement ---
+        const searchInputElement = document.getElementById('bt-search-input');
+        const searchResultsElement = document.getElementById('search-results'); // <-- Récupérer l'élément pour les résultats
+
+        searchInputElement.addEventListener('keyup', function(event) { // <-- Écoute l'événement 'keyup' (quand une touche est relâchée)
+          const searchTerm = searchInputElement.value.toLowerCase(); // <-- Récupérer le terme de recherche (en minuscules)
+
+          if (searchTerm === "") { // <-- AJOUTER CETTE CONDITION : VÉRIFIER SI LE TERME DE RECHERCHE EST VIDE
+            searchResultsElement.innerHTML = ""; // <-- SI OUI, VIDER LE CONTENEUR DES RÉSULTATS (UTILISER searchResultsElement que vous avez déjà)
+            console.log("Terme de recherche vide : résultats effacés."); // <-- (Optionnel : message de log)
+            return; // <-- IMPORTANT : ARRÊTER L'EXÉCUTION DE LA FONCTION ICI
+        }
+
+          console.log("Recherche en cours pour :", searchTerm); // <-- LOG : Vérification du terme de recherche
+
+         
+          // --- Filtrer les livres en fonction du terme de recherche ---
+          const livresFiltres = allBooks.filter(livre => { // <-- Supposant que vos livres sont dans 'livresExemples'
+            const titreLower = livre.title.toLowerCase(); // <-- Titre du livre en minuscules
+            const auteurLower = livre.author.toLowerCase(); // <-- Auteur du livre en minuscules
+            return titreLower.includes(searchTerm) || auteurLower.includes(searchTerm); // <-- Vrai si le titre OU l'auteur contient le terme
+          });
+
+          console.log("Livres filtrés :", livresFiltres); // <-- LOG : Vérification des livres filtrés
+
+          // --- Afficher les livres filtrés dans la zone de résultats ---
+          searchResultsElement.innerHTML = ''; // <-- Vider les résultats précédents avant d'afficher les nouveaux
+
+          if (livresFiltres.length > 0) { // <-- Vérifier s'il y a des livres filtrés
+            livresFiltres.forEach(livre => { // <-- Parcourir les livres filtrés
+              const carteLivreHTML = creerCarteLivreHTML(livre); // <-- Réutiliser votre fonction creerCarteLivreHTML (si elle existe)
+              searchResultsElement.appendChild(carteLivreHTML); // <-- Ajouter la carte de livre à la zone de résultats
+            });
+          } else {
+            searchResultsElement.innerHTML = '<p class="text-gray-500 mt-2">Aucun livre trouvé correspondant à votre recherche.</p>'; // <-- Message si aucun livre trouvé
+          }
+        });
             } else if (sectionLien === "#etageres") {
                 // --- Pour la section "Étagères", on appelle la fonction de bookshelf.js ---
                 afficherSectionEtagere(contenuPrincipalElement);

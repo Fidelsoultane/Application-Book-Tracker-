@@ -32,28 +32,12 @@ const etageresExemples = [
     function afficherSectionEtagere(contenuPrincipalElement) {
       // Fonction appelée depuis menu.js pour afficher le contenu de la section "Étagères"
     
-      // --- AJOUTER CETTE LIGNE ICI, AU TOUT DÉBUT DE LA FONCTION, POUR VIDER LA LISTE À CHAQUE APPEL ---
-      const menuEtagereListElement = document.getElementById('menu-etagere');
-      if (menuEtagereListElement) {
-        menuEtagereListElement.innerHTML = ""; // <--  ***REMETTRE CETTE LIGNE ICI, AU DÉBUT***
-      }
-    
-    
-      // 1. Effacer le contenu précédent de la zone principale (on ne va plus afficher de titre temporaire ici)
-      contenuPrincipalElement.innerHTML = "";
-    
-      // 2. Récupérer l'élément HTML de la liste des étagères dans le menu latéral (ul#menu-etagere)
-      // ---  On récupère menuEtagereListElement ICI MAINTENANT, AVANT LE IF, ET ON LE RÉUTILISE ---
-      // const menuEtagereListElement = document.getElementById('menu-etagere');  <--  *SUPPRIMER CETTE LIGNE ICI (déjà récupéré en haut)*
-    
-    
-      if (menuEtagereListElement) {
-       // 3. Parcourir le tableau des étagères exemples et créer une carte HTML pour chaque étagère
-        etageresExemples.forEach(etagere => {
-          const carteHTML = creerCarteEtagereHTML(etagere); // Appeler la fonction pour créer la carte HTML
-          contenuPrincipalElement.appendChild(carteHTML); // Ajouter la carte HTML à la liste (ul) du menu
-        });
-      } else {
-        console.error("Élément de liste du menu 'Étagères' non trouvé (ID: 'menu-etagere')");
-      }
+      // 1. Effacer le contenu précédent de la zone principale
+  contenuPrincipalElement.innerHTML = "";
+
+  // 2. Parcourir le tableau des étagères exemples et créer une carte HTML pour chaque étagère
+    etageresExemples.forEach(etagere => {
+        const carteHTML = creerCarteEtagereHTML(etagere); // Appeler la fonction pour créer la carte HTML
+        contenuPrincipalElement.appendChild(carteHTML); // Ajouter la carte HTML *DIRECTEMENT* à contenuPrincipalElement (zone principale)
+      });
     }
