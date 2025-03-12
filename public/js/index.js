@@ -452,7 +452,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
           console.log("Recherche en cours pour :", searchTerm); // <-- LOG : Vérification du terme de recherche
 
-         
           // --- Filtrer les livres en fonction du terme de recherche ---
           const livresFiltres = allBooks.filter(livre => { // <-- Supposant que vos livres sont dans 'livresExemples'
             const titreLower = livre.title.toLowerCase(); // <-- Titre du livre en minuscules
