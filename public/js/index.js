@@ -385,6 +385,31 @@ ajouterEtagereBtn.addEventListener('click', function() { // <-- AJOUT DE L'ÉCOU
     }
 });
 
+supprimerEtagereBtn.addEventListener('click', function() { // <-- ÉCOUTEUR D'ÉVÉNEMENT 'click' SUR LE BOUTON "supprimer-etagere-btn"
+      console.log("Bouton 'Supprimer une étagère' cliqué (dans index.js) !"); // <-- MESSAGE DE LOG (POUR TEST - VOUS POUVEZ GARDER CETTE LIGNE POUR VÉRIFICATION)
+    
+      // --- CODE POUR LA SUPPRESSION D'ÉTAGÈRE (VERSION  *TRÈS  *BASIQUE*  - SUPPRIME  *TOUJOURS LA PREMIÈRE*  ÉTAGÈRE DE LA LISTE) ---
+      if (etageresExemples.length > 0) { // <-- VÉRIFIER SI LA LISTE DES ÉTAGÈRES N'EST PAS DÉJÀ VIDE (POUR ÉVITER UNE ERREUR SI ON ESSAIE DE SUPPRIMER UNE ÉTAGÈRE D'UNE LISTE VIDE)
+        const etagereSupprimee = etageresExemples.shift(); // <-- SUPPRIMER  *LA PREMIÈRE*  ÉTAGÈRE DU TABLEAU etageresExemples AVEC  `.shift()`  (ET  `.shift()`  RETOURNE AUSSI L'ÉTAGÈRE SUPPRIMÉE,  QUE NOUS STOCKONS DANS la variable etagereSupprimee,  MÊME SI NOUS NE L'UTILISONS PAS POUR L'INSTANT DANS CET EXEMPLE BASIQUE)
+    
+        console.log("Étagère supprimée (version basique - 1ère étagère supprimée) :", etagereSupprimee); // <-- MESSAGE DE LOG (POUR CONFIRMATION - AFFICHER L'ÉTAGÈRE QUI A ÉTÉ SUPPRIMÉE)
+        console.log("Tableau etageresExemples mis à jour (après suppression) :", etageresExemples); // <-- MESSAGE DE LOG (POUR AFFICHER LE TABLEAU MIS À JOUR APRÈS SUPPRESSION)
+    
+        // --- RE-RENDER LE MENU LATÉRAL POUR METTRE À JOUR LA LISTE DES ÉTAGÈRES (APRÈS LA SUPPRESSION) ---
+        const menuEtagereElement = document.getElementById('menu-etagere'); // Récupérer l'élément <ul> du menu latéral (où la liste des étagères est affichée)
+        afficherMenuEtagere(menuEtagereElement); // Appeler la fonction afficherMenuEtagere pour re-générer le menu latéral (SANS L'ÉTAGÈRE SUPPRIMÉE !)
+    
+        // --- (OPTIONNEL) AFFICHER UN MESSAGE DE CONFIRMATION À L'UTILISATEUR ---
+        alert("Première étagère supprimée avec succès (version basique) !"); // <-- MESSAGE D'ALERTE (TEMPORAIRE - POUR CONFIRMATION RAPIDE)
+    
+      } else { // <-- SI LA LISTE DES ÉTAGÈRES EST DÉJÀ VIDE
+        console.log("Aucune étagère à supprimer (liste déjà vide)."); // <-- MESSAGE DE LOG (SI LISTE DÉJÀ VIDE)
+        alert("Aucune étagère à supprimer (liste déjà vide) !"); // <-- MESSAGE D'ALERTE (TEMPORAIRE - POUR CONFIRMATION RAPIDE)
+      }
+      // --- FIN DU CODE POUR LA SUPPRESSION D'ÉTAGÈRE (VERSION TRÈS BASIQUE) ---
+    
+     });
+
       } 
 
       function afficherMenuEtagere(menuEtagereElement) {
