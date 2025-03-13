@@ -41,3 +41,5 @@ const etageresExemples = [
         contenuPrincipalElement.appendChild(carteHTML); // Ajouter la carte HTML *DIRECTEMENT* à contenuPrincipalElement (zone principale)
       });
     }
+
+   

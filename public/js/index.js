@@ -289,9 +289,26 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`Nombre d'étagères détecté : ${nombreEtageres}`);
     
         if (menuElement) {
+
+            menuElement.innerHTML = `
+            <div class="mb-4 flex space-x-2">
+        <button id="ajouter-etagere-btn" class="bg-[#A8786A] hover:bg-[#7B685E] text-[#E5C0A2] font-semibold py-2 px-3 rounded-lg transition-colors duration-200">  
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 inline-block align-middle">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+        </button>
+        <button id="supprimer-etagere-btn" class="bg-red-600 hover:bg-red-700 text-gray-100 font-semibold py-2 px-3 rounded-lg transition-colors duration-200">  
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 inline-block align-middle">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+        `;
+
           menuItems.forEach(menuItem => {
             console.log("Ajout du menu :", menuItem.nom, "->", menuItem.lien);
-    
+
+          
             const carteMenu = document.createElement('li'); // <-- correction : carteMenu au lieu de menuItem
             let lienTextNode; // <-- Déclarer lienTextNode en dehors du if/else
     
@@ -318,10 +335,70 @@ document.addEventListener('DOMContentLoaded', function() {
               afficherSectionContenu(menuItem.lien);
             });
           });
+
+          // --- NOUVEAU :  Appeler afficherMenuEtagere POUR AFFICHER DYNAMIQUEMENT LA LISTE DES ÉTAGÈRES SOUS LE TITRE "Étagères" ---
+          const menuEtagereElement = document.getElementById('menu-etagere'); // Récupérer l'élément <ul> AVEC L'ID "menu-etagere" QUE NOUS AVONS AJOUTÉ DANS LE HTML CI-DESSUS
+          afficherMenuEtagere(menuEtagereElement); // Appeler la fonction afficherMenuEtagere POUR REMPLIR DYNAMIQUEMENT CET ÉLÉMENT <ul> AVEC LA LISTE DES ÉTAGÈRES (À PARTIR DE etageresExemples)
+
         } else {
           console.error("Élément de menu latéral non trouvé (ID: 'menu-lateral')");
         }
-      } // <-- AJOUTER CETTE accolade fermante pour fermer la fonction afficherMenuLateral
+
+        
+
+    const ajouterEtagereBtn = document.getElementById('ajouter-etagere-btn'); // <-- CETTE LIGNE DOIT DÉJÀ EXISTER (récupération du bouton "Ajouter")
+const supprimerEtagereBtn = document.getElementById('supprimer-etagere-btn'); // <-- CETTE LIGNE DOIT DÉJÀ EXISTER (récupération du bouton "Supprimer")
+
+// --- NOUVEAU : Ajouter un écouteur d'événement 'click' sur le bouton "Ajouter" ---
+ajouterEtagereBtn.addEventListener('click', function() { // <-- AJOUT DE L'ÉCOUTEUR D'ÉVÉNEMENT 'click' SUR LE BOUTON "ajouter-etagere-btn"
+    console.log("Bouton 'Ajouter une étagère' cliqué (dans index.js) !"); // <-- Message de log (pour vérifier que le bouton est cliqué)
+
+    // --- 1. Demander à l'utilisateur le nom de la nouvelle étagère (avec un prompt) ---
+    const nomNouvelleEtagere = prompt("Nom de la nouvelle étagère :", "Nouvelle étagère"); // Ouvrir une boîte de dialogue prompt pour demander le nom de la nouvelle étagère
+
+    if (nomNouvelleEtagere) { // <-- Vérifier si l'utilisateur a saisi un nom (et n'a pas cliqué sur "Annuler")
+        console.log("Nom de la nouvelle étagère saisi :", nomNouvelleEtagere); // <-- Message de log (pour afficher le nom saisi par l'utilisateur)
+
+        // --- 2. Créer un nouvel objet étagère (avec un ID unique et le nom saisi) ---
+        const nouvelleEtagere = { // Créer un nouvel objet étagère
+            id: Date.now(), // Générer un ID unique basé sur le timestamp actuel (pour simplifier dans cette version)
+            nom: nomNouvelleEtagere, // Utiliser le nom saisi par l'utilisateur
+            nombreLivres: 0 // Initialiser le nombre de livres à 0 pour une nouvelle étagère
+        };
+
+        console.log("Nouvelle étagère créée :", nouvelleEtagere); // <-- Message de log (pour afficher le nouvel objet étagère créé)
+
+        // --- 3. Ajouter la nouvelle étagère au tableau etageresExemples ---
+        etageresExemples.push(nouvelleEtagere); // Ajouter le nouvel objet étagère à la fin du tableau etageresExemples
+
+        console.log("Tableau etageresExemples mis à jour :", etageresExemples); // <-- Message de log (pour afficher le tableau mis à jour avec la nouvelle étagère)
+
+        // --- 4. Re-render le menu latéral pour mettre à jour la liste des étagères (avec la nouvelle étagère ajoutée) ---
+        const menuEtagereElement = document.getElementById('menu-etagere'); // Récupérer l'élément <ul> du menu latéral (où la liste des étagères est affichée)
+        afficherMenuEtagere(menuEtagereElement); // Appeler la fonction afficherMenuEtagere pour re-générer le menu latéral (AVEC LA NOUVELLE ÉTAGÈRE !)
+
+        // --- 5. (Optionnel) Afficher un message de confirmation à l'utilisateur ---
+        alert("Étagère '" + nouvelleEtagere.nom + "' ajoutée avec succès !"); // <-- Afficher un message d'alerte pour confirmer à l'utilisateur que l'étagère a bien été ajoutée (TEMPORAIRE,  POUR CONFIRMATION RAPIDE)
+
+    } else {
+        console.log("Nom de la nouvelle étagère non saisi ou annulé."); // <-- Message de log (si l'utilisateur annule le prompt ou ne saisit pas de nom)
+    }
+});
+
+      } 
+
+      function afficherMenuEtagere(menuEtagereElement) {
+        if (menuEtagereElement && Array.isArray(etageresExemples)) {
+            menuEtagereElement.innerHTML = ''; // Vider la liste des étagères AVANT de la re-remplir
+    
+            etageresExemples.forEach(etagere => {
+                const carteEtagereHTML = creerCarteEtagereHTML(etagere); // Utiliser la fonction creerCarteEtagereHTML pour créer le HTML de la carte de l'étagère
+                menuEtagereElement.appendChild(carteEtagereHTML); // Ajouter la carte de l'étagère (<li>) à la liste (<ul>) dans le menu latéral
+            });
+        } else {
+            console.error("Élément de menu étagère non trouvé ou etageresExemples n'est pas un tableau.");
+        }
+    }
 
 
     const menuItems = [
