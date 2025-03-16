@@ -15,7 +15,7 @@ function createBookCard(book) {
     card.dataset.bookId = book._id; // Stocke l'ID du livre pour les modifications/suppressions
 
     const imgContainer = createElementWithClasses('div', 'flex justify-center');
-    const img = createElementWithClasses('img', 'book-cover h-48 object-cover'); // Hauteur fixe, object-cover
+    const img = createElementWithClasses('img', 'book-cover h-48 w-48 object-cover'); // Hauteur fixe, object-cover
     img.src = book.coverUrl || 'placeholder.jpg'; // Image par défaut si pas d'URL (assure-toi d'avoir placeholder.jpg)
     img.alt = `Couverture de ${book.title}`;
     imgContainer.appendChild(img);
