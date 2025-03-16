@@ -20,7 +20,14 @@
             <h1 class="text-[#A8786A] text-2xl font-bold mb-4">Bienvenue sur Book Tracker</h1>
             <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto hidden">
                 <h2 id="form-title" class="text-[#A8786A] text-2xl font-bold mb-4">Ajouter un nouveau livre</h2>
-                <input type="hidden" id="book-id"> <div class="mb-4">
+                <input type="hidden" id="book-id">
+                
+                <div class="mb-4">
+                    <label for="book-isbn" class="block text-etagere text-sm font-bold mb-1">ISBN:</label>
+                    <input type="text" id="book-isbn" placeholder="ISBN du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                
+                <div class="mb-4">
                     <label for="book-title" class="block text-[#4E342E] text-sm font-bold mb-1">Titre:</label>
                     <input type="text" id="book-title" placeholder="Titre du livre" class="input-field">
                 </div>

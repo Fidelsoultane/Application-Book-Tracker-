@@ -7,13 +7,30 @@ const Book = require('../models/Book');
 // Ajouter un livre
 router.post('/books', async (req, res) => {
   try {
-      const { title, author, status, coverUrl } = req.body; // **Récupérer 'coverUrl' depuis req.body**
+    const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn } = req.body; // Déstructure tous les champs
 
-      const newBook = new Book({ title, author, status, coverUrl }); // **Inclure 'coverUrl' lors de la création**
-      const savedBook = await newBook.save();
-      res.status(201).json(savedBook);
+    // Validation (exemple, à adapter/compléter):
+    if (!title || !author) {
+      return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
+    }
+
+    const newBook = new Book({
+      title,
+      author,
+      status,
+      coverUrl,
+      publisher, // Ajout
+      publishedDate, // Ajout
+      pageCount, // Ajout
+      isbn
+    });
+
+    const savedBook = await newBook.save();
+    res.status(201).json(savedBook); // 201 Created pour une création réussie
+
   } catch (error) {
-      res.status(400).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Erreur lors de la création du livre.' });
   }
 });
 
@@ -30,23 +47,52 @@ router.get('/books', async (req, res) => {
 // Mettre à jour un livre
 router.put('/books/:id', async (req, res) => {
   try {
-      const bookId = req.params.id;
-      // **Récupérer également 'coverUrl' depuis req.body, en plus de title, author et status**
-      const { title, author, status, coverUrl } = req.body;
-      // **Mettre à jour le livre dans la base de données, en incluant 'coverUrl'**
-      const updatedBook = await Book.findByIdAndUpdate(
-          bookId,
-          { title, author, status, coverUrl }, // Les données à mettre à jour, incluant 'coverUrl'
-          { new: true, runValidators: true } // Options: retourne le document mis à jour, applique les validations du schéma
-      );
+    const { id } = req.params; // Récupère l'ID depuis les paramètres de l'URL
+    const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn } = req.body; // Déstructure les données du corps de la requête
 
-      if (!updatedBook) {
-          return res.status(404).json({ message: 'Livre non trouvé' });
-      }
+    // Validation (exemple, à adapter/compléter):
+    if (!title || !author) {
+      return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
+    }
 
-      res.json(updatedBook); // Renvoyer le livre mis à jour en JSON
+    // Vérifie si le livre existe (important !)
+    const existingBook = await Book.findById(id);
+    if (!existingBook) {
+      return res.status(404).json({ message: 'Livre non trouvé.' }); // 404 Not Found
+    }
+
+    // Met à jour le livre (approche 1 : findByIdAndUpdate)
+    const updatedBook = await Book.findByIdAndUpdate(
+      id,
+      {
+        title,
+        author,
+        status,
+        coverUrl,
+        publisher, // Ajout
+        publishedDate, // Ajout
+        pageCount, // Ajout
+        isbn
+      },
+      { new: true, runValidators: true } // Options importantes !
+    );
+
+    // // Approche 2 (plus verbeuse, mais utile si vous avez besoin de faire des opérations spécifiques avant la sauvegarde)
+    // existingBook.title = title;
+    // existingBook.author = author;
+    // existingBook.status = status;
+    // existingBook.coverUrl = coverUrl;
+    // existingBook.publisher = publisher;
+    // existingBook.publishedDate = publishedDate;
+    // existingBook.pageCount = pageCount;
+    // const updatedBook = await existingBook.save();
+
+
+    res.status(200).json(updatedBook); // Renvoie le livre mis à jour
+
   } catch (error) {
-      res.status(400).json({ message: error.message }); // Gestion des erreurs (validation, etc.)
+    console.error(error);
+    res.status(500).json({ message: 'Erreur lors de la modification du livre.' });
   }
 });
 // Supprimer un livre
