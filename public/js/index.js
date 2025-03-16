@@ -1,5 +1,5 @@
 // index.js
-
+import { etageresExemples, creerCarteEtagereHTML } from './bookshelf.js';
 // --------- Fonctions utilitaires ---------
 
 // Crée un élément HTML avec les classes Tailwind fournies
@@ -193,18 +193,6 @@ async function handleFormSubmit(event) {
     }
 }
 
-// --------- Gestion des filtres ---------
-function handleFilterClick(event) {
-    if (event.target.classList.contains('filter-button')) {
-        // Désélectionne le bouton précédemment actif
-        document.querySelectorAll('.filter-button').forEach(button => button.classList.remove('bg-[#7B685E]', 'text-[#E5C0A2]'));
-
-        // Sélectionne le bouton cliqué
-        event.target.classList.add('bg-[#7B685E]', 'text-[#E5C0A2]');
-        currentFilter = event.target.dataset.status;
-        fetchBooks(); // Recharge avec le filtre appliqué
-    }
-}
 
 // --------- Gestion de l'affichage ---------
 function showLoading() {
@@ -238,7 +226,42 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("add-book-button").classList.remove("hidden");
     });
 
-    // Gestion des clics sur les boutons de filtre
-    document.querySelector('.mb-4.flex.justify-center.space-x-2').addEventListener('click', handleFilterClick);
+
+    // Affichage des étagères
+    const menuEtagere = document.getElementById('menu-etagere');
+    etageresExemples.forEach(etagere => {
+        const carte = creerCarteEtagereHTML(etagere);
+        menuEtagere.appendChild(carte);
+    });
+
+    // --- Gestion des clics sur les étagères (pour le filtrage) ---
+    menuEtagere.addEventListener('click', (event) => {
+       //On remonte pour trouver le li
+        let target = event.target;
+        while (target && target.tagName !== 'LI') {
+            target = target.parentNode;
+        }
+
+        if (target && target.dataset.status) {
+            //Désélectionne potentiellement les anciens boutons
+            document.querySelectorAll('.filter-button').forEach(button =>
+                button.classList.remove('bg-[#7B685E]', 'text-[#E5C0A2]') // Enlève le style sélectionné des anciens boutons (si besoin)
+            );
+
+            // Met à jour le filtre courant
+            currentFilter = target.dataset.status === "Tous mes livres" ? "Tous" : target.dataset.status; //Pour gérer le cas "Tous"
+            fetchBooks(); // Recharge les livres avec le nouveau filtre
+
+            //On selectionne visuellement l'étagère
+            document.querySelectorAll('#menu-etagere li').forEach(li => {
+                li.classList.remove('bg-gray-600'); // Met en gris foncé par défaut
+             });
+
+            target.classList.add('bg-gray-600'); // Met en gris clair la sélection
+
+        }
+
+    });
+
 
 });
