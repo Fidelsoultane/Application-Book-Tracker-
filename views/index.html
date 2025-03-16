@@ -1,75 +1,71 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Book Tracker</title>
-  <!-- Inclusion de Tailwind CSS pour le style -->
-  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Book Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#F5F0EC]">
 
-  <div id="contenu-principal-global" class="flex">  
-    <nav id="menu-lateral" class="w-64 bg-gray-800 text-gray-100 h-screen">  
-      <div class="p-4">
-    <h2 class="text-[#A8786A] text-2xl font-bold">Étagères</h2> 
-    <ul id="menu-etagere" class="bg-[#4E342E]">
-      </ul>
-  </div>
-</nav>
+    <div id="contenu-principal-global" class="flex">
+        <nav id="menu-lateral" class="w-64 bg-gray-800 text-gray-100 h-screen">
+            <div class="p-4">
+                <h2 class="text-[#A8786A] text-2xl font-bold">Étagères</h2>
+                <ul id="menu-etagere" class="bg-[#4E342E]">
+                    </ul>
+            </div>
+        </nav>
 
-<main id="contenu-principal" class="flex-1 p-5">
-   <h1 class="text-[#A8786A] text-2xl font-bold">Bienvenue sur Book Tracker</h1>
-   <p>Contenu de la section Recherche (à implémenter)</p>
-  
-   <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto">
-    <h2 class="text-[#A8786A] text-2xl font-bold">Ajouter un nouveau livre</h2>
-    <div class="mb-4">
-     <label for="title" class="block text-[#4E342E] text-sm font-bold mb-1">Titre:</label>
-     <input type="text" id="book-title" placeholder="Titre du livre" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]">
+        <main id="contenu-principal" class="flex-1 p-5">
+            <h1 class="text-[#A8786A] text-2xl font-bold mb-4">Bienvenue sur Book Tracker</h1>
+            <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto hidden">
+                <h2 id="form-title" class="text-[#A8786A] text-2xl font-bold mb-4">Ajouter un nouveau livre</h2>
+                <input type="hidden" id="book-id"> <div class="mb-4">
+                    <label for="book-title" class="block text-[#4E342E] text-sm font-bold mb-1">Titre:</label>
+                    <input type="text" id="book-title" placeholder="Titre du livre" class="input-field">
+                </div>
+                <div class="mb-4">
+                    <label for="book-author" class="block text-[#4E342E] text-sm font-bold mb-1">Auteur:</label>
+                    <input type="text" id="book-author" placeholder="Auteur du livre" class="input-field">
+                </div>
+                <div class="mb-4">
+                    <label for="book-coverUrl" class="block text-[#4E342E] text-sm font-bold mb-1">URL de la couverture:</label>
+                    <input type="text" id="book-coverUrl" placeholder="URL de l'image de couverture" class="input-field">
+                </div>
+                <div class="mb-6">
+                    <label for="book-status" class="block text-[#4E342E] text-sm font-bold mb-1">Statut de lecture:</label>
+                    <select id="book-status" class="input-field">
+                        <option value="À lire">À lire</option>
+                        <option value="En cours">En cours</option>
+                        <option value="Terminé">Terminé</option>
+                        <option value="Souhaité">Souhaité</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-center">
+                    <button type="submit" class="submit-button">Enregistrer</button>
+                     <button type="button" id="cancel-button" class="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 ml-2">Annuler</button>
+                </div>
+            </form>
+
+            <button id="add-book-button" class="bg-[#A8786A] hover:bg-[#7B685E] text-[#E5C0A2] font-semibold py-2 px-4 rounded-lg transition-colors duration-200 mb-4">
+                Ajouter un livre
+            </button>
+
+             <div class="mb-4 flex justify-center space-x-2">
+                <button data-status="Tous" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200">Tous</button>
+                <button data-status="À lire" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200">À lire</button>
+                <button data-status="En cours" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200">En cours</button>
+                <button data-status="Terminé" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200">Terminé</button>
+                <button data-status="Souhaité" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200">Souhaité</button>
+            </div>
+
+            <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
+            <div id="book-list" class="book-list flex flex-row flex-wrap justify-start items-start gap-4 px-4 md:px-6 lg:px-8 max-w-screen-lg mx-auto mt-8">
+                </div>
+
+        </main>
     </div>
-    <div class="mb-4">
-     <label for="author" class="block text-[#4E342E] text-sm font-bold mb-1">Auteur:</label>
-     <input type="text" id="book-author" placeholder="Auteur du livre" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]">
-    </div>
-    <div class="mb-4">
-     <label for="coverUrl" class="block text-[#4E342E] text-sm font-bold mb-1">URL de la couverture (optionnel):</label>
-     <input type="text" id="book-coverUrl" placeholder="URL de l'image de couverture" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A]">
-    </div>
-    <div class="mb-6">
-     <label for="status" class="block text-[#4E342E] text-sm font-bold mb-1">Statut de lecture:</label>
-     <select id="book-status" class="shadow appearance-none border border-[#7B685E] rounded-md w-full py-2 px-3 text-[#4E342E] leading-tight focus:outline-none focus:shadow-md focus:border-[#A8786A] book-status">
-       <option value="À lire">À lire</option>
-       <option value="En cours">En cours</option>
-       <option value="Terminé">Terminé</option>
-       <option value="Souhaité">Souhaité</option>
-     </select>
-    </div>
-    <div class="flex items-center justify-center">
-      <button class="bg-[#A8786A] hover:bg-[#7B685E] text-[#E5C0A2] font-semibold py-2 px-4 rounded-lg transition-colors duration-200" type="submit">
-       Ajouter un livre
-      </button>
-    </div>
-  </form>
-  
-</main>
 
-</div>
-
-  <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
-
-  <div class="mb-4 flex justify-center space-x-2"><button data-status="Tous" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200">Tous</button>
-    <button id="filter-status-a-lire" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200" data-status="À lire">À lire</button>
-    <button id="filter-status-en-cours" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200" data-status="En cours">En cours</button>
-    <button id="filter-status-termine" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200" data-status="Terminé">Terminé</button>
-    <button id="filter-status-souhaite" class="filter-button bg-[#E5C0A2] hover:bg-[#D0B09d] text-[#7B685E] font-semibold py-2 px-4 rounded-full transition-colors duration-200" data-status="Souhaité">Souhaité</button>  </div>
-
-
-  <!-- Zone d'affichage des livres -->
-  <div id="book-list" class="book-list flex flex-row flex-wrap justify-start items-start gap-4 px-4 md:px-6 lg:px-8 max-w-screen-lg mx-auto mt-8">
-  </div>
-
-    <script src="/js/index.js"></script>
-    <script src="/etagere/bookshelf.js"></script>
-</body>
+    <script src="js/index.js"></script>
+    </body>
 </html>
-
