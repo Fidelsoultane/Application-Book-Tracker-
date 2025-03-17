@@ -16,7 +16,7 @@ function createBookCard(book) {
 
     const imgContainer = createElementWithClasses('div', 'flex justify-center');
     const img = createElementWithClasses('img', 'book-cover h-48 w-48 object-cover rounded-md');
-    img.src = book.coverUrl || 'placeholder.jpg'; // Conserve l'image par défaut
+    img.src = book.coverUrl || 'images/default-book-cover.png'; // Conserve l'image par défaut
     img.alt = `Couverture de ${book.title}`;
     imgContainer.appendChild(img);
     card.appendChild(imgContainer);
@@ -79,6 +79,10 @@ function createBookCard(book) {
     return card;
 }
 
+// ... (autres fonctions) ...
+let currentFilter = "Tous"; // initialisation de la variable
+
+// Affiche les livres filtrés
 function displayBooks(books) {
     const bookList = document.getElementById('book-list');
     bookList.innerHTML = ''; // Efface les livres précédents
@@ -167,100 +171,153 @@ function resetForm() {
 // --- NOUVELLE FONCTION : Récupère les données du livre à partir de l'ISBN ---
 async function fetchBookDataFromISBN(isbn) {
     const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`;
+    console.log("URL de l'API:", apiUrl);
 
-    try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
+    const maxAttempts = 5; // Nombre maximum de tentatives
+    let attempt = 0;
+    let delay = 1000; // Délai initial en millisecondes (1 seconde)
+
+
+    while (attempt < maxAttempts) {
+        attempt++;
+        try {
+            const response = await fetch(apiUrl);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Données brutes de l'API:", data);
+
+                if (data.totalItems === 0) {
+                    throw new Error("Aucun livre trouvé pour cet ISBN.");
+                }
+
+                const bookData = data.items[0].volumeInfo;
+                console.log("bookData extrait:", bookData);
+
+                const extractedData = {
+                    title: bookData.title,
+                    author: bookData.authors ? bookData.authors[0] : '',
+                    coverUrl: bookData.imageLinks ? bookData.imageLinks.thumbnail : '',
+                    publisher: bookData.publisher,
+                    publishedDate: bookData.publishedDate,
+                    pageCount: bookData.pageCount,
+                    isbn: isbn,
+                    status: "À lire",
+                };
+                console.log("Données extraites:", extractedData);
+                return extractedData;
+
+            } else if (response.status === 503) {
+                console.warn(`Tentative <span class="math-inline">\{attempt\}/</span>{maxAttempts}: Erreur 503. Nouvel essai dans ${delay / 1000} secondes...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2; // Double le délai à chaque tentative (exponential backoff)
+            } else {
+                throw new Error(`Erreur HTTP: ${response.status}`); // Gère les autres erreurs HTTP
+            }
+
+        } catch (error) {
+            console.error("Erreur lors de la récupération des données ISBN:", error);
+             if (attempt === maxAttempts) {
+                    displayError(error.message + " après plusieurs tentatives."); // Affiche "Aucun livre trouvé" seulement si c'est l'erreur
+                    return null;
+             }
         }
-        const data = await response.json();
-
-        if (data.totalItems === 0) {
-            throw new Error("Aucun livre trouvé pour cet ISBN.");
-        }
-
-        // Extraction des données (attention à la structure de l'objet !)
-        const bookData = data.items[0].volumeInfo;
-        return {
-            title: bookData.title,
-            author: bookData.authors ? bookData.authors[0] : '', // Gère le cas où 'authors' est absent
-            coverUrl: bookData.imageLinks ? bookData.imageLinks.thumbnail : '', // Gère le cas où 'imageLinks' est absent
-            // Ajoutez d'autres champs ici si vous voulez les récupérer (description, etc.)
-        };
-
-    } catch (error) {
-        console.error("Erreur lors de la récupération des données ISBN:", error);
-        displayError(error.message); // Affiche l'erreur à l'utilisateur
-        return null; // Important : retourne null en cas d'erreur
     }
+
 }
+
+
 // --------- Gestion du formulaire ---------
 
 async function handleFormSubmit(event) {
     event.preventDefault();
 
     const bookId = document.getElementById('book-id').value;
-    const isbn = document.getElementById('book-isbn').value; // Récupère l'ISBN
+    const isbn = document.getElementById('book-isbn').value;
     const title = document.getElementById('book-title').value;
     const author = document.getElementById('book-author').value;
     const status = document.getElementById('book-status').value;
     const coverUrl = document.getElementById('book-coverUrl').value;
-    let bookData = { title, author, status, coverUrl };
 
-    // --- LOGIQUE ISBN ---
+    // Si un ISBN est fourni, on appelle la fonction de recherche *AVANT* de construire bookData
     if (isbn) {
-        // Si un ISBN est fourni, on appelle la fonction de recherche
         const fetchedData = await fetchBookDataFromISBN(isbn);
+
         if (fetchedData) {
-          //Si on a des données on remplace les données du formulaire par les données récupéré de l'API
-            bookData = { ...bookData, ...fetchedData }; // Fusionne les données
-             document.getElementById('book-title').value = bookData.title;
-            document.getElementById('book-author').value = bookData.author;
-            document.getElementById('book-coverUrl').value = bookData.coverUrl
+            // Si des données sont récupérées, on les utilise DIRECTEMENT.
+            try {
+                let response;
+                if (bookId) {
+                    // Modification d'un livre existant
+                    response = await fetch(`/api/books/${bookId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(fetchedData), // Utilise directement fetchedData
+                    });
+                } else {
+                    // Ajout d'un nouveau livre
+                    response = await fetch('/api/books', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(fetchedData), // Utilise directement fetchedData
+                    });
+                }
+
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+
+                fetchBooks();
+                resetForm();
+                document.getElementById('book-form').classList.add('hidden');
+
+            } catch (error) {
+                console.error("Erreur lors de l'enregistrement du livre:", error);
+                displayError("Impossible d'enregistrer le livre. Veuillez réessayer.");
+            }
         } else {
-            // Si la recherche ISBN échoue, on arrête le processus
+            // Si la recherche ISBN échoue (fetchedData est null), on arrête le processus
             return;
         }
-    }else{
-       // Validation simple (vérifie que les champs obligatoires sont remplis)
+    } else {
+        // Si AUCUN ISBN n'est fourni, on procède à la validation et à l'enregistrement "classiques".
         if (!title || !author) {
             alert("Veuillez remplir les champs titre et auteur.");
             return;
         }
-    }
 
-    // --- FIN LOGIQUE ISBN ---
-    //Le reste du code reste inchangé
-    try {
-        let response;
-        if (bookId) {
-            // Modification d'un livre existant
-            response = await fetch(`/api/books/${bookId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookData),
-            });
-        } else {
-            // Ajout d'un nouveau livre
-            response = await fetch('/api/books', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookData),
-            });
+        const bookData = { title, author, status, coverUrl, isbn }; // Ajout de isbn, important pour l'affichage
+
+        try {
+            let response;
+            if (bookId) {
+                // Modification d'un livre existant
+                response = await fetch(`/api/books/${bookId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookData),
+                });
+            } else {
+                // Ajout d'un nouveau livre
+                response = await fetch('/api/books', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookData),
+                });
+            }
+
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+
+            fetchBooks();
+            resetForm();
+            document.getElementById('book-form').classList.add('hidden');
+
+        } catch (error) {
+            console.error("Erreur lors de l'enregistrement du livre:", error);
+            displayError("Impossible d'enregistrer le livre. Veuillez réessayer.");
         }
-
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-
-        // const savedBook = await response.json();
-        fetchBooks();
-        resetForm();
-        document.getElementById('book-form').classList.add('hidden');
-
-    } catch (error) {
-        console.error("Erreur lors de l'enregistrement du livre:", error);
-        displayError("Impossible d'enregistrer le livre. Veuillez réessayer.");
     }
 }
 

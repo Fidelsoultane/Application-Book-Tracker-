@@ -6,7 +6,8 @@ const Book = require('../models/Book');
 
 // Ajouter un livre
 router.post('/books', async (req, res) => {
-  try {
+   try {
+    console.log("Requête POST /api/books reçue.  Corps de la requête:", req.body);
     const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn } = req.body; // Déstructure tous les champs
 
     // Validation (exemple, à adapter/compléter):
@@ -25,22 +26,25 @@ router.post('/books', async (req, res) => {
       isbn
     });
 
+    console.log("Objet newBook créé:", newBook);
+
     const savedBook = await newBook.save();
+    console.log("Livre enregistré:", savedBook); 
     res.status(201).json(savedBook); // 201 Created pour une création réussie
 
   } catch (error) {
-    console.error(error);
+    console.error("Erreur dans la route POST /api/books:", error);
     res.status(500).json({ message: 'Erreur lors de la création du livre.' });
   }
 });
 
-// Récupérer tous les livres
 router.get('/books', async (req, res) => {
   try {
-    const books = await Book.find();
-    res.json(books);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    const books = await Book.find(); // Récupère *tous* les livres.  Assurez-vous que 'Book' est correctement importé.
+    res.status(200).json(books); // Renvoie les livres au format JSON.  200 OK
+  } catch (error) {
+    console.error("Erreur lors de la récupération des livres (GET /api/books):", error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des livres.' }); // 500 Internal Server Error
   }
 });
 
@@ -113,7 +117,7 @@ router.delete('/books/:id', async (req, res) => { // **ROUTE DELETE /books/:id**
 
 module.exports = router;
 
-module.exports = router;
+
 
 
 
