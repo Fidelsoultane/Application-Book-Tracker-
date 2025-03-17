@@ -1,26 +1,20 @@
-// index.js
+// index.js 
 import { etageresExemples, creerCarteEtagereHTML } from './bookshelf.js';
 // --------- Fonctions utilitaires ---------
 
-// Crée un élément HTML avec les classes Tailwind fournies
 function createElementWithClasses(tag, classNames) {
     const element = document.createElement(tag);
     element.className = classNames;
     return element;
 }
 
-// Crée une carte de livre HTML
 function createBookCard(book) {
     const card = createElementWithClasses('div', 'bg-white rounded-lg shadow-md p-4 relative');
     card.dataset.bookId = book._id;
 
     const imgContainer = createElementWithClasses('div', 'flex justify-center');
-
     const img = createElementWithClasses('img', 'book-cover h-48 w-48 object-cover rounded-md');
-    img.src = book.coverUrl || 'images/default-book-cover.png'; // Conserve l'image par défaut
-
-   
-
+    img.src = book.coverUrl || 'images/default-book-cover.png'; // Utilisez le chemin correct
     img.alt = `Couverture de ${book.title}`;
     imgContainer.appendChild(img);
     card.appendChild(imgContainer);
@@ -30,7 +24,6 @@ function createBookCard(book) {
     card.appendChild(title);
 
     const author = createElementWithClasses('p', 'text-gray-600');
-    // Gère le cas où book.author est un tableau ou une chaîne
     author.textContent = Array.isArray(book.author) ? book.author.join(', ') : (book.author || 'Auteur inconnu');
     card.appendChild(author);
 
@@ -38,9 +31,7 @@ function createBookCard(book) {
     status.textContent = `Statut: ${book.status}`;
     card.appendChild(status);
 
-    // --- Ajouts pour les autres informations (si présentes) ---
-
-    if (book.publisher) { // Vérifie si l'information existe
+    if (book.publisher) {
         const publisher = createElementWithClasses('p', 'text-sm text-gray-500');
         publisher.textContent = `Éditeur: ${book.publisher}`;
         card.appendChild(publisher);
@@ -53,21 +44,18 @@ function createBookCard(book) {
     }
 
     if (book.pageCount) {
-      const pageCount = createElementWithClasses('p', 'text-sm text-gray-500');
-      pageCount.textContent = `Nombre de pages: ${book.pageCount}`;
-      card.appendChild(pageCount);
+        const pageCount = createElementWithClasses('p', 'text-sm text-gray-500');
+        pageCount.textContent = `Nombre de pages: ${book.pageCount}`;
+        card.appendChild(pageCount);
     }
-    if(book.isbn){
+
+    if (book.isbn) {
         const isbn = createElementWithClasses('p', 'text-sm text-gray-500');
         isbn.textContent = `ISBN: ${book.isbn}`;
         card.appendChild(isbn);
     }
 
-
-    // --- Fin des ajouts ---
-
     const actionsContainer = createElementWithClasses('div', 'absolute top-2 right-2 flex space-x-2');
-
     const editButton = createElementWithClasses('button', 'edit-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs');
     editButton.innerHTML = '&#9998;';
     editButton.addEventListener('click', () => editBook(book));
@@ -83,13 +71,13 @@ function createBookCard(book) {
     return card;
 }
 
-// ... (autres fonctions) ...
-let currentFilter = "Tous"; // initialisation de la variable
+// --------- Gestion des livres ---------
 
-// Affiche les livres filtrés
+let currentFilter = "Tous";
+
 function displayBooks(books) {
     const bookList = document.getElementById('book-list');
-    bookList.innerHTML = ''; // Efface les livres précédents
+    bookList.innerHTML = '';
 
     const filteredBooks = currentFilter === "Tous" ? books : books.filter(book => book.status === currentFilter);
 
@@ -99,15 +87,14 @@ function displayBooks(books) {
     }
 
     filteredBooks.forEach(book => {
-        const card = createBookCard(book); // createBookCard gère maintenant toutes les infos
+        const card = createBookCard(book);
         bookList.appendChild(card);
     });
 }
 
-// Récupère les livres depuis le serveur
 async function fetchBooks() {
     try {
-        showLoading(); // Affiche l'indicateur de chargement
+        showLoading();
         const response = await fetch('/api/books');
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
@@ -116,16 +103,14 @@ async function fetchBooks() {
         displayBooks(books);
     } catch (error) {
         console.error("Erreur lors de la récupération des livres:", error);
-        displayError("Impossible de récupérer les livres. Veuillez réessayer."); // Affiche un message d'erreur à l'utilisateur
+        displayError("Impossible de récupérer les livres. Veuillez réessayer.");
     } finally {
-        hideLoading(); // Masque l'indicateur de chargement
+        hideLoading();
     }
 }
 
-
-// Supprime un livre
 async function deleteBook(bookId) {
-     if (!confirm("Êtes-vous sûr de vouloir supprimer ce livre ?")) {  // Ajout d'une confirmation
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce livre ?")) {
         return;
     }
 
@@ -137,50 +122,43 @@ async function deleteBook(bookId) {
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
-
-       //  const result = await response.json(); // Pas besoin si le serveur renvoie juste un message
-       //  console.log(result.message);  // Affiche le message de succès, si nécessaire
-        fetchBooks(); // Recharge les livres après la suppression
+        fetchBooks();
     } catch (error) {
         console.error("Erreur lors de la suppression du livre:", error);
-        displayError("Impossible de supprimer le livre. Veuillez réessayer."); // Affiche un message d'erreur à l'utilisateur
+        displayError("Impossible de supprimer le livre. Veuillez réessayer.");
     }
 }
 
-
-
-// Affiche le formulaire d'édition avec les données du livre
 function editBook(book) {
     document.getElementById('book-id').value = book._id;
     document.getElementById('book-title').value = book.title;
     document.getElementById('book-author').value = book.author;
     document.getElementById('book-status').value = book.status;
     document.getElementById('book-coverUrl').value = book.coverUrl;
+    if(book.isbn){
+       document.getElementById('book-isbn').value = book.isbn;
+    }
     document.getElementById('form-title').textContent = "Modifier le livre";
-    document.getElementById('book-form').classList.remove('hidden'); // Affiche le formulaire
+    document.getElementById('book-form').classList.remove('hidden');
     document.getElementById("add-book-button").classList.add("hidden");
 }
 
-//Réinitialise le formulaire
 function resetForm() {
     document.getElementById('book-form').reset();
-    document.getElementById('book-id').value = ''; // Important: Réinitialise l'ID
+    document.getElementById('book-id').value = '';
     document.getElementById('form-title').textContent = "Ajouter un nouveau livre";
-     document.getElementById("add-book-button").classList.remove("hidden");
+    document.getElementById("add-book-button").classList.remove("hidden");
 }
 
+// --------- Requête ISBN (fetchBookDataFromISBN) ---------
 
-// --------- Gestion du formulaire ---------
-
-// --- NOUVELLE FONCTION : Récupère les données du livre à partir de l'ISBN ---
 async function fetchBookDataFromISBN(isbn) {
     const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`;
     console.log("URL de l'API:", apiUrl);
 
-    const maxAttempts = 5; // Nombre maximum de tentatives
+    const maxAttempts = 5;
     let attempt = 0;
-    let delay = 1000; // Délai initial en millisecondes (1 seconde)
-
+    let delay = 1000;
 
     while (attempt < maxAttempts) {
         attempt++;
@@ -206,33 +184,33 @@ async function fetchBookDataFromISBN(isbn) {
                     publishedDate: bookData.publishedDate,
                     pageCount: bookData.pageCount,
                     isbn: isbn,
-                    status: "À lire",
+                    status: "À lire", // Valeur par défaut
                 };
                 console.log("Données extraites:", extractedData);
                 return extractedData;
 
             } else if (response.status === 503) {
-                console.warn(`Tentative <span class="math-inline">\{attempt\}/</span>{maxAttempts}: Erreur 503. Nouvel essai dans ${delay / 1000} secondes...`);
+                console.warn(`Tentative ${attempt}/${maxAttempts}: Erreur 503. Nouvel essai dans ${delay / 1000} secondes...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2; // Double le délai à chaque tentative (exponential backoff)
+                delay *= 2;
             } else {
-                throw new Error(`Erreur HTTP: ${response.status}`); // Gère les autres erreurs HTTP
+                throw new Error(`Erreur HTTP: ${response.status}`);
             }
-
         } catch (error) {
-            console.error("Erreur lors de la récupération des données ISBN:", error);
-             if (attempt === maxAttempts) {
-                    displayError(error.message + " après plusieurs tentatives."); // Affiche "Aucun livre trouvé" seulement si c'est l'erreur
-                    return null;
-             }
+            console.error(`Erreur lors de la tentative ${attempt}/${maxAttempts}:`, error);
+            if (attempt === maxAttempts) {
+                if (error.message === "Aucun livre trouvé pour cet ISBN.") {
+                    displayError("Aucun livre trouvé pour cet ISBN après plusieurs tentatives.");
+                } else {
+                    displayError("Impossible de récupérer les informations du livre après plusieurs tentatives.");
+                }
+                return null;
+            }
         }
     }
-
 }
 
-
 // --------- Gestion du formulaire ---------
-
 async function handleFormSubmit(event) {
     event.preventDefault();
 
@@ -243,27 +221,23 @@ async function handleFormSubmit(event) {
     const status = document.getElementById('book-status').value;
     const coverUrl = document.getElementById('book-coverUrl').value;
 
-    // Si un ISBN est fourni, on appelle la fonction de recherche *AVANT* de construire bookData
     if (isbn) {
         const fetchedData = await fetchBookDataFromISBN(isbn);
 
         if (fetchedData) {
-            // Si des données sont récupérées, on les utilise DIRECTEMENT.
             try {
                 let response;
                 if (bookId) {
-                    // Modification d'un livre existant
                     response = await fetch(`/api/books/${bookId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(fetchedData), // Utilise directement fetchedData
+                        body: JSON.stringify(fetchedData),
                     });
                 } else {
-                    // Ajout d'un nouveau livre
                     response = await fetch('/api/books', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(fetchedData), // Utilise directement fetchedData
+                        body: JSON.stringify(fetchedData),
                     });
                 }
 
@@ -280,29 +254,25 @@ async function handleFormSubmit(event) {
                 displayError("Impossible d'enregistrer le livre. Veuillez réessayer.");
             }
         } else {
-            // Si la recherche ISBN échoue (fetchedData est null), on arrête le processus
             return;
         }
     } else {
-        // Si AUCUN ISBN n'est fourni, on procède à la validation et à l'enregistrement "classiques".
         if (!title || !author) {
             alert("Veuillez remplir les champs titre et auteur.");
             return;
         }
 
-        const bookData = { title, author, status, coverUrl, isbn }; // Ajout de isbn, important pour l'affichage
+        const bookData = { title, author, status, coverUrl, isbn }; // Ajout de l'ISBN
 
         try {
             let response;
             if (bookId) {
-                // Modification d'un livre existant
                 response = await fetch(`/api/books/${bookId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bookData),
                 });
             } else {
-                // Ajout d'un nouveau livre
                 response = await fetch('/api/books', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -325,33 +295,18 @@ async function handleFormSubmit(event) {
     }
 }
 
-
- // --------- Gestion des filtres ---------
-function handleFilterClick(event) {
-  if (event.target.classList.contains('filter-button')) {
-    // Désélectionne le bouton précédemment actif
-    document.querySelectorAll('.filter-button').forEach(button => button.classList.remove('bg-[#7B685E]', 'text-[#E5C0A2]'));
-
-    // Sélectionne le bouton cliqué
-    event.target.classList.add('bg-[#7B685E]', 'text-[#E5C0A2]');
-    currentFilter = event.target.dataset.status;
-    fetchBooks(); // Recharge avec le filtre appliqué
-  }
-}
-
-
 // --------- Gestion de l'affichage ---------
+
 function showLoading() {
-  document.getElementById('loading-message').classList.remove('hidden');
+    document.getElementById('loading-message').classList.remove('hidden');
 }
 
 function hideLoading() {
-  document.getElementById('loading-message').classList.add('hidden');
+    document.getElementById('loading-message').classList.add('hidden');
 }
 
 function displayError(message) {
-  // Idéalement, crée un élément d'alerte réutilisable dans ton HTML, et affiche/masque cet élément ici.
-  alert(message); // Solution temporaire
+    alert(message);
 }
 
 // --------- Initialisation et écouteurs d'événements ---------
@@ -359,22 +314,43 @@ function displayError(message) {
 document.addEventListener('DOMContentLoaded', () => {
     fetchBooks();
 
-     //Affiche le formulaire est le réinitialise
+    document.getElementById('book-form').addEventListener('submit', handleFormSubmit); // Correction ici
+
     document.getElementById('add-book-button').addEventListener('click', () => {
         resetForm();
         document.getElementById('book-form').classList.remove('hidden');
     });
 
-    //Bouton annuler
     document.getElementById('cancel-button').addEventListener('click', () => {
         document.getElementById('book-form').classList.add('hidden');
         document.getElementById("add-book-button").classList.remove("hidden");
     });
 
-     // Gestion des clics sur les boutons de filtre
- document.querySelector('.mb-4.flex.justify-center.space-x-2').addEventListener('click', handleFilterClick);
-});
+    const menuEtagere = document.getElementById('menu-etagere');
+    etageresExemples.forEach(etagere => {
+        const carte = creerCarteEtagereHTML(etagere);
+        menuEtagere.appendChild(carte);
+    });
 
+    menuEtagere.addEventListener('click', (event) => {
+        let target = event.target;
+        while (target && target.tagName !== 'LI') {
+            target = target.parentNode;
+        }
 
+        if (target && target.dataset.status) {
+            document.querySelectorAll('.filter-button').forEach(button =>
+                button.classList.remove('bg-[#7B685E]', 'text-[#E5C0A2]')
+            );
 
-document.getElementById('book-form').addEventListener('submit', handleFormSubmit);
+            currentFilter = target.dataset.status === "Tous mes livres" ? "Tous" : target.dataset.status;
+            fetchBooks();
+
+            document.querySelectorAll('#menu-etagere li').forEach(li => {
+                li.classList.remove('bg-gray-600');
+            });
+
+            target.classList.add('bg-gray-600');
+        }
+    });
+}); 
