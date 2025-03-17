@@ -1,5 +1,5 @@
 // index.js
-
+import { etageresExemples, creerCarteEtagereHTML } from './bookshelf.js';
 // --------- Fonctions utilitaires ---------
 
 // Crée un élément HTML avec les classes Tailwind fournies
@@ -15,8 +15,12 @@ function createBookCard(book) {
     card.dataset.bookId = book._id;
 
     const imgContainer = createElementWithClasses('div', 'flex justify-center');
+
     const img = createElementWithClasses('img', 'book-cover h-48 w-48 object-cover rounded-md');
     img.src = book.coverUrl || 'images/default-book-cover.png'; // Conserve l'image par défaut
+
+   
+
     img.alt = `Couverture de ${book.title}`;
     imgContainer.appendChild(img);
     card.appendChild(imgContainer);
@@ -321,6 +325,7 @@ async function handleFormSubmit(event) {
     }
 }
 
+
  // --------- Gestion des filtres ---------
 function handleFilterClick(event) {
   if (event.target.classList.contains('filter-button')) {
@@ -333,6 +338,7 @@ function handleFilterClick(event) {
     fetchBooks(); // Recharge avec le filtre appliqué
   }
 }
+
 
 // --------- Gestion de l'affichage ---------
 function showLoading() {
@@ -368,5 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
      // Gestion des clics sur les boutons de filtre
  document.querySelector('.mb-4.flex.justify-center.space-x-2').addEventListener('click', handleFilterClick);
 });
+
+
 
 document.getElementById('book-form').addEventListener('submit', handleFormSubmit);
