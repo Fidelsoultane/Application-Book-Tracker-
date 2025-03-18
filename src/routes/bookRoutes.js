@@ -6,35 +6,46 @@ const Book = require('../models/Book');
 
 // Ajouter un livre
 router.post('/books', async (req, res) => {
-   try {
-    console.log("Requête POST /api/books reçue.  Corps de la requête:", req.body);
-    const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn } = req.body; // Déstructure tous les champs
+  try {
+      console.log("Requête POST /api/books reçue. Corps de la requête:", req.body);
+      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre } = req.body; // Inclure 'genre'
 
-    // Validation (exemple, à adapter/compléter):
-    if (!title || !author) {
-      return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
-    }
+      // Validation (plus complète)
+      if (!title) {
+          return res.status(400).json({ message: 'Le titre est obligatoire.' });
+      }
+      if (!author) {
+          return res.status(400).json({ message: 'L\'auteur est obligatoire.' });
+      }
+      // Ajoutez d'autres validations ici...
 
-    const newBook = new Book({
-      title,
-      author,
-      status,
-      coverUrl,
-      publisher, // Ajout
-      publishedDate, // Ajout
-      pageCount, // Ajout
-      isbn
-    });
+      const newBook = new Book({
+          title,
+          author,
+          status,
+          coverUrl,
+          publisher,
+          publishedDate,
+          pageCount,
+          isbn,
+          genre, // Ajout
+      });
+       console.log("Objet newBook créé:", newBook);
 
-    console.log("Objet newBook créé:", newBook);
+      const savedBook = await newBook.save();
+       console.log("Livre enregistré:", savedBook);
 
-    const savedBook = await newBook.save();
-    console.log("Livre enregistré:", savedBook); 
-    res.status(201).json(savedBook); // 201 Created pour une création réussie
-
+      res.status(201).json(savedBook);
   } catch (error) {
-    console.error("Erreur dans la route POST /api/books:", error);
-    res.status(500).json({ message: 'Erreur lors de la création du livre.' });
+      console.error("Erreur dans la route POST /api/books:", error);
+      if (error.name === 'ValidationError') {
+          const messages = Object.values(error.errors).map(val => val.message);
+          return res.status(400).json({ message: messages });
+      } else if (error.code === 11000) {
+          return res.status(409).json({ message: 'Un livre avec cet ISBN existe déjà.' });
+      } else {
+          res.status(500).json({ message: 'Erreur lors de la création du livre.' });
+      }
   }
 });
 
@@ -50,55 +61,53 @@ router.get('/books', async (req, res) => {
 
 // Mettre à jour un livre
 router.put('/books/:id', async (req, res) => {
-  try {
-    const { id } = req.params; // Récupère l'ID depuis les paramètres de l'URL
-    const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn } = req.body; // Déstructure les données du corps de la requête
-
-    // Validation (exemple, à adapter/compléter):
+   try {
+    console.log("Requête PUT /api/books/:id reçue.  ID:", req.params.id, "Corps:", req.body); // AJOUT
+    const { id } = req.params;
+    const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre } = req.body; // Inclure 'genre'
+  
     if (!title || !author) {
-      return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
+     return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
     }
-
-    // Vérifie si le livre existe (important !)
+  
     const existingBook = await Book.findById(id);
     if (!existingBook) {
-      return res.status(404).json({ message: 'Livre non trouvé.' }); // 404 Not Found
+     return res.status(404).json({ message: 'Livre non trouvé.' });
     }
-
-    // Met à jour le livre (approche 1 : findByIdAndUpdate)
-    const updatedBook = await Book.findByIdAndUpdate(
-      id,
-      {
-        title,
-        author,
-        status,
-        coverUrl,
-        publisher, // Ajout
-        publishedDate, // Ajout
-        pageCount, // Ajout
-        isbn
-      },
-      { new: true, runValidators: true } // Options importantes !
+  
+   const updatedBook = await Book.findByIdAndUpdate(
+     id,
+     {
+      title,
+      author,
+      status,
+      coverUrl,
+      publisher,
+      publishedDate,
+      pageCount,
+      isbn,
+      genre, // Ajout
+     },
+     { new: true, runValidators: true }
     );
-
-    // // Approche 2 (plus verbeuse, mais utile si vous avez besoin de faire des opérations spécifiques avant la sauvegarde)
-    // existingBook.title = title;
-    // existingBook.author = author;
-    // existingBook.status = status;
-    // existingBook.coverUrl = coverUrl;
-    // existingBook.publisher = publisher;
-    // existingBook.publishedDate = publishedDate;
-    // existingBook.pageCount = pageCount;
-    // const updatedBook = await existingBook.save();
-
-
-    res.status(200).json(updatedBook); // Renvoie le livre mis à jour
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Erreur lors de la modification du livre.' });
-  }
-});
+    console.log("Livre mis à jour:", updatedBook); // AJOUT
+  
+    res.status(200).json(updatedBook);
+  
+   } catch (error) {
+    console.error("Erreur dans la route PUT /api/books/:id:", error); // AJOUT
+  
+    // Gestion plus précise des erreurs (comme pour POST)
+    if (error.name === 'ValidationError') {
+     const messages = Object.values(error.errors).map(val => val.message);
+     return res.status(400).json({ message: messages });
+    } else if (error.code === 11000) {
+     return res.status(409).json({ message: 'Un livre avec cet ISBN existe déjà.' });
+    } else {
+     res.status(500).json({ message: 'Erreur lors de la modification du livre.' });
+    }
+   }
+  });
 // Supprimer un livre
 router.delete('/books/:id', async (req, res) => { // **ROUTE DELETE /books/:id**
   try {

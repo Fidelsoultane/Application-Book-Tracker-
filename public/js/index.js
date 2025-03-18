@@ -31,6 +31,7 @@ function createBookCard(book) {
     status.textContent = `Statut: ${book.status}`;
     card.appendChild(status);
 
+    // --- Affichage des informations supplémentaires (conditionnel) ---
     if (book.publisher) {
         const publisher = createElementWithClasses('p', 'text-sm text-gray-500');
         publisher.textContent = `Éditeur: ${book.publisher}`;
@@ -53,6 +54,11 @@ function createBookCard(book) {
         const isbn = createElementWithClasses('p', 'text-sm text-gray-500');
         isbn.textContent = `ISBN: ${book.isbn}`;
         card.appendChild(isbn);
+    }
+     if (book.genre) {
+        const genre = createElementWithClasses('p', 'text-sm text-gray-500');
+        genre.textContent = `Genre: ${book.genre}`;
+        card.appendChild(genre);
     }
 
     const actionsContainer = createElementWithClasses('div', 'absolute top-2 right-2 flex space-x-2');
@@ -135,9 +141,13 @@ function editBook(book) {
     document.getElementById('book-author').value = book.author;
     document.getElementById('book-status').value = book.status;
     document.getElementById('book-coverUrl').value = book.coverUrl;
-    if(book.isbn){
-       document.getElementById('book-isbn').value = book.isbn;
+    if (book.isbn) {
+        document.getElementById('book-isbn').value = book.isbn; // Pré-remplit le champ ISBN
     }
+    document.getElementById('book-publisher').value = book.publisher || ''; // Gère le cas où c'est undefined
+    document.getElementById('book-publishedDate').value = book.publishedDate || '';
+    document.getElementById('book-pageCount').value = book.pageCount || '';
+    document.getElementById('book-genre').value = book.genre || ''; // Ajout du champ genre
     document.getElementById('form-title').textContent = "Modifier le livre";
     document.getElementById('book-form').classList.remove('hidden');
     document.getElementById("add-book-button").classList.add("hidden");
@@ -173,6 +183,7 @@ async function fetchBookDataFromISBN(isbn) {
                     throw new Error("Aucun livre trouvé pour cet ISBN.");
                 }
 
+                // Déclarez bookData *ICI*, avant le bloc try/catch
                 const bookData = data.items[0].volumeInfo;
                 console.log("bookData extrait:", bookData);
 
@@ -185,6 +196,7 @@ async function fetchBookDataFromISBN(isbn) {
                     pageCount: bookData.pageCount,
                     isbn: isbn,
                     status: "À lire", // Valeur par défaut
+                    genre: (bookData.categories && Array.isArray(bookData.categories) && bookData.categories.length > 0) ? bookData.categories[0] : '',
                 };
                 console.log("Données extraites:", extractedData);
                 return extractedData;
@@ -220,6 +232,10 @@ async function handleFormSubmit(event) {
     const author = document.getElementById('book-author').value;
     const status = document.getElementById('book-status').value;
     const coverUrl = document.getElementById('book-coverUrl').value;
+    const publisher = document.getElementById('book-publisher').value; // Ajout
+    const publishedDate = document.getElementById('book-publishedDate').value; // Ajout
+    const pageCount = document.getElementById('book-pageCount').value;
+    const genre = document.getElementById('book-genre').value;
 
     if (isbn) {
         const fetchedData = await fetchBookDataFromISBN(isbn);
