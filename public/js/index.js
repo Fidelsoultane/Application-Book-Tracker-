@@ -249,25 +249,34 @@ async function handleFormSubmit(event) {
     const author = document.getElementById('book-author').value;
     const status = document.getElementById('book-status').value;
     const coverUrl = document.getElementById('book-coverUrl').value;
-    const publisher = document.getElementById('book-publisher').value; // Ajout
-    const publishedDate = document.getElementById('book-publishedDate').value; // Ajout
+    const publisher = document.getElementById('book-publisher').value;
+    const publishedDate = document.getElementById('book-publishedDate').value;
     const pageCount = document.getElementById('book-pageCount').value;
     const genre = document.getElementById('book-genre').value;
     const startDate = document.getElementById('book-startDate').value;
     const endDate = document.getElementById('book-endDate').value;
+
+    let bookData; // Déclaration de bookData *avant* le if/else
+
     if (isbn) {
         const fetchedData = await fetchBookDataFromISBN(isbn);
 
         if (fetchedData) {
+            // Fusionne les données de l'API avec les données du formulaire (pour status, startDate, endDate)
+            bookData = { ...fetchedData, status, startDate, endDate };
+            console.log("bookData après récupération de l'API:", bookData);
+
             try {
                 let response;
                 if (bookId) {
+                    // Modification d'un livre existant (PUT)
                     response = await fetch(`/api/books/${bookId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(bookData),
                     });
                 } else {
+                    // Ajout d'un nouveau livre (POST)
                     response = await fetch('/api/books', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -288,26 +297,29 @@ async function handleFormSubmit(event) {
                 displayError("Impossible d'enregistrer le livre. Veuillez réessayer.");
             }
         } else {
-            return;
+            return; // Si la recherche ISBN échoue, on quitte la fonction.
         }
     } else {
+        // Pas d'ISBN : ajout manuel
         if (!title || !author) {
             alert("Veuillez remplir les champs titre et auteur.");
             return;
         }
 
-        const bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate };
-        console.log("bookData avant envoi (ajout manuel):", bookData); //  ce log pour le débogage
+        bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate };
+        console.log("bookData avant envoi (ajout manuel):", bookData); // Gardez ce log
 
         try {
             let response;
             if (bookId) {
+                // Modification d'un livre existant (PUT)
                 response = await fetch(`/api/books/${bookId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bookData),
                 });
             } else {
+                // Ajout d'un nouveau livre (POST)
                 response = await fetch('/api/books', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
