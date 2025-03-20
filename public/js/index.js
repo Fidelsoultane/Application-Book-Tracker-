@@ -61,6 +61,19 @@ function createBookCard(book) {
         card.appendChild(genre);
     }
 
+     // Affichage des dates de début et de fin (conditionnel)
+     if (book.startDate) {
+        const startDate = createElementWithClasses('p', 'text-sm text-gray-500');
+        startDate.textContent = `Début de lecture: ${new Date(book.startDate).toLocaleDateString()}`; // Formatage de la date
+        card.appendChild(startDate);
+    }
+
+    if (book.endDate) {
+        const endDate = createElementWithClasses('p', 'text-sm text-gray-500');
+        endDate.textContent = `Fin de lecture: ${new Date(book.endDate).toLocaleDateString()}`;  // Formatage de la date
+        card.appendChild(endDate);
+    }
+
     const actionsContainer = createElementWithClasses('div', 'absolute top-2 right-2 flex space-x-2');
     const editButton = createElementWithClasses('button', 'edit-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs');
     editButton.innerHTML = '&#9998;';
@@ -148,6 +161,10 @@ function editBook(book) {
     document.getElementById('book-publishedDate').value = book.publishedDate || '';
     document.getElementById('book-pageCount').value = book.pageCount || '';
     document.getElementById('book-genre').value = book.genre || ''; // Ajout du champ genre
+    // Pré-remplissage des dates (conversion en string YYYY-MM-DD pour l'input type="date")
+    document.getElementById('book-startDate').value = book.startDate ? new Date(book.startDate).toISOString().split('T')[0] : '';
+    document.getElementById('book-endDate').value = book.endDate ? new Date(book.endDate).toISOString().split('T')[0] : '';
+ 
     document.getElementById('form-title').textContent = "Modifier le livre";
     document.getElementById('book-form').classList.remove('hidden');
     document.getElementById("add-book-button").classList.add("hidden");
@@ -236,7 +253,8 @@ async function handleFormSubmit(event) {
     const publishedDate = document.getElementById('book-publishedDate').value; // Ajout
     const pageCount = document.getElementById('book-pageCount').value;
     const genre = document.getElementById('book-genre').value;
-
+    const startDate = document.getElementById('book-startDate').value;
+    const endDate = document.getElementById('book-endDate').value;
     if (isbn) {
         const fetchedData = await fetchBookDataFromISBN(isbn);
 
@@ -247,13 +265,13 @@ async function handleFormSubmit(event) {
                     response = await fetch(`/api/books/${bookId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(fetchedData),
+                        body: JSON.stringify(bookData),
                     });
                 } else {
                     response = await fetch('/api/books', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(fetchedData),
+                        body: JSON.stringify(bookData),
                     });
                 }
 
@@ -278,7 +296,8 @@ async function handleFormSubmit(event) {
             return;
         }
 
-        const bookData = { title, author, status, coverUrl, isbn }; // Ajout de l'ISBN
+        const bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate };
+        console.log("bookData avant envoi (ajout manuel):", bookData); //  ce log pour le débogage
 
         try {
             let response;

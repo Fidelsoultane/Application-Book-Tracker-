@@ -7,17 +7,28 @@ const Book = require('../models/Book');
 // Ajouter un livre
 router.post('/books', async (req, res) => {
   try {
-      console.log("Requête POST /api/books reçue. Corps de la requête:", req.body);
-      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre } = req.body; // Inclure 'genre'
+      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate } = req.body;
 
-      // Validation (plus complète)
+      // Validation (plus complète, incluant les dates)
       if (!title) {
           return res.status(400).json({ message: 'Le titre est obligatoire.' });
       }
       if (!author) {
           return res.status(400).json({ message: 'L\'auteur est obligatoire.' });
       }
-      // Ajoutez d'autres validations ici...
+
+      // Validation des dates (si elles sont fournies)
+      if (startDate && isNaN(Date.parse(startDate))) {
+          return res.status(400).json({ message: 'La date de début doit être une date valide.' });
+      }
+      if (endDate && isNaN(Date.parse(endDate))) {
+          return res.status(400).json({ message: 'La date de fin doit être une date valide.' });
+      }
+      // Validation supplémentaire: startDate doit être antérieure à endDate
+      if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+          return res.status(400).json({ message: 'La date de début doit être antérieure à la date de fin.' });
+      }
+
 
       const newBook = new Book({
           title,
@@ -28,20 +39,20 @@ router.post('/books', async (req, res) => {
           publishedDate,
           pageCount,
           isbn,
-          genre, // Ajout
+          genre,
+          startDate, // Ajout des dates
+          endDate,   // Ajout des dates
       });
-       console.log("Objet newBook créé:", newBook);
 
       const savedBook = await newBook.save();
-       console.log("Livre enregistré:", savedBook);
-
       res.status(201).json(savedBook);
+
   } catch (error) {
       console.error("Erreur dans la route POST /api/books:", error);
       if (error.name === 'ValidationError') {
           const messages = Object.values(error.errors).map(val => val.message);
           return res.status(400).json({ message: messages });
-      } else if (error.code === 11000) {
+      } else if (error.code === 11000) { // Gestion des doublons (si vous avez un index unique sur l'ISBN)
           return res.status(409).json({ message: 'Un livre avec cet ISBN existe déjà.' });
       } else {
           res.status(500).json({ message: 'Erreur lors de la création du livre.' });
@@ -61,53 +72,60 @@ router.get('/books', async (req, res) => {
 
 // Mettre à jour un livre
 router.put('/books/:id', async (req, res) => {
-   try {
-    console.log("Requête PUT /api/books/:id reçue.  ID:", req.params.id, "Corps:", req.body); // AJOUT
-    const { id } = req.params;
-    const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre } = req.body; // Inclure 'genre'
-  
-    if (!title || !author) {
-     return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
-    }
-  
-    const existingBook = await Book.findById(id);
-    if (!existingBook) {
-     return res.status(404).json({ message: 'Livre non trouvé.' });
-    }
-  
-   const updatedBook = await Book.findByIdAndUpdate(
-     id,
-     {
-      title,
-      author,
-      status,
-      coverUrl,
-      publisher,
-      publishedDate,
-      pageCount,
-      isbn,
-      genre, // Ajout
-     },
-     { new: true, runValidators: true }
-    );
-    console.log("Livre mis à jour:", updatedBook); // AJOUT
-  
-    res.status(200).json(updatedBook);
-  
-   } catch (error) {
-    console.error("Erreur dans la route PUT /api/books/:id:", error); // AJOUT
-  
-    // Gestion plus précise des erreurs (comme pour POST)
-    if (error.name === 'ValidationError') {
-     const messages = Object.values(error.errors).map(val => val.message);
-     return res.status(400).json({ message: messages });
-    } else if (error.code === 11000) {
-     return res.status(409).json({ message: 'Un livre avec cet ISBN existe déjà.' });
-    } else {
-     res.status(500).json({ message: 'Erreur lors de la modification du livre.' });
-    }
-   }
-  });
+  try {
+      const { id } = req.params;
+      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate } = req.body;
+
+      // Validation (similaire à POST)
+      if (!title || !author) {
+          return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
+      }
+      if (startDate && isNaN(Date.parse(startDate))) {
+          return res.status(400).json({ message: 'La date de début doit être une date valide.' });
+      }
+      if (endDate && isNaN(Date.parse(endDate))) {
+          return res.status(400).json({ message: 'La date de fin doit être une date valide.' });
+      }
+     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+          return res.status(400).json({message: 'La date de début doit être antérieure à la date de fin'});
+      }
+
+      const existingBook = await Book.findById(id); // Vérifie si le livre existe
+      if (!existingBook) {
+          return res.status(404).json({ message: 'Livre non trouvé.' });
+      }
+
+      const updatedBook = await Book.findByIdAndUpdate(
+          id,
+          {
+              title,
+              author,
+              status,
+              coverUrl,
+              publisher,
+              publishedDate,
+              pageCount,
+              isbn,
+              genre,
+              startDate, // Ajout des dates
+              endDate,   // Ajout des dates
+          },
+          { new: true, runValidators: true } // Important: runValidators pour la validation Mongoose
+      );
+
+      res.status(200).json(updatedBook);
+
+  } catch (error) {
+      console.error("Erreur dans la route PUT /api/books/:id:", error);
+      if (error.name === 'ValidationError') {
+          const messages = Object.values(error.errors).map(val => val.message);
+          return res.status(400).json({ message: messages });
+      } else {
+          res.status(500).json({ message: 'Erreur lors de la modification du livre.' });
+      }
+  }
+});
+
 // Supprimer un livre
 router.delete('/books/:id', async (req, res) => { // **ROUTE DELETE /books/:id**
   try {

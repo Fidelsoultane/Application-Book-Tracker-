@@ -11,7 +11,9 @@ const bookSchema = new mongoose.Schema({
     publishedDate: { type: String }, 
     pageCount: { type: Number }, 
     isbn: { type: String },
-    genre: { type: String }, 
+    genre: { type: String },
+    startDate: { type: Date }, 
+    endDate: { type: Date }, 
   });
 
 module.exports = mongoose.model('Book', bookSchema);
