@@ -7,13 +7,14 @@ const bookSchema = new mongoose.Schema({
     status: { type: String, required: true, default: 'À lire', enum: ['À lire', 'En cours', 'Terminé', 'Souhaité'] },
     coverUrl: { type: String },
     publisher: { type: String },
-    publishedDate: { type: String }, // Ou type: Date, selon vos besoins
+    publishedDate: { type: String }, // Ou type: Date
     pageCount: { type: Number },
     isbn: { type: String },
     genre: { type: String },
     startDate: { type: Date },
     endDate: { type: Date },
-}, { timestamps: true }); // Utilisez timestamps : PLUS SIMPLE et gère updatedAt
+    tags: { type: [String], default: [] }, // Ajout du champ tags (tableau de strings)
+}, { timestamps: true });
 
 const Book = mongoose.model('Book', bookSchema);
 

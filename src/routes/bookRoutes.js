@@ -7,7 +7,7 @@ const Book = require('../models/Book');
 // Ajouter un livre
 router.post('/books', async (req, res) => {
   try {
-      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate } = req.body;
+      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags } = req.body;
 
       // Validation (plus complète, incluant les dates)
       if (!title) {
@@ -42,6 +42,7 @@ router.post('/books', async (req, res) => {
           genre,
           startDate, // Ajout des dates
           endDate,   // Ajout des dates
+          tags,
       });
 
       const savedBook = await newBook.save();
@@ -99,7 +100,7 @@ router.get('/books', async (req, res) => {
 router.put('/books/:id', async (req, res) => {
   try {
       const { id } = req.params;
-      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate } = req.body;
+      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags } = req.body;
 
       // Validation (similaire à POST)
       if (!title || !author) {
@@ -134,6 +135,7 @@ router.put('/books/:id', async (req, res) => {
               genre,
               startDate, // Ajout des dates
               endDate,   // Ajout des dates
+              tags,
           },
           { new: true, runValidators: true } // Important: runValidators pour la validation Mongoose
       );

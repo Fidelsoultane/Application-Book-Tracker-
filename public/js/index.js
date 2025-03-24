@@ -85,6 +85,16 @@ function createBookCard(book) {
     deleteButton.addEventListener('click', () => deleteBook(book._id));
     actionsContainer.appendChild(deleteButton);
 
+    if (book.tags && book.tags.length > 0) { // Affiche les tags seulement s'il y en a
+        const tagsContainer = createElementWithClasses('div', 'mt-2'); // Un conteneur pour les tags
+        book.tags.forEach(tag => {
+            const tagElement = createElementWithClasses('span', 'inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2');
+            tagElement.textContent = tag;
+            tagsContainer.appendChild(tagElement);
+        });
+        card.appendChild(tagsContainer);
+    }
+
     card.appendChild(actionsContainer);
 
     return card;
@@ -182,6 +192,7 @@ function editBook(book) {
     // Pré-remplissage des dates (conversion en string ভাগের চিহ্ন-MM-dd pour l'input type="date")
     document.getElementById('book-startDate').value = book.startDate ? new Date(book.startDate).toISOString().split('T')[0] : '';
     document.getElementById('book-endDate').value = book.endDate ? new Date(book.endDate).toISOString().split('T')[0] : '';
+    document.getElementById('book-tags').value = book.tags ? book.tags.join(', ') : ''; // Joint les tags avec des virgules
 
     document.getElementById('form-title').textContent = "Modifier le livre";
     document.getElementById('book-form').classList.remove('hidden');
@@ -271,15 +282,21 @@ async function handleFormSubmit(event) {
     const genre = document.getElementById('book-genre').value;
     const startDate = document.getElementById('book-startDate').value;
     const endDate = document.getElementById('book-endDate').value;
+    const tagsString = document.getElementById('book-tags').value;
 
-    let bookData; // Déclaration de bookData *avant* le if/else
+    const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()).filter(tag => tag !== "") : []; // Important :  .trim() et .filter()
+    //tagsString.split(',') divise la chaîne en un tableau en utilisant la virgule comme séparateur.
+    //.map(tag => tag.trim()) supprime les espaces blancs au début et à la fin de chaque tag.
+    //.filter(tag => tag !== "") supprime les tags vides.
+    let bookData;
 
     if (isbn) {
         const fetchedData = await fetchBookDataFromISBN(isbn);
+        
 
         if (fetchedData) {
-            // Fusionne les données de l'API avec les données du formulaire (pour status, startDate, endDate)
-            bookData = { ...fetchedData, status, startDate, endDate };
+            // Fusionne les données de l'API avec les données du formulaire 
+            bookData = { ...fetchedData, status, startDate, endDate, tags };
             console.log("bookData après récupération de l'API:", bookData);
 
             try {
@@ -322,7 +339,7 @@ async function handleFormSubmit(event) {
             return;
         }
 
-        bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate };
+        bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags };
         console.log("bookData avant envoi (ajout manuel):", bookData); // Gardez ce log
 
         try {
