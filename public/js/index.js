@@ -1,5 +1,6 @@
-// index.js 
+// index.js
 import { etageresExemples, creerCarteEtagereHTML } from './bookshelf.js';
+
 // --------- Fonctions utilitaires ---------
 
 function createElementWithClasses(tag, classNames) {
@@ -31,7 +32,6 @@ function createBookCard(book) {
     status.textContent = `Statut: ${book.status}`;
     card.appendChild(status);
 
-    // --- Affichage des informations supplémentaires (conditionnel) ---
     if (book.publisher) {
         const publisher = createElementWithClasses('p', 'text-sm text-gray-500');
         publisher.textContent = `Éditeur: ${book.publisher}`;
@@ -55,14 +55,14 @@ function createBookCard(book) {
         isbn.textContent = `ISBN: ${book.isbn}`;
         card.appendChild(isbn);
     }
-     if (book.genre) {
+    if (book.genre) {
         const genre = createElementWithClasses('p', 'text-sm text-gray-500');
         genre.textContent = `Genre: ${book.genre}`;
         card.appendChild(genre);
     }
 
-     // Affichage des dates de début et de fin (conditionnel)
-     if (book.startDate) {
+    // Affichage des dates de début et de fin (conditionnel)
+    if (book.startDate) {
         const startDate = createElementWithClasses('p', 'text-sm text-gray-500');
         startDate.textContent = `Début de lecture: ${new Date(book.startDate).toLocaleDateString()}`; // Formatage de la date
         card.appendChild(startDate);
@@ -90,13 +90,9 @@ function createBookCard(book) {
     return card;
 }
 
-// --------- Gestion des livres ---------
-
-let currentFilter = "Tous";
-
 function displayBooks(books) {
     const bookList = document.getElementById('book-list');
-    bookList.innerHTML = '';
+    bookList.innerHTML = ''; // Efface les livres précédents
 
     const filteredBooks = currentFilter === "Tous" ? books : books.filter(book => book.status === currentFilter);
 
@@ -111,10 +107,32 @@ function displayBooks(books) {
     });
 }
 
+// --------- Gestion des livres ---------
+
+let currentFilter = "Tous"; // Variable globale pour le filtre de statut
+
 async function fetchBooks() {
     try {
         showLoading();
-        const response = await fetch('/api/books');
+
+        let url = '/api/books?';
+
+        // --- Filtrage par statut (utilisant currentFilter) ---
+        if (currentFilter !== "Tous") {
+            url += `status=${currentFilter}&`;
+        }
+
+        // --- Tri par titre (exemple) ---
+        const sortSelect = document.getElementById('sort-select');
+        if (sortSelect && sortSelect.value) {
+            url += `sortBy=${sortSelect.value}&`;
+        }
+
+        if (url.endsWith('&')) {
+            url = url.slice(0, -1);
+        }
+
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
@@ -127,7 +145,6 @@ async function fetchBooks() {
         hideLoading();
     }
 }
-
 async function deleteBook(bookId) {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce livre ?")) {
         return;
@@ -154,17 +171,18 @@ function editBook(book) {
     document.getElementById('book-author').value = book.author;
     document.getElementById('book-status').value = book.status;
     document.getElementById('book-coverUrl').value = book.coverUrl;
-    if (book.isbn) {
-        document.getElementById('book-isbn').value = book.isbn; // Pré-remplit le champ ISBN
+    if(book.isbn){
+       document.getElementById('book-isbn').value = book.isbn;
     }
-    document.getElementById('book-publisher').value = book.publisher || ''; // Gère le cas où c'est undefined
+    document.getElementById('book-publisher').value = book.publisher || '';
     document.getElementById('book-publishedDate').value = book.publishedDate || '';
     document.getElementById('book-pageCount').value = book.pageCount || '';
-    document.getElementById('book-genre').value = book.genre || ''; // Ajout du champ genre
-    // Pré-remplissage des dates (conversion en string YYYY-MM-DD pour l'input type="date")
+    document.getElementById('book-genre').value = book.genre || '';
+
+    // Pré-remplissage des dates (conversion en string ভাগের চিহ্ন-MM-dd pour l'input type="date")
     document.getElementById('book-startDate').value = book.startDate ? new Date(book.startDate).toISOString().split('T')[0] : '';
     document.getElementById('book-endDate').value = book.endDate ? new Date(book.endDate).toISOString().split('T')[0] : '';
- 
+
     document.getElementById('form-title').textContent = "Modifier le livre";
     document.getElementById('book-form').classList.remove('hidden');
     document.getElementById("add-book-button").classList.add("hidden");
@@ -176,7 +194,6 @@ function resetForm() {
     document.getElementById('form-title').textContent = "Ajouter un nouveau livre";
     document.getElementById("add-book-button").classList.remove("hidden");
 }
-
 // --------- Requête ISBN (fetchBookDataFromISBN) ---------
 
 async function fetchBookDataFromISBN(isbn) {
@@ -200,7 +217,6 @@ async function fetchBookDataFromISBN(isbn) {
                     throw new Error("Aucun livre trouvé pour cet ISBN.");
                 }
 
-                // Déclarez bookData *ICI*, avant le bloc try/catch
                 const bookData = data.items[0].volumeInfo;
                 console.log("bookData extrait:", bookData);
 
@@ -213,7 +229,7 @@ async function fetchBookDataFromISBN(isbn) {
                     pageCount: bookData.pageCount,
                     isbn: isbn,
                     status: "À lire", // Valeur par défaut
-                    genre: (bookData.categories && Array.isArray(bookData.categories) && bookData.categories.length > 0) ? bookData.categories[0] : '',
+                    genre: bookData.categories? bookData.categories[0] : '',
                 };
                 console.log("Données extraites:", extractedData);
                 return extractedData;
@@ -341,7 +357,6 @@ async function handleFormSubmit(event) {
         }
     }
 }
-
 // --------- Gestion de l'affichage ---------
 
 function showLoading() {
@@ -361,7 +376,7 @@ function displayError(message) {
 document.addEventListener('DOMContentLoaded', () => {
     fetchBooks();
 
-    document.getElementById('book-form').addEventListener('submit', handleFormSubmit); // Correction ici
+    document.getElementById('book-form').addEventListener('submit', handleFormSubmit); // L'écouteur manquant
 
     document.getElementById('add-book-button').addEventListener('click', () => {
         resetForm();
@@ -373,31 +388,32 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("add-book-button").classList.remove("hidden");
     });
 
-    const menuEtagere = document.getElementById('menu-etagere');
+       // --- Gestion des clics sur les *boutons* de filtre ---
+    const filterButtons = document.querySelectorAll('.filter-button');
+    filterButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            // Désactive le style actif sur tous les boutons
+            filterButtons.forEach(btn => btn.classList.remove('bg-gray-600', 'text-white'));
+
+            // Active le style sur le bouton cliqué
+            event.target.classList.add('bg-gray-600', 'text-white');
+
+            // Met à jour le filtre courant
+            currentFilter = event.target.dataset.status;
+
+            // Recharge les livres avec le nouveau filtre
+            fetchBooks();
+        });
+    });
+
+    const sortSelect = document.getElementById('sort-select');
+      if(sortSelect){
+        sortSelect.addEventListener('change', fetchBooks);
+      }
+
+    const menuEtagere = document.getElementById('menu-etagere'); //On a plus besoin de filtrer ici
     etageresExemples.forEach(etagere => {
         const carte = creerCarteEtagereHTML(etagere);
         menuEtagere.appendChild(carte);
     });
-
-    menuEtagere.addEventListener('click', (event) => {
-        let target = event.target;
-        while (target && target.tagName !== 'LI') {
-            target = target.parentNode;
-        }
-
-        if (target && target.dataset.status) {
-            document.querySelectorAll('.filter-button').forEach(button =>
-                button.classList.remove('bg-[#7B685E]', 'text-[#E5C0A2]')
-            );
-
-            currentFilter = target.dataset.status === "Tous mes livres" ? "Tous" : target.dataset.status;
-            fetchBooks();
-
-            document.querySelectorAll('#menu-etagere li').forEach(li => {
-                li.classList.remove('bg-gray-600');
-            });
-
-            target.classList.add('bg-gray-600');
-        }
-    });
-}); 
+});

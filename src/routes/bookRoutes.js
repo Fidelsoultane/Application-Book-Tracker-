@@ -62,11 +62,36 @@ router.post('/books', async (req, res) => {
 
 router.get('/books', async (req, res) => {
   try {
-    const books = await Book.find(); // Récupère *tous* les livres.  Assurez-vous que 'Book' est correctement importé.
-    res.status(200).json(books); // Renvoie les livres au format JSON.  200 OK
+      console.log("Requête GET /api/books reçue.  Query params:", req.query);
+
+      const query = {};
+
+      // --- Filtrage par statut ---
+      if (req.query.status && req.query.status !== 'Tous') {
+          query.status = req.query.status;
+      }
+
+      // --- Tri par titre ---
+      const sortOptions = {};
+      if (req.query.sortBy) {
+          const [field, order] = req.query.sortBy.split(':');
+          // On vérifie que le champ est 'title' et que l'ordre est valide
+          if (field === 'title' && (order === 'asc' || order === 'desc')) {
+            sortOptions[field] = order === 'desc' ? -1 : 1;
+          } else {
+            // Optionnel: Gérer le cas où le paramètre sortBy est invalide
+            return res.status(400).json({ message: "Paramètre de tri invalide." });
+          }
+      }
+
+      const books = await Book.find(query).sort(sortOptions);
+
+      console.log("Livres récupérés:", books);
+      res.status(200).json(books);
+
   } catch (error) {
-    console.error("Erreur lors de la récupération des livres (GET /api/books):", error);
-    res.status(500).json({ message: 'Erreur lors de la récupération des livres.' }); // 500 Internal Server Error
+      console.error("Erreur lors de la récupération des livres (GET /api/books):", error);
+      res.status(500).json({ message: 'Erreur lors de la récupération des livres.' });
   }
 });
 

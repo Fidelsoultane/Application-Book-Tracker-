@@ -2,98 +2,134 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Book Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'principal': '#F5F0EC',
+                        'secondary': '#A8786A',
+                        'accent': '#7B685E',
+                        'etagere': '#4E342E',
+                        'text-light': '#E5C0A2',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-[#F5F0EC]">
+<body class="bg-principal">
 
-    <div id="contenu-principal-global" class="flex">
-        <nav id="menu-lateral" class="w-64 bg-gray-800 text-gray-100 h-screen">
-            <div class="p-4">
-                <h2 class="text-[#A8786A] text-2xl font-bold">Étagères</h2>
-                <ul id="menu-etagere" class="bg-[#4E342E]">
-                    </ul>
+<div id="contenu-principal-global" class="flex">
+    <nav id="menu-lateral" class="w-64 bg-gray-800 text-gray-100 h-screen">
+        <div class="p-4">
+            <h2 class="text-secondary text-2xl font-bold">Étagères</h2>
+            <ul id="menu-etagere" class="bg-etagere">
+                </ul>
+        </div>
+    </nav>
+
+    <main id="contenu-principal" class="flex-1 p-5">
+        <h1 class="text-secondary text-2xl font-bold mb-4">Bienvenue sur Book Tracker</h1>
+
+        <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto hidden">
+            <h2 id="form-title" class="text-secondary text-2xl font-bold mb-4">Ajouter un nouveau livre</h2>
+            <input type="hidden" id="book-id">
+            <div class="mb-4">
+                <label for="book-isbn" class="block text-etagere text-sm font-bold mb-1">ISBN:</label>
+                <input type="text" id="book-isbn" placeholder="ISBN du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
             </div>
-        </nav>
+            <div class="mb-4">
+                <label for="book-title" class="block text-etagere text-sm font-bold mb-1">Titre:</label>
+                <input type="text" id="book-title" placeholder="Titre du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div class="mb-4">
+                <label for="book-author" class="block text-etagere text-sm font-bold mb-1">Auteur:</label>
+                <input type="text" id="book-author" placeholder="Auteur du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div class="mb-4">
+                <label for="book-coverUrl" class="block text-etagere text-sm font-bold mb-1">URL de la couverture:</label>
+                <input type="text" id="book-coverUrl" placeholder="URL de l'image de couverture" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div class="mb-4">
+                <label for="book-publisher" class="block text-etagere text-sm font-bold mb-1">Éditeur:</label>
+                <input type="text" id="book-publisher" placeholder="Éditeur"
+                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+             <div class="mb-4">
+                <label for="book-publishedDate" class="block text-etagere text-sm font-bold mb-1">Date de publication:</label>
+                <input type="text" id="book-publishedDate" placeholder="Date de publication"
+                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div class="mb-4">
+                <label for="book-pageCount" class="block text-etagere text-sm font-bold mb-1">Nombre de pages:</label>
+                <input type="number" id="book-pageCount" placeholder="Nombre de pages"
+                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div class="mb-4">
+                <label for="book-genre" class="block text-etagere text-sm font-bold mb-1">Genre:</label>
+                <input type="text" id="book-genre" placeholder="Genre"
+                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div class="mb-6">
+                <label for="book-status" class="block text-etagere text-sm font-bold mb-1">Statut de lecture:</label>
+                <select id="book-status" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                    <option value="À lire">À lire</option>
+                    <option value="En cours">En cours</option>
+                    <option value="Terminé">Terminé</option>
+                    <option value="Souhaité">Souhaité</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="book-startDate" class="block text-etagere text-sm font-bold mb-1">Date de début de lecture:</label>
+                <input type="date" id="book-startDate"
+                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
 
-        <main id="contenu-principal" class="flex-1 p-5">
-            <h1 class="text-[#A8786A] text-2xl font-bold mb-4">Bienvenue sur Book Tracker</h1>
-            <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto hidden">
-                <h2 id="form-title" class="text-[#A8786A] text-2xl font-bold mb-4">Ajouter un nouveau livre</h2>
-                <input type="hidden" id="book-id">
-                
-                <div class="mb-4">
-                    <label for="book-isbn" class="block text-etagere text-sm font-bold mb-1">ISBN:</label>
-                    <input type="text" id="book-isbn" placeholder="ISBN du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                </div>
-                
-                <div class="mb-4">
-                    <label for="book-title" class="block text-[#4E342E] text-sm font-bold mb-1">Titre:</label>
-                    <input type="text" id="book-title" placeholder="Titre du livre" class="input-field">
-                </div>
-                <div class="mb-4">
-                    <label for="book-author" class="block text-[#4E342E] text-sm font-bold mb-1">Auteur:</label>
-                    <input type="text" id="book-author" placeholder="Auteur du livre" class="input-field">
-                </div>
-                <div class="mb-4">
-                    <label for="book-coverUrl" class="block text-[#4E342E] text-sm font-bold mb-1">URL de la couverture:</label>
-                    <input type="text" id="book-coverUrl" placeholder="URL de l'image de couverture" class="input-field">
-                </div>
-                <div class="mb-6">
-                    <label for="book-status" class="block text-[#4E342E] text-sm font-bold mb-1">Statut de lecture:</label>
-                    <select id="book-status" class="input-field">
-                        <option value="À lire">À lire</option>
-                        <option value="En cours">En cours</option>
-                        <option value="Terminé">Terminé</option>
-                        <option value="Souhaité">Souhaité</option>
-                    </select>
-                </div>
-                <div class="flex items-center justify-center">
-                    <button type="submit" class="submit-button">Enregistrer</button>
-                     <button type="button" id="cancel-button" class="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 ml-2">Annuler</button>
-                </div>
-                <div class="mb-4">
-                    <label for="book-genre" class="block text-etagere text-sm font-bold mb-1">Genre:</label>
-                    <input type="text" id="book-genre" placeholder="Genre du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                </div>
-                <div class="mb-4">
-                    <label for="book-publisher" class="block text-etagere text-sm font-bold mb-1">Éditeur:</label>
-                    <input type="text" id="book-publisher" placeholder="Éditeur du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                </div>
-                
-                <div class="mb-4">
-                    <label for="book-publishedDate" class="block text-etagere text-sm font-bold mb-1">Date de publication:</label>
-                    <input type="text" id="book-publishedDate" placeholder="AAAA-MM-JJ" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                </div>
-                <div class="mb-4">
-                    <label for="book-pageCount" class="block text-etagere text-sm font-bold mb-1">Nombre de page:</label>
-                    <input type="text" id="book-pageCount" placeholder="Nombre de page" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                </div>
+            <div class="mb-4">
+                <label for="book-endDate" class="block text-etagere text-sm font-bold mb-1">Date de fin de
+                    lecture:</label>
+                <input type="date" id="book-endDate"
+                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
+            <div class="flex items-center justify-center">
+                <button type="submit" class="submit-button bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200">Enregistrer</button>
+                <button type="button" id="cancel-button" class="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 ml-2">Annuler</button>
+            </div>
+        </form>
 
-                <div class="mb-4">
-                    <label for="book-startDate" class="block text-etagere text-sm font-bold mb-1">Date de début de lecture:</label>
-                    <input type="date" id="book-startDate" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                </div>
-                
-                <div class="mb-4">
-                    <label for="book-endDate" class="block text-etagere text-sm font-bold mb-1">Date de fin de lecture:</label>
-                    <input type="date" id="book-endDate" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                </div>
+        <button id="add-book-button" class="bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200 mb-4">
+            Ajouter un livre
+        </button>
 
-            </form>
+         <div class="mb-4 flex justify-center space-x-2">
+            <button data-status="Tous" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">Tous mes livres</button>
+            <button data-status="À lire" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">À lire</button>
+            <button data-status="En cours" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">En cours</button>
+            <button data-status="Terminé" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">Terminé</button>
+            <button data-status="Souhaité" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">Souhaité</button>
+        </div>
 
-            <button id="add-book-button" class="bg-[#A8786A] hover:bg-[#7B685E] text-[#E5C0A2] font-semibold py-2 px-4 rounded-lg transition-colors duration-200 mb-4">
-                Ajouter un livre
-            </button>
+        <div class="mb-4 flex justify-center">
+            <label for="sort-select" class="block text-etagere text-sm font-bold mr-2">Trier par :</label>
+            <select id="sort-select" class="w-1/4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                <option value="">-- Choisir --</option>
+                <option value="title:asc">Titre (A-Z)</option>
+                <option value="title:desc">Titre (Z-A)</option>
+            </select>
+        </div>
 
-
-            <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
-            <div id="book-list" class="book-list flex flex-row flex-wrap justify-start items-start gap-4 px-4 md:px-6 lg:px-8 max-w-screen-lg mx-auto mt-8">
-                </div>
-
-        </main>
-    </div>
-
-    <script src="js/index.js" type="module"></script>
-    </body>
+        <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
+         <h2 class="text-2xl font-bold mt-8 mb-4 text-center">Exemples d'étagères</h2>
+        <div id="book-list" class="book-list flex flex-row flex-wrap justify-start items-start gap-4 px-4 md:px-6 lg:px-8 max-w-screen-lg mx-auto mt-8">
+            </div>
+    </main>
+</div>
+    <ul id="menu-etagere" class="flex flex-wrap justify-center gap-4">
+    </ul>
+<script src="js/index.js" type="module"></script>
+</body>
 </html>
