@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const bookRoutes = require('./routes/bookRoutes');
+const etagereRoutes = require('./routes/etagereRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +36,7 @@ app.get('/', (req, res) => {
 
 // Routes pour les livres
 app.use('/api', bookRoutes);
+app.use('/api/etageres', etagereRoutes);
 
 app.listen(PORT, () => {
     console.log(`Serveur démarré sur le port ${PORT}`);

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -27,6 +29,20 @@
     <nav id="menu-lateral" class="w-64 bg-gray-800 text-gray-100 h-screen">
         <div class="p-4">
             <h2 class="text-secondary text-2xl font-bold">Étagères</h2>
+            
+                <button id="manage-etageres-button" class="bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200 mb-4 w-full text-left">
+                    Ajouter une étagère
+                </button>
+            
+                <form id="add-etagere-form" class="mb-4 hidden">
+                    <label for="etagere-name" class="block text-sm font-medium text-gray-300 mb-1">Nom de la nouvelle étagère :</label>
+                    <input type="text" id="etagere-name" placeholder="Ex: Science-Fiction" required class="input-field w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary bg-gray-700 text-gray-100">
+                    <div class="mt-2 flex justify-end space-x-2">
+                         <button type="button" id="cancel-add-etagere" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded text-xs">Annuler</button>
+                         <button type="submit" class="bg-secondary hover:bg-accent text-text-light font-semibold py-1 px-2 rounded text-xs">Ajouter</button>
+                    </div>
+                </form>
+            
             <ul id="menu-etagere" class="bg-etagere">
                 </ul>
         </div>
@@ -129,13 +145,11 @@
         </div>
 
         <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
-         <h2 class="text-2xl font-bold mt-8 mb-4 text-center">Exemples d'étagères</h2>
         <div id="book-list" class="book-list flex flex-row flex-wrap justify-start items-start gap-4 px-4 md:px-6 lg:px-8 max-w-screen-lg mx-auto mt-8">
             </div>
     </main>
 </div>
-    <ul id="menu-etagere" class="flex flex-wrap justify-center gap-4">
-    </ul>
+    
 <script src="js/index.js" type="module"></script>
 </body>
 </html>

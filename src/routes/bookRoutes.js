@@ -63,7 +63,7 @@ router.post('/books', async (req, res) => {
 
 router.get('/books', async (req, res) => {
   try {
-      console.log("Requête GET /api/books reçue.  Query params:", req.query);
+      console.log("Requête GET /api/books reçue. Query params:", req.query);
 
       const query = {};
 
@@ -72,22 +72,29 @@ router.get('/books', async (req, res) => {
           query.status = req.query.status;
       }
 
-      // --- Tri par titre ---
+      // --- Filtrage par genre --- (NOUVEAU)
+      if (req.query.genre && req.query.genre !== 'Tous') {
+          query.genre = req.query.genre; // Ajoute le filtre genre à la requête Mongoose
+      }
+
+      // --- Tri ---
       const sortOptions = {};
       if (req.query.sortBy) {
           const [field, order] = req.query.sortBy.split(':');
-          // On vérifie que le champ est 'title' et que l'ordre est valide
-          if (field === 'title' && (order === 'asc' || order === 'desc')) {
-            sortOptions[field] = order === 'desc' ? -1 : 1;
+           // Validez les champs de tri autorisés ici si nécessaire
+          if ((field === 'title' || field === 'author' || field === 'createdAt') && (order === 'asc' || order === 'desc')) {
+               sortOptions[field] = order === 'desc' ? -1 : 1;
           } else {
-            // Optionnel: Gérer le cas où le paramètre sortBy est invalide
-            return res.status(400).json({ message: "Paramètre de tri invalide." });
+               console.warn("Paramètre de tri ignoré (invalide):", req.query.sortBy);
           }
       }
 
+      console.log("Filtre Mongoose (query):", query); // Log pour le débogage
+      console.log("Options de tri Mongoose:", sortOptions); // Log pour le débogage
+
       const books = await Book.find(query).sort(sortOptions);
 
-      console.log("Livres récupérés:", books);
+      console.log("Livres récupérés:", books.length); // Log le nombre de livres
       res.status(200).json(books);
 
   } catch (error) {
@@ -95,6 +102,7 @@ router.get('/books', async (req, res) => {
       res.status(500).json({ message: 'Erreur lors de la récupération des livres.' });
   }
 });
+
 
 // Mettre à jour un livre
 router.put('/books/:id', async (req, res) => {
@@ -147,7 +155,9 @@ router.put('/books/:id', async (req, res) => {
       if (error.name === 'ValidationError') {
           const messages = Object.values(error.errors).map(val => val.message);
           return res.status(400).json({ message: messages });
-      } else {
+      } else if (error.code === 11000) {
+         return res.status(409).json({ message: 'Donnée conflictuelle (ISBN ou autre contrainte unique).' });
+   } else {
           res.status(500).json({ message: 'Erreur lors de la modification du livre.' });
       }
   }
