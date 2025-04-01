@@ -545,6 +545,12 @@ function displayEtageres(etageres) {
             publisherInput.value = "";
         }
 
+         // --- Réinitialise le menu déroulant de TRI --- (AJOUTÉ)
+         const sortSelect = document.getElementById('sort-select');
+         if (sortSelect) {
+             sortSelect.selectedIndex = 0; // Remet à la première option ("-- Non trié --" ou "-- Choisir --")
+         }
+
         fetchBooks();
         // Gère le style actif
         document.querySelectorAll('#menu-etagere li').forEach(item => item.classList.remove('bg-gray-600', 'text-white'));
