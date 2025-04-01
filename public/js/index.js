@@ -213,9 +213,13 @@ async function deleteBook(bookId) {
     }
 }
 
-function editBook(book) {
+async function editBook(book) {
     console.log("Modification du livre:", book);
     resetForm(); // Vide le formulaire avant de le remplir
+
+    // PEUPLE LE DROPDOWN AVANT de remplir les champs
+    await populateGenreDropdown(book.genre || ''); // Passe le genre actuel pour pré-sélection
+
 
     // Pré-remplir le formulaire avec les données du livre
     document.getElementById('book-id').value = book._id;
@@ -250,8 +254,12 @@ function resetForm() {
     const formTitle = document.getElementById('form-title');
     if(formTitle) formTitle.textContent = "Ajouter un nouveau livre";
 
-    // Ne pas cacher le formulaire ici, peut-être appelé avant l'affichage
-    // Cachez-le après la soumission réussie
+    // Réinitialise le select du genre à la première option ("-- Sélectionner --")
+    const genreSelect = document.getElementById('book-genre');
+    if (genreSelect) genreSelect.selectedIndex = 0; // Remet à la première option
+
+    const addBookButton = document.getElementById("add-book-button");
+    if (addBookButton) addBookButton.classList.remove("hidden");
 }
 
 // --------- Requête ISBN (fetchBookDataFromISBN) ---------
@@ -579,6 +587,44 @@ function displayEtageres(etageres) {
 }
 
 
+
+/**
+ * Récupère les étagères depuis l'API et peuple le menu déroulant des genres.
+ * @param {string} [selectedValue] - Optionnel: La valeur du genre à pré-sélectionner.
+ */
+async function populateGenreDropdown(selectedValue = '') {
+    const genreSelect = document.getElementById('book-genre');
+    if (!genreSelect) return; // Quitte si l'élément n'existe pas
+
+    const currentValue = genreSelect.value; // Sauvegarde la valeur actuelle (utile si on rafraîchit)
+
+    try {
+        const etageres = await fetchEtageres(); // Réutilise la fonction existante
+
+        // Vide les options actuelles (sauf la première "-- Sélectionner --")
+        genreSelect.length = 1; // Garde seulement la première option
+
+        etageres.forEach(etagere => {
+            const option = document.createElement('option');
+            option.value = etagere.name; // La valeur de l'option est le nom de l'étagère
+            option.textContent = etagere.name; // Le texte affiché est aussi le nom
+            genreSelect.appendChild(option);
+        });
+
+        // Pré-sélectionne la valeur si fournie (pour l'édition) ou restaure la valeur actuelle
+        if (selectedValue) {
+            genreSelect.value = selectedValue;
+        } else {
+            genreSelect.value = currentValue; // Restaure la valeur précédente si aucune sélection spécifique n'est demandée
+        }
+
+    } catch (error) {
+        console.error("Erreur lors du peuplement du dropdown des genres:", error);
+        // Optionnel: Afficher un message à l'utilisateur
+    }
+}
+
+
 // --------- Initialisation et écouteurs d'événements ---------
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -590,8 +636,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('book-form').addEventListener('submit', handleFormSubmit);
 
     // 3. Bouton "Ajouter un livre"
-    document.getElementById('add-book-button').addEventListener('click', () => {
+    document.getElementById('add-book-button').addEventListener('click', async () => { // Notez le 'async' ici
         resetForm();
+        await populateGenreDropdown(); // PEUPLE LE DROPDOWN avant d'afficher
         document.getElementById('book-form').classList.remove('hidden');
     });
 
