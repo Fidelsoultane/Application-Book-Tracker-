@@ -112,12 +112,16 @@ function createBookCard(book) {
     deleteButton.addEventListener('click', () => deleteBook(book._id));
     actionsContainer.appendChild(deleteButton);
      // Affichage des tags
-        if (book.tags && book.tags.length > 0) {
-            const tagsContainer = createElementWithClasses('div', 'mt-2 flex flex-wrap');
-            book.tags.forEach(tag => {
-                const tagElement = createElementWithClasses('span', 'bg-gray-200 text-gray-700 rounded-full px-2 py-1 text-xs mr-1 mb-1');
-                tagElement.textContent = tag;
-                tagsContainer.appendChild(tagElement);
+     if (book.tags && book.tags.length > 0) {
+        const tagsContainer = createElementWithClasses('div', 'mt-2 flex flex-wrap'); // Le conteneur
+        book.tags.forEach(tag => {
+            // Crée un lien <a> pour chaque tag
+            const tagElement = createElementWithClasses('a', 'tag-link bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-xs mr-1 mb-1 cursor-pointer hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400'); // Ajout de classes cliquables
+            tagElement.textContent = tag;
+            tagElement.dataset.tag = tag; // Stocke le nom du tag
+            tagElement.href = "#"; // Empêche le comportement par défaut mais rend cliquable
+              // L'écouteur sera ajouté via délégation sur #book-list
+              tagsContainer.appendChild(tagElement);
             });
             card.appendChild(tagsContainer);
         }
@@ -132,6 +136,7 @@ function createBookCard(book) {
 
 let currentStatusFilter = "Tous"; // Renommé pour clarté
 let currentGenreFilter = "Tous"; // Pour le filtre par étagère/genre
+let currentTagFilter = null; // null signifie "pas de filtre tag actif"
 
 async function fetchBooks() {
     try {
@@ -147,6 +152,11 @@ async function fetchBooks() {
         // --- Filtrage par genre ---
         if (currentGenreFilter !== "Tous") {
             url += `genre=${encodeURIComponent(currentGenreFilter)}&`;
+        }
+
+         // --- Filtrage par tag --- (NOUVEAU BLOC)
+         if (currentTagFilter) { // Vérifie si un tag est sélectionné (n'est pas null)
+            url += `tags=${encodeURIComponent(currentTagFilter)}&`; // Ajoute le paramètre tag
         }
 
         // --- Tri ---
@@ -515,7 +525,12 @@ function displayEtageres(etageres) {
     tousMesLivresLi.textContent = "Tous mes livres";
     // Écouteur pour "Tous mes livres"
     tousMesLivresLi.addEventListener('click', () => {
-        currentGenreFilter = "Tous";
+        console.log("Clic sur 'Tous mes livres' détecté."); // Log pour débogage
+    
+        // --- Réinitialise TOUS les filtres ---
+        currentGenreFilter = "Tous";   // Réinitialise le filtre Genre
+        currentTagFilter = null;     // RÉINITIALISE LE FILTRE TAG (met à null)
+        currentStatusFilter = "Tous"; // Réinitialise aussi le filtre Statut
         fetchBooks();
         // Gère le style actif
         document.querySelectorAll('#menu-etagere li').forEach(item => item.classList.remove('bg-gray-600', 'text-white'));
@@ -708,4 +723,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+     // --- Gestion du clic sur un TAG (Délégation d'événement) ---
+     const bookListElement = document.getElementById('book-list');
+     if (bookListElement) {
+         bookListElement.addEventListener('click', (event) => {
+             // 1. Vérifie si l'élément cliqué (ou un de ses parents) est un lien de tag
+             const tagLink = event.target.closest('a.tag-link'); // Cherche un <a> avec la classe tag-link
+ 
+             // 2. Si un lien de tag a été cliqué...
+             if (tagLink) {
+                 event.preventDefault(); // Empêche le lien '#' de modifier l'URL
+ 
+                 // 3. Récupère le nom du tag depuis l'attribut data-tag
+                 const clickedTag = tagLink.dataset.tag;
+ 
+                 // 4. Met à jour la variable globale du filtre tag
+                 currentTagFilter = clickedTag;
+                 console.log("Filtre tag activé:", currentTagFilter); // Pour débogage
+ 
+                 // 5. Recharge les livres avec le nouveau filtre appliqué
+                 fetchBooks();
+ 
+                 // Optionnel (pour plus tard) : Mettre en évidence le filtre actif
+                 // updateActiveTagDisplay(currentTagFilter);
+             }
+         });
+     }
 }); // FIN de DOMContentLoaded

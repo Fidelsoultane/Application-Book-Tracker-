@@ -77,6 +77,14 @@ router.get('/books', async (req, res) => {
           query.genre = req.query.genre; // Ajoute le filtre genre à la requête Mongoose
       }
 
+      // --- Filtrage par tag --- (NOUVEAU BLOC)
+      if (req.query.tags) {
+        // $in cherche les documents où le tableau 'tags' contient la valeur fournie
+        query.tags = { $in: [req.query.tags] };
+        // Note: Si plus tard vous voulez chercher plusieurs tags à la fois (ex: tags=a,b),
+        // vous pourriez faire : query.tags = { $all: req.query.tags.split(',') };
+    }
+
       // --- Tri ---
       const sortOptions = {};
       if (req.query.sortBy) {
