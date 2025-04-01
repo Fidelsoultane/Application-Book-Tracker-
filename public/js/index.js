@@ -137,6 +137,8 @@ function createBookCard(book) {
 let currentStatusFilter = "Tous"; // Renommé pour clarté
 let currentGenreFilter = "Tous"; // Pour le filtre par étagère/genre
 let currentTagFilter = null; // null signifie "pas de filtre tag actif"
+let currentPublisherFilter = ""; // NOUVELLE variable globale pour le filtre éditeur
+
 
 async function fetchBooks() {
     try {
@@ -157,6 +159,10 @@ async function fetchBooks() {
          // --- Filtrage par tag --- (NOUVEAU BLOC)
          if (currentTagFilter) { // Vérifie si un tag est sélectionné (n'est pas null)
             url += `tags=${encodeURIComponent(currentTagFilter)}&`; // Ajoute le paramètre tag
+        }
+
+        if (currentPublisherFilter) { // NOUVEAU FILTRE
+            url += `publisher=${encodeURIComponent(currentPublisherFilter)}&`;
         }
 
         // --- Tri ---
@@ -531,6 +537,14 @@ function displayEtageres(etageres) {
         currentGenreFilter = "Tous";   // Réinitialise le filtre Genre
         currentTagFilter = null;     // RÉINITIALISE LE FILTRE TAG (met à null)
         currentStatusFilter = "Tous"; // Réinitialise aussi le filtre Statut
+        currentPublisherFilter = ""; // RÉINITIALISE LE FILTRE ÉDITEUR
+
+        // Vide le champ de saisie du filtre éditeur
+        const publisherInput = document.getElementById('filter-publisher');
+        if (publisherInput) {
+            publisherInput.value = "";
+        }
+
         fetchBooks();
         // Gère le style actif
         document.querySelectorAll('#menu-etagere li').forEach(item => item.classList.remove('bg-gray-600', 'text-white'));
@@ -750,4 +764,22 @@ document.addEventListener('DOMContentLoaded', () => {
              }
          });
      }
+
+     // --- Gestion du filtre par Éditeur --- (NOUVEAU BLOC)
+    const publisherInput = document.getElementById('filter-publisher');
+    let publisherFilterTimeout; // Pour le debounce
+
+    if (publisherInput) {
+        publisherInput.addEventListener('input', (event) => {
+            // Annule le timeout précédent pour éviter les appels multiples rapides
+            clearTimeout(publisherFilterTimeout);
+
+            // Définit un nouveau timeout
+            publisherFilterTimeout = setTimeout(() => {
+                currentPublisherFilter = event.target.value; // Met à jour le filtre éditeur
+                console.log("Filtrage par éditeur:", currentPublisherFilter); // Débogage
+                fetchBooks(); // Recharge les livres avec le nouveau filtre
+            }, 500); // Attend 500ms après la dernière frappe avant de lancer la recherche
+        });
+    }
 }); // FIN de DOMContentLoaded

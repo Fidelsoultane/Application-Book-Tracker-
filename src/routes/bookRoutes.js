@@ -60,49 +60,59 @@ router.post('/books', async (req, res) => {
       }
   }
 });
-
 router.get('/books', async (req, res) => {
   try {
       console.log("Requête GET /api/books reçue. Query params:", req.query);
 
-      const query = {};
+      const query = {}; // Pour les filtres Mongoose
 
       // --- Filtrage par statut ---
       if (req.query.status && req.query.status !== 'Tous') {
           query.status = req.query.status;
       }
 
-      // --- Filtrage par genre --- (NOUVEAU)
+      // --- Filtrage par genre ---
       if (req.query.genre && req.query.genre !== 'Tous') {
-          query.genre = req.query.genre; // Ajoute le filtre genre à la requête Mongoose
+          query.genre = req.query.genre;
       }
 
-      // --- Filtrage par tag --- (NOUVEAU BLOC)
+      // --- Filtrage par tag ---
       if (req.query.tags) {
-        // $in cherche les documents où le tableau 'tags' contient la valeur fournie
-        query.tags = { $in: [req.query.tags] };
-        // Note: Si plus tard vous voulez chercher plusieurs tags à la fois (ex: tags=a,b),
-        // vous pourriez faire : query.tags = { $all: req.query.tags.split(',') };
-    }
+          query.tags = { $in: [req.query.tags] };
+      }
+
+      // --- Filtrage par éditeur --- (NOUVEAU)
+      if (req.query.publisher && req.query.publisher.trim() !== '') {
+          // Utilise une expression régulière pour une recherche insensible à la casse
+          query.publisher = { $regex: new RegExp(req.query.publisher.trim(), 'i') };
+      }
 
       // --- Tri ---
       const sortOptions = {};
       if (req.query.sortBy) {
           const [field, order] = req.query.sortBy.split(':');
-           // Validez les champs de tri autorisés ici si nécessaire
-          if ((field === 'title' || field === 'author' || field === 'createdAt') && (order === 'asc' || order === 'desc')) {
-               sortOptions[field] = order === 'desc' ? -1 : 1;
+          const sortOrder = order === 'desc' ? -1 : 1;
+
+          // Champs de tri autorisés
+          const allowedSortFields = ['title', 'createdAt', 'author', 'publishedDate']; // AJOUTER 'author', 'publishedDate'
+
+          if (allowedSortFields.includes(field) && (order === 'asc' || order === 'desc')) {
+               sortOptions[field] = sortOrder;
           } else {
                console.warn("Paramètre de tri ignoré (invalide):", req.query.sortBy);
           }
+      } else {
+           // Tri par défaut si aucun sortBy n'est spécifié (par exemple, par date d'ajout récente)
+           sortOptions.createdAt = -1; // Optionnel: définissez un tri par défaut
       }
 
-      console.log("Filtre Mongoose (query):", query); // Log pour le débogage
-      console.log("Options de tri Mongoose:", sortOptions); // Log pour le débogage
+
+      console.log("Filtre Mongoose (query):", query);
+      console.log("Options de tri Mongoose:", sortOptions);
 
       const books = await Book.find(query).sort(sortOptions);
 
-      console.log("Livres récupérés:", books.length); // Log le nombre de livres
+      console.log("Livres récupérés (filtrés/triés):", books.length);
       res.status(200).json(books);
 
   } catch (error) {
@@ -110,7 +120,6 @@ router.get('/books', async (req, res) => {
       res.status(500).json({ message: 'Erreur lors de la récupération des livres.' });
   }
 });
-
 
 // Mettre à jour un livre
 router.put('/books/:id', async (req, res) => {

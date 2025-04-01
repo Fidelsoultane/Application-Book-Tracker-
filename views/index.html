@@ -136,13 +136,21 @@
             <button data-status="Souhaité" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">Souhaité</button>
         </div>
 
-        <div class="mb-4 flex justify-center">
-            <label for="sort-select" class="block text-etagere text-sm font-bold mr-2">Trier par :</label>
-            <select id="sort-select" class="w-1/4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                <option value="">-- Choisir --</option>
-                <option value="title:asc">Titre (A-Z)</option>
-                <option value="title:desc">Titre (Z-A)</option>
-            </select>
+        <div class="mb-4 flex justify-center items-center space-x-4">
+            <div>
+                <label for="sort-select" class="block text-etagere text-sm font-bold mb-1">Trier par :</label>
+                <select id="sort-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                    <option value="">-- Non trié --</option> <option value="createdAt:desc">Date d'ajout (plus récent)</option>
+                    <option value="createdAt:asc">Date d'ajout (plus ancien)</option>
+                    <option value="title:asc">Titre (A-Z)</option>
+                    <option value="title:desc">Titre (Z-A)</option>
+                    <option value="author:asc">Auteur (A-Z)</option> <option value="author:desc">Auteur (Z-A)</option> <option value="publishedDate:desc">Publication (plus récent)</option> <option value="publishedDate:asc">Publication (plus ancien)</option> </select>
+            </div>
+        
+            <div>
+                <label for="filter-publisher" class="block text-etagere text-sm font-bold mb-1">Filtrer par Éditeur :</label>
+                <input type="text" id="filter-publisher" placeholder="Nom de l'éditeur" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+            </div>
         </div>
 
         <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
