@@ -26,14 +26,42 @@ function hideLoading() {
     }
 }
 
-// Fonction pour afficher les erreurs (vous l'avez peut-être déjà, sinon ajoutez-la aussi)
+/**
+ * Affiche un message d'erreur à l'utilisateur via Toastify.
+ * @param {string} message - Le message d'erreur à afficher.
+ */
 function displayError(message) {
-    alert(`Erreur : ${message}`);
+    Toastify({
+        text: message || "Une erreur est survenue.", // Message par défaut
+        duration: 3000, // Durée d'affichage en ms (3 secondes)
+        close: true, // Affiche un bouton pour fermer
+        gravity: "top", // Position (top ou bottom)
+        position: "right", // Position (left, center ou right)
+        stopOnFocus: true, // Met en pause la durée si l'utilisateur survole
+        style: {
+            background: "linear-gradient(to right, #FF5F6D, #FFC371)", // Style pour l'erreur (rouge/orange)
+        },
+        onClick: function(){} // Callback après un clic
+    }).showToast();
 }
 
-// Fonction pour afficher succès (vous l'avez peut-être déjà)
+/**
+ * Affiche un message de succès à l'utilisateur via Toastify.
+ * @param {string} message - Le message de succès à afficher.
+ */
 function displaySuccessMessage(message) {
-    alert(message);
+    Toastify({
+        text: message || "Opération réussie.", // Message par défaut
+        duration: 2000, // Durée d'affichage (2 secondes)
+        close: true,
+        gravity: "top",
+        position: "right",
+        stopOnFocus: true,
+        style: {
+            background: "linear-gradient(to right, #00b09b, #96c93d)", // Style pour le succès (vert)
+        },
+        onClick: function(){}
+    }).showToast();
 }
 
 function createBookCard(book) {
@@ -398,7 +426,7 @@ async function handleFormSubmit(event) {
     } else {
         // Pas d'ISBN fourni OU Modification (bookId existe)
         if (!title || !author) {
-            alert("Veuillez remplir les champs titre et auteur.");
+            displayError("Veuillez remplir les champs titre et auteur.");
             return;
         }
         // Pour la modification (bookId existe), on utilise les données du formulaire
@@ -428,7 +456,7 @@ async function handleFormSubmit(event) {
             } catch (e) {/* Ignore */}
             throw new Error(errorMsg);
         }
-
+        displaySuccessMessage(bookId ? "Livre modifié avec succès !" : "Livre ajouté avec succès !"); // Message de succès
         fetchBooks(); // Recharge la liste des livres
         resetForm(); // Réinitialise et cache le formulaire
         const bookFormElement = document.getElementById('book-form');
@@ -577,6 +605,7 @@ function displayEtageres(etageres) {
             if (confirm(`Êtes-vous sûr de vouloir supprimer l'étagère "${etagere.name}" ?`)) {
                 deleteEtagere(etagere._id).then(success => {
                     if (success) {
+                        displaySuccessMessage(`Étagère "${etagere.name}" supprimée.`); // Message de succès
                         fetchEtageres().then(displayEtageres);
                         if (currentGenreFilter === etagere.name) {
                             currentGenreFilter = "Tous";
@@ -735,6 +764,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const newEtagere = await createEtagere({ name });
             if (newEtagere) {
+                displaySuccessMessage(`Étagère "${newEtagere.name}" ajoutée.`); // Message de succès
                 etagereNameInput.value = '';
                 addEtagereForm.classList.add('hidden');
                 fetchEtageres().then(displayEtageres); // Recharge la liste des étagères
