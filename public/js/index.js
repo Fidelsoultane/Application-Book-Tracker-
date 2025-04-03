@@ -354,18 +354,29 @@ async function fetchBookDataFromISBN(isbn) {
                 throw new Error(`Erreur HTTP: ${response.status}`);
             }
         } catch (error) {
-            console.error(`Erreur lors de la tentative ${attempt}/${maxAttempts}:`, error);
+            console.error(`Erreur lors de la tentative <span class="math-inline">\{attempt\}/</span>{maxAttempts}:`, error); // Log l'erreur (important pour le débogage)
+        
+            // Est-ce la dernière tentative ?
             if (attempt === maxAttempts) {
-                 // Affiche l'erreur seulement à la dernière tentative
-                 displayError(error.message || "Impossible de récupérer les informations du livre.");
-                return null;
+                // Oui, affiche l'erreur finale appropriée
+                if (error.message === "Aucun livre trouvé pour cet ISBN.") {
+                  displayError("Aucun livre trouvé pour cet ISBN après plusieurs tentatives.");
+                } else {
+                  // Pour toutes les autres erreurs lors de la dernière tentative (y compris 503 persistant)
+                  displayError("Impossible de récupérer les informations du livre après plusieurs tentatives.");
+                }
+                return null; // Échec final après toutes les tentatives
             }
-            // Si pas la dernière tentative, et c'est une erreur 503, on continue la boucle
-            // Si autre erreur, on la relance pour sortir de la boucle
-             if (response && response.status !== 503) throw error;
-             if (!response) throw error; // Relance si fetch lui-même échoue (ex: réseau)
-
-        }
+          
+        } // Fin du catch
+        
+    // ... (fin de la boucle while) ...
+    // Si la boucle se termine sans succès (maxAttempts atteint sans réponse OK)
+    // On affiche une erreur générique si ce n'était pas déjà fait dans le catch
+    // Normalement, le catch gère déjà ça. Mais par sécurité :
+     if(attempt === maxAttempts) {
+       displayError("Impossible de récupérer les informations du livre après plusieurs tentatives.");
+     }
     }
     return null; // Retourne null si toutes les tentatives échouent
 }
@@ -417,7 +428,7 @@ async function handleFormSubmit(event) {
         } else {
             // Si la recherche ISBN échoue MAIS que l'utilisateur a rempli le titre/auteur, on continue en manuel
             if (!title || !author) {
-                 displayError("ISBN non trouvé et informations manquantes. Veuillez remplir au moins le titre et l'auteur.");
+    
                  return; // Sortir si l'ISBN est invalide ET les infos manuelles manquent
             }
              console.log("ISBN non trouvé, ajout manuel avec les données saisies.");
