@@ -14,6 +14,7 @@ const bookSchema = new mongoose.Schema({
     startDate: { type: Date },
     endDate: { type: Date },
     tags: { type: [String], default: [] }, // Ajout du champ tags (tableau de strings)
+    notes: { type: String, default: '' } // AJOUT DU CHAMP NOTES
 }, { timestamps: true });
 
 const Book = mongoose.model('Book', bookSchema);

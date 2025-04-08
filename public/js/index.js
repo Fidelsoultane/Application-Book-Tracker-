@@ -116,6 +116,30 @@ function createBookCard(book) {
         card.appendChild(genre);
     }
 
+     // --- Affichage de l'indicateur de notes --- (NOUVEAU BLOC)
+     if (book.notes && book.notes.trim() !== '') {
+        const noteIndicatorContainer = createElementWithClasses('span', 'ml-2'); // Conteneur pour l'icône
+
+        const noteIndicatorIcon = createElementWithClasses('i', 'note-indicator-icon far fa-sticky-note text-gray-400 cursor-pointer hover:text-blue-500'); // Ajout cursor-pointer et classe
+        noteIndicatorIcon.title = "Voir les notes"; // Infobulle
+
+        // Ajout de l'écouteur de clic sur l'icône
+        noteIndicatorIcon.addEventListener('click', (event) => {
+            event.stopPropagation(); // Empêche le clic de remonter (ex: au LI parent)
+            showNoteModal(book); // Appelle la fonction pour afficher la modale
+        });
+
+        noteIndicatorContainer.appendChild(noteIndicatorIcon);
+
+        // Ajouter l'indicateur (par exemple, après le statut)
+        const statusElement = card.querySelector('p.text-sm.text-gray-500');
+        if (statusElement) {
+            statusElement.appendChild(noteIndicatorContainer);
+        } else {
+            card.appendChild(noteIndicatorContainer);
+        }
+    }
+
     // Affichage des dates de début et de fin (conditionnel)
     if (book.startDate) {
         const startDate = createElementWithClasses('p', 'text-sm text-gray-500');
@@ -158,6 +182,29 @@ function createBookCard(book) {
     card.appendChild(actionsContainer);
 
     return card;
+}
+
+// --- NOUVELLE FONCTION : Afficher la modale de note ---
+function showNoteModal(book) {
+    const modal = document.getElementById('note-modal');
+    const modalTitle = document.getElementById('note-modal-title');
+    const modalContent = document.getElementById('note-modal-content');
+
+    if (modal && modalTitle && modalContent) {
+        modalTitle.textContent = `Notes pour : ${book.title}`; // Met à jour le titre
+        modalContent.textContent = book.notes; // Met à jour le contenu des notes
+        modal.classList.remove('hidden'); // Affiche la modale
+    } else {
+        console.error("Éléments de la modale introuvables !");
+    }
+}
+
+// --- NOUVELLE FONCTION : Cacher la modale de note ---
+function hideNoteModal() {
+    const modal = document.getElementById('note-modal');
+    if (modal) {
+        modal.classList.add('hidden'); // Cache la modale
+    }
 }
 
 // --------- Gestion des livres ---------
@@ -279,8 +326,10 @@ async function editBook(book) {
     document.getElementById('book-startDate').value = book.startDate ? new Date(book.startDate).toISOString().split('T')[0] : ''; // Format YYYY-MM-DD
     document.getElementById('book-endDate').value = book.endDate ? new Date(book.endDate).toISOString().split('T')[0] : ''; // Format YYYY-MM-DD
     document.getElementById('book-coverUrl').value = book.coverUrl || '';
+    document.getElementById('book-notes').value = book.notes || ''; // PRÉ-REMPLIT LES NOTES
 
 
+    document.getElementById('form-title').textContent = "Modifier le livre";
     // Afficher le formulaire
     const bookForm = document.getElementById('book-form');
     if (bookForm) bookForm.classList.remove('hidden');
@@ -295,6 +344,9 @@ function resetForm() {
     if (form) form.reset();
     const bookIdInput = document.getElementById('book-id');
     if (bookIdInput) bookIdInput.value = '';
+// reset() devrait vider le textarea, mais par sécurité :
+const notesTextArea = document.getElementById('book-notes');
+if (notesTextArea) notesTextArea.value = '';
     const formTitle = document.getElementById('form-title');
     if(formTitle) formTitle.textContent = "Ajouter un nouveau livre";
 
@@ -400,6 +452,8 @@ async function handleFormSubmit(event) {
     const endDate = document.getElementById('book-endDate').value || null;     // Envoyer null si vide
     const tagsString = document.getElementById('book-tags').value;
     const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()).filter(tag => tag !== "") : [];
+    const notes = document.getElementById('book-notes').value.trim(); // RÉCUPÈRE LES NOTES
+
 
     let bookData; // Déclaration de bookData *avant* le if/else
 
@@ -422,6 +476,7 @@ async function handleFormSubmit(event) {
                 startDate: startDate,
                 endDate: endDate,
                 tags: tags,
+                notes: notes, // AJOUTÉ ICI
                 isbn: isbn // Assure que l'ISBN est bien là
              };
             console.log("bookData après récupération de l'API et fusion:", bookData);
@@ -432,7 +487,7 @@ async function handleFormSubmit(event) {
                  return; // Sortir si l'ISBN est invalide ET les infos manuelles manquent
             }
              console.log("ISBN non trouvé, ajout manuel avec les données saisies.");
-             bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags };
+             bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes };
         }
     } else {
         // Pas d'ISBN fourni OU Modification (bookId existe)
@@ -442,7 +497,7 @@ async function handleFormSubmit(event) {
         }
         // Pour la modification (bookId existe), on utilise les données du formulaire
         // Pour l'ajout manuel (pas d'ISBN), on utilise aussi les données du formulaire
-        bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags };
+        bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes };
         console.log("bookData pour ajout manuel ou modification:", bookData);
     }
 
@@ -827,6 +882,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Filtrage par éditeur:", currentPublisherFilter); // Débogage
                 fetchBooks(); // Recharge les livres avec le nouveau filtre
             }, 500); // Attend 500ms après la dernière frappe avant de lancer la recherche
+        });
+    }
+    // --- Écouteurs pour fermer la modale de note 
+    const noteModal = document.getElementById('note-modal');
+    const noteModalCloseButton = document.getElementById('note-modal-close-button');
+
+    if (noteModalCloseButton) {
+        noteModalCloseButton.addEventListener('click', hideNoteModal);
+    }
+
+    // Optionnel : Fermer en cliquant en dehors de la modale
+    if (noteModal) {
+        noteModal.addEventListener('click', (event) => {
+            // Si le clic a eu lieu directement sur le fond semi-transparent (le conteneur modal)
+            if (event.target === noteModal) {
+                hideNoteModal();
+            }
         });
     }
 }); // FIN de DOMContentLoaded

@@ -119,6 +119,11 @@
                 <input type="text" id="book-tags" placeholder="tag1, tag2, tag3" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
             </div>
 
+            <div class="mb-4">
+                <label for="book-notes" class="block text-etagere text-sm font-bold mb-1">Notes personnelles :</label>
+                <textarea id="book-notes" placeholder="Vos critiques, citations préférées, etc." rows="4" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"></textarea>
+            </div>
+
             <div class="flex items-center justify-center">
                 <button type="submit" class="submit-button bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200">Enregistrer</button>
                 <button type="button" id="cancel-button" class="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 ml-2">Annuler</button>
@@ -158,6 +163,20 @@
         <div id="book-list" class="book-list flex flex-row flex-wrap justify-start items-start gap-4 px-4 md:px-6 lg:px-8 max-w-screen-lg mx-auto mt-8">
             </div>
     </main>
+</div>
+
+<div id="note-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
+    <div class="relative mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+            <h3 id="note-modal-title" class="text-xl font-medium text-gray-900">Notes pour : Livre</h3>
+            <button id="note-modal-close-button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+                <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                <span class="sr-only">Fermer</span>
+            </button>
+        </div>
+        <div class="mt-4">
+            <p id="note-modal-content" class="text-base leading-relaxed text-gray-600 whitespace-pre-wrap"></p> </div>
+    </div>
 </div>
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>

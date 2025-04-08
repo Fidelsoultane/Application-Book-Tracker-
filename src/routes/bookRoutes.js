@@ -7,7 +7,7 @@ const Book = require('../models/Book');
 // Ajouter un livre
 router.post('/books', async (req, res) => {
   try {
-      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags } = req.body;
+      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes } = req.body;
 
       // Validation (plus complète, incluant les dates)
       if (!title) {
@@ -43,9 +43,12 @@ router.post('/books', async (req, res) => {
           startDate, // Ajout des dates
           endDate,   // Ajout des dates
           tags,
+          notes,
       });
 
-      const savedBook = await newBook.save();
+      console.log("Objet newBook (avec notes):", newBook);
+        const savedBook = await newBook.save();
+        console.log("Livre enregistré:", savedBook);
       res.status(201).json(savedBook);
 
   } catch (error) {
@@ -125,7 +128,7 @@ router.get('/books', async (req, res) => {
 router.put('/books/:id', async (req, res) => {
   try {
       const { id } = req.params;
-      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags } = req.body;
+      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes } = req.body;
 
       // Validation (similaire à POST)
       if (!title || !author) {
@@ -161,11 +164,17 @@ router.put('/books/:id', async (req, res) => {
               startDate, // Ajout des dates
               endDate,   // Ajout des dates
               tags,
+              notes,
           },
           { new: true, runValidators: true } // Important: runValidators pour la validation Mongoose
       );
 
-      res.status(200).json(updatedBook);
+      if (!updatedBook) {
+        return res.status(404).json({ message: "Livre non trouvé." });
+    }
+
+    console.log("Livre mis à jour (avec notes):", updatedBook);
+    res.status(200).json(updatedBook);
 
   } catch (error) {
       console.error("Erreur dans la route PUT /api/books/:id:", error);
