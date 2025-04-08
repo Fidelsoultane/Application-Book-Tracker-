@@ -63,65 +63,61 @@ router.post('/books', async (req, res) => {
       }
   }
 });
+
 router.get('/books', async (req, res) => {
-  try {
-      console.log("Requête GET /api/books reçue. Query params:", req.query);
+    try {
+        console.log("Requête GET /api/books reçue. Query params:", req.query);
 
-      const query = {}; // Pour les filtres Mongoose
+        // --- Pagination Parameters ---
+        const page = parseInt(req.query.page) || 1; // Page actuelle, défaut = 1
+        const limit = parseInt(req.query.limit) || 12; // Livres par page, défaut = 12
+        const skip = (page - 1) * limit; // Nombre de documents à sauter
 
-      // --- Filtrage par statut ---
-      if (req.query.status && req.query.status !== 'Tous') {
-          query.status = req.query.status;
-      }
+        // --- Filtres ---
+        const query = {};
+        if (req.query.status && req.query.status !== 'Tous') { query.status = req.query.status; }
+        if (req.query.genre && req.query.genre !== 'Tous') { query.genre = req.query.genre; }
+        if (req.query.tags) { query.tags = { $in: [req.query.tags] }; }
+        if (req.query.publisher && req.query.publisher.trim() !== '') { query.publisher = { $regex: new RegExp(req.query.publisher.trim(), 'i') }; }
 
-      // --- Filtrage par genre ---
-      if (req.query.genre && req.query.genre !== 'Tous') {
-          query.genre = req.query.genre;
-      }
+        // --- Tri ---
+        const sortOptions = {};
+        if (req.query.sortBy) {
+            const [field, order] = req.query.sortBy.split(':');
+            const sortOrder = order === 'desc' ? -1 : 1;
+            const allowedSortFields = ['title', 'createdAt', 'author', 'publishedDate'];
+            if (allowedSortFields.includes(field)) { sortOptions[field] = sortOrder; }
+        } else {
+             sortOptions.createdAt = -1; // Tri par défaut
+        }
 
-      // --- Filtrage par tag ---
-      if (req.query.tags) {
-          query.tags = { $in: [req.query.tags] };
-      }
+        console.log("Filtre Mongoose (query):", query);
+        console.log("Options de tri Mongoose:", sortOptions);
 
-      // --- Filtrage par éditeur --- (NOUVEAU)
-      if (req.query.publisher && req.query.publisher.trim() !== '') {
-          // Utilise une expression régulière pour une recherche insensible à la casse
-          query.publisher = { $regex: new RegExp(req.query.publisher.trim(), 'i') };
-      }
+        // --- Exécuter les requêtes ---
+        // 1. Compter le nombre total de documents correspondant aux filtres
+        const totalBooks = await Book.countDocuments(query);
 
-      // --- Tri ---
-      const sortOptions = {};
-      if (req.query.sortBy) {
-          const [field, order] = req.query.sortBy.split(':');
-          const sortOrder = order === 'desc' ? -1 : 1;
+        // 2. Récupérer les livres pour la page actuelle, avec filtres, tri et pagination
+        const books = await Book.find(query)
+                                  .sort(sortOptions)
+                                  .skip(skip)   // Saute les documents des pages précédentes
+                                  .limit(limit); // Limite au nombre de livres par page
 
-          // Champs de tri autorisés
-          const allowedSortFields = ['title', 'createdAt', 'author', 'publishedDate']; // AJOUTER 'author', 'publishedDate'
+        console.log(`Livres récupérés: ${books.length} sur un total de ${totalBooks}`);
 
-          if (allowedSortFields.includes(field) && (order === 'asc' || order === 'desc')) {
-               sortOptions[field] = sortOrder;
-          } else {
-               console.warn("Paramètre de tri ignoré (invalide):", req.query.sortBy);
-          }
-      } else {
-           // Tri par défaut si aucun sortBy n'est spécifié (par exemple, par date d'ajout récente)
-           sortOptions.createdAt = -1; // Optionnel: définissez un tri par défaut
-      }
+        // --- Renvoyer la réponse ---
+        res.status(200).json({
+            books: books, // Le tableau des livres pour la page actuelle
+            totalBooks: totalBooks, // Le nombre total de livres correspondant aux filtres
+            currentPage: page,
+            totalPages: Math.ceil(totalBooks / limit) // Calcule le nombre total de pages
+        });
 
-
-      console.log("Filtre Mongoose (query):", query);
-      console.log("Options de tri Mongoose:", sortOptions);
-
-      const books = await Book.find(query).sort(sortOptions);
-
-      console.log("Livres récupérés (filtrés/triés):", books.length);
-      res.status(200).json(books);
-
-  } catch (error) {
-      console.error("Erreur lors de la récupération des livres (GET /api/books):", error);
-      res.status(500).json({ message: 'Erreur lors de la récupération des livres.' });
-  }
+    } catch (error) {
+        console.error("Erreur lors de la récupération des livres (GET /api/books):", error);
+        res.status(500).json({ message: 'Erreur lors de la récupération des livres.' });
+    }
 });
 
 // Mettre à jour un livre

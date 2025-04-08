@@ -213,58 +213,79 @@ let currentStatusFilter = "Tous"; // Renommé pour clarté
 let currentGenreFilter = "Tous"; // Pour le filtre par étagère/genre
 let currentTagFilter = null; // null signifie "pas de filtre tag actif"
 let currentPublisherFilter = ""; // NOUVELLE variable globale pour le filtre éditeur
+let currentPage = 1;
+const booksPerPage = 12; // Ou le nombre que vous préférez (doit correspondre au défaut du backend ou être envoyé)
 
 
 async function fetchBooks() {
     try {
         showLoading();
 
-        let url = '/api/books?';
+        let url = '/api/books?'; // Commence par '?'
 
-        // --- Filtrage par statut ---
-        if (currentStatusFilter !== "Tous") {
-            url += `status=${encodeURIComponent(currentStatusFilter)}&`;
-        }
+        // --- Ajout des paramètres de pagination --- (VÉRIFIEZ CES LIGNES)
+        url += `page=${currentPage}&limit=${booksPerPage}&`;
 
-        // --- Filtrage par genre ---
-        if (currentGenreFilter !== "Tous") {
-            url += `genre=${encodeURIComponent(currentGenreFilter)}&`;
-        }
-
-         // --- Filtrage par tag --- (NOUVEAU BLOC)
-         if (currentTagFilter) { // Vérifie si un tag est sélectionné (n'est pas null)
-            url += `tags=${encodeURIComponent(currentTagFilter)}&`; // Ajoute le paramètre tag
-        }
-
-        if (currentPublisherFilter) { // NOUVEAU FILTRE
-            url += `publisher=${encodeURIComponent(currentPublisherFilter)}&`;
-        }
+        // --- Filtres ---
+        if (currentStatusFilter !== "Tous") { url += `status=${encodeURIComponent(currentStatusFilter)}&`; }
+        if (currentGenreFilter !== "Tous") { url += `genre=${encodeURIComponent(currentGenreFilter)}&`; }
+        if (currentTagFilter) { url += `tags=${encodeURIComponent(currentTagFilter)}&`; }
+        if (currentPublisherFilter) { url += `publisher=${encodeURIComponent(currentPublisherFilter)}&`; }
 
         // --- Tri ---
         const sortSelect = document.getElementById('sort-select');
-        if (sortSelect && sortSelect.value) {
-            url += `sortBy=${sortSelect.value}&`;
-        }
+        if (sortSelect && sortSelect.value) { url += `sortBy=${sortSelect.value}&`; }
 
-        // Supprime le '&' final si présent
-        if (url.endsWith('&')) {
-            url = url.slice(0, -1);
-        }
+        // Supprime le '&' final
+        if (url.endsWith('&')) { url = url.slice(0, -1); }
 
-        console.log("Fetching URL:", url); // Log pour le débogage
+        console.log("Fetching URL:", url); // Doit maintenant inclure page et limit
 
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
-        const books = await response.json();
-        displayBooks(books);
+        const data = await response.json();
+
+        console.log("Données reçues du serveur (pagination):", data);
+
+        displayBooks(data.books); // Affiche les livres de la page
+        updatePaginationControls(data.totalBooks); // Met à jour les boutons
+
     } catch (error) {
         console.error("Erreur lors de la récupération des livres:", error);
         displayError("Impossible de récupérer les livres. Veuillez réessayer.");
+        displayBooks([]);
+        updatePaginationControls(0);
     } finally {
         hideLoading();
     }
+}
+
+// --- NOUVELLE FONCTION : Mettre à jour les contrôles de pagination ---
+function updatePaginationControls(totalBooks) {
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
+    const pageInfo = document.getElementById('page-info');
+
+    if (!prevButton || !nextButton || !pageInfo) return; // Sécurité
+
+    const totalPages = Math.ceil(totalBooks / booksPerPage);
+
+    // Met à jour le texte d'information
+    pageInfo.textContent = `Page ${currentPage} sur ${totalPages > 0 ? totalPages : 1}`;
+
+    // Active/désactive le bouton "Précédent"
+    prevButton.disabled = currentPage <= 1;
+
+    // Active/désactive le bouton "Suivant"
+    nextButton.disabled = currentPage >= totalPages;
+
+    // Cache les contrôles s'il n'y a qu'une seule page ou aucune page
+     const controlsContainer = document.getElementById('pagination-controls');
+     if (controlsContainer) {
+         controlsContainer.style.display = totalPages <= 1 ? 'none' : 'flex';
+     }
 }
 
 function displayBooks(books) {
@@ -637,6 +658,7 @@ function displayEtageres(etageres) {
         const publisherInput = document.getElementById('filter-publisher');
         if (publisherInput) {
             publisherInput.value = "";
+            applyFilterOrSort();
         }
 
          // --- Réinitialise le menu déroulant de TRI --- (AJOUTÉ)
@@ -686,7 +708,7 @@ function displayEtageres(etageres) {
         // Écouteur sur le LI pour le filtrage par GENRE
         li.addEventListener('click', () => {
             currentGenreFilter = etagere.name;
-            fetchBooks();
+            applyFilterOrSort();
             // Gère le style actif
             document.querySelectorAll('#menu-etagere li').forEach(item => item.classList.remove('bg-gray-600', 'text-white'));
             li.classList.add('bg-gray-600', 'text-white');
@@ -754,6 +776,11 @@ async function populateGenreDropdown(selectedValue = '') {
     }
 }
 
+function applyFilterOrSort() {
+    currentPage = 1; // RÉINITIALISE LA PAGE à 1
+    fetchBooks();
+}
+
 
 // --------- Initialisation et écouteurs d'événements ---------
 
@@ -790,14 +817,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Met à jour le filtre courant
             currentStatusFilter = event.target.dataset.status; // Renommé pour clarté
 
-            // Recharge les livres avec le nouveau filtre
-            fetchBooks();
+            applyFilterOrSort(); // Utilise la fonction pour réinitialiser la page
         });
     });
       // --- Tri par titre ---
     const sortSelect = document.getElementById('sort-select');
     if(sortSelect){
-        sortSelect.addEventListener('change', fetchBooks);
+        sortSelect.addEventListener('change', applyFilterOrSort);
     }
 
      // --- Gestion du formulaire d'ajout d'étagère ---
@@ -854,12 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  // 3. Récupère le nom du tag depuis l'attribut data-tag
                  const clickedTag = tagLink.dataset.tag;
  
-                 // 4. Met à jour la variable globale du filtre tag
-                 currentTagFilter = clickedTag;
-                 console.log("Filtre tag activé:", currentTagFilter); // Pour débogage
- 
-                 // 5. Recharge les livres avec le nouveau filtre appliqué
-                 fetchBooks();
+                 applyFilterOrSort();
  
                  // Optionnel (pour plus tard) : Mettre en évidence le filtre actif
                  // updateActiveTagDisplay(currentTagFilter);
@@ -880,7 +901,7 @@ document.addEventListener('DOMContentLoaded', () => {
             publisherFilterTimeout = setTimeout(() => {
                 currentPublisherFilter = event.target.value; // Met à jour le filtre éditeur
                 console.log("Filtrage par éditeur:", currentPublisherFilter); // Débogage
-                fetchBooks(); // Recharge les livres avec le nouveau filtre
+                applyFilterOrSort; // Recharge les livres avec le nouveau filtre
             }, 500); // Attend 500ms après la dernière frappe avant de lancer la recherche
         });
     }
@@ -899,6 +920,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (event.target === noteModal) {
                 hideNoteModal();
             }
+        });
+    }
+
+    // --- NOUVEAUX Écouteurs pour les boutons de pagination ---
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
+
+    if (prevButton) {
+        prevButton.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--; // Décrémente la page
+                fetchBooks(); // Recharge les livres pour la nouvelle page
+            }
+        });
+    }
+
+    if (nextButton) {
+        nextButton.addEventListener('click', () => {
+            // Pas besoin de vérifier la dernière page ici, car updatePaginationControls désactive le bouton
+            currentPage++; // Incrémente la page
+            fetchBooks(); // Recharge les livres pour la nouvelle page
         });
     }
 }); // FIN de DOMContentLoaded
