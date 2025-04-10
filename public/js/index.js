@@ -667,10 +667,19 @@ function displayEtageres(etageres) {
              sortSelect.selectedIndex = 0; // Remet à la première option ("-- Non trié --" ou "-- Choisir --")
          }
 
-        fetchBooks();
+         applyFilterOrSort();
         // Gère le style actif
         document.querySelectorAll('#menu-etagere li').forEach(item => item.classList.remove('bg-gray-600', 'text-white'));
         tousMesLivresLi.classList.add('bg-gray-600', 'text-white');
+
+         // Gère le style actif pour les BOUTONS DE STATUT
+         const filterButtons = document.querySelectorAll('.filter-button');
+        filterButtons.forEach(button => {
+            button.classList.remove('bg-gray-600', 'text-white');
+            if (button.dataset.status === "Tous") {
+                button.classList.add('bg-gray-600', 'text-white');
+            }
+        });
     });
     menuEtagere.appendChild(tousMesLivresLi); // Ajoute "Tous mes livres"
 
@@ -868,25 +877,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
      // --- Gestion du clic sur un TAG (Délégation d'événement) ---
      const bookListElement = document.getElementById('book-list');
-     if (bookListElement) {
-         bookListElement.addEventListener('click', (event) => {
-             // 1. Vérifie si l'élément cliqué (ou un de ses parents) est un lien de tag
-             const tagLink = event.target.closest('a.tag-link'); // Cherche un <a> avec la classe tag-link
- 
-             // 2. Si un lien de tag a été cliqué...
-             if (tagLink) {
-                 event.preventDefault(); // Empêche le lien '#' de modifier l'URL
- 
-                 // 3. Récupère le nom du tag depuis l'attribut data-tag
-                 const clickedTag = tagLink.dataset.tag;
- 
-                 applyFilterOrSort();
- 
-                 // Optionnel (pour plus tard) : Mettre en évidence le filtre actif
-                 // updateActiveTagDisplay(currentTagFilter);
-             }
-         });
-     }
+    const activeTagDisplay = document.getElementById('active-tag-filter-display');
+    const activeTagName = document.getElementById('active-tag-name');
+
+    if (bookListElement && activeTagDisplay && activeTagName) {
+        bookListElement.addEventListener('click', (event) => {
+            const tagLink = event.target.closest('a.tag-link');
+            if (tagLink) {
+                event.preventDefault();
+                const clickedTag = tagLink.dataset.tag;
+                currentTagFilter = clickedTag;
+                console.log("Filtre tag activé:", currentTagFilter);
+
+                // AFFICHE la zone du filtre tag actif
+                activeTagName.textContent = clickedTag;
+                activeTagDisplay.classList.remove('hidden');
+
+                // APPELLE applyFilterOrSort pour réinitialiser la page et recharger
+                applyFilterOrSort(); // <-- MODIFICATION ICI
+
+                // Optionnel : Mettre en évidence le filtre actif
+                // updateActiveTagDisplay(currentTagFilter);
+            }
+        });
+    } else {
+        console.error("Élément(s) manquant(s) pour la gestion du filtre tag actif.");
+    }
+         
+     // --- Gestion du clic sur le bouton d'annulation du filtre TAG --- (BLOC À AJOUTER/VÉRIFIER)
+    const clearTagFilterButton = document.getElementById('clear-tag-filter-button');
+    const activeTagDisplayElement = document.getElementById('active-tag-filter-display'); // Récupère aussi la div display
+
+    if (clearTagFilterButton && activeTagDisplayElement) { // Vérifie que les deux éléments existent
+        clearTagFilterButton.addEventListener('click', () => {
+            console.log("Annulation du filtre tag via bouton X.");
+            currentTagFilter = null; // Réinitialise SEULEMENT le filtre tag
+            activeTagDisplayElement.classList.add('hidden'); // Cache la zone d'affichage
+            applyFilterOrSort(); // Appelle la fonction pour réinitialiser la page ET recharger les livres
+        });
+    } else {
+         console.error("Bouton d'annulation du tag ou zone d'affichage introuvable lors de l'initialisation.");
+    }
 
      // --- Gestion du filtre par Éditeur --- (NOUVEAU BLOC)
     const publisherInput = document.getElementById('filter-publisher');
