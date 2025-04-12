@@ -932,7 +932,7 @@ document.addEventListener('DOMContentLoaded', () => {
             publisherFilterTimeout = setTimeout(() => {
                 currentPublisherFilter = event.target.value; // Met à jour le filtre éditeur
                 console.log("Filtrage par éditeur:", currentPublisherFilter); // Débogage
-                applyFilterOrSort; // Recharge les livres avec le nouveau filtre
+                applyFilterOrSort(); // Recharge les livres avec le nouveau filtre
             }, 500); // Attend 500ms après la dernière frappe avant de lancer la recherche
         });
     }
