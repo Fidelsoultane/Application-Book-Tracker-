@@ -455,6 +455,143 @@ async function fetchBookDataFromISBN(isbn) {
 }
 
 
+async function searchBooksAPI(query) {
+    if (!query || query.trim() === '') {
+        displayError("Veuillez entrer un titre ou des mots-clés pour la recherche.");
+        return null; // Retourne null si la requête est vide
+    }
+
+    // Limite le nombre de résultats pour ne pas surcharger l'affichage
+    const maxResults = 10;
+    // Optionnel: Restreindre la langue (ex: 'fr' pour français)
+    const langRestrict = 'fr';
+    const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&maxResults=${maxResults}&langRestrict=${langRestrict}`;
+
+    console.log("Appel API Recherche Titre:", apiUrl); // Pour débogage
+
+    try {
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+            // Pas besoin de retenter ici comme pour l'ISBN, l'utilisateur peut relancer la recherche
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Données brutes reçues de l'API Titre:", data); // Pour débogage
+
+        // Vérifie s'il y a des résultats et si le tableau 'items' existe
+        if (data.totalItems > 0 && data.items) {
+            return data.items; // Retourne le tableau des livres trouvés
+        } else {
+            return []; // Retourne un tableau vide si aucun livre n'est trouvé
+        }
+
+    } catch (error) {
+        console.error("Erreur lors de la recherche API par titre:", error);
+        displayError(error.message || "Erreur lors de la recherche de livres.");
+        return null; // Retourne null pour indiquer une erreur
+    }
+}
+
+function displayAPISearchResults(results) {
+    console.log("Entrée dans displayAPISearchResults. Tentative de trouver les éléments...");
+    const resultsContainer = document.getElementById('api-search-results');
+    console.log("resultsContainer trouvé:", resultsContainer); // Qu'est-ce qui est logué ici ?
+    const messageElement = document.getElementById('api-search-message');
+    console.log("messageElement trouvé:", messageElement);     // Et ici ?
+
+    if (!resultsContainer || !messageElement) {
+        console.error("Éléments nécessaires pour l'affichage des résultats API non trouvés.");
+        return;
+    }
+
+    // Vide le contenu précédent (y compris le message "Chargement...")
+    resultsContainer.innerHTML = '';
+    messageElement.textContent = ''; // Vide le message
+    messageElement.classList.add('hidden'); // Cache la zone de message par défaut
+
+    // Cas 1 : Erreur ou Aucun Résultat
+    if (!results || results.length === 0) {
+        messageElement.textContent = 'Aucun livre trouvé pour cette recherche.';
+        messageElement.classList.remove('hidden'); // Affiche le message
+        resultsContainer.appendChild(messageElement); // Ajoute le message au conteneur
+        return; // Sort de la fonction
+    }
+
+    // Cas 2 : Des résultats ont été trouvés
+    console.log(`Affichage de ${results.length} résultat(s) de l'API.`);
+    const resultList = document.createElement('div'); // Utilise une div comme conteneur principal pour les résultats
+    resultList.className = 'space-y-3'; // Espace vertical entre les résultats
+
+    results.forEach(item => {
+        if (!item.volumeInfo) return; // Ignore les items sans volumeInfo
+
+        const bookInfo = item.volumeInfo;
+
+        // Extraction des données (avec gestion des cas où des infos manquent)
+        const title = bookInfo.title || 'Titre inconnu';
+        const authors = bookInfo.authors ? bookInfo.authors.join(', ') : 'Auteur inconnu';
+        const coverUrl = bookInfo.imageLinks?.thumbnail || bookInfo.imageLinks?.smallThumbnail || 'images/default-book-cover.png';
+        const publisher = bookInfo.publisher || '';
+        const publishedDate = bookInfo.publishedDate || '';
+        const pageCount = bookInfo.pageCount || null;
+        const genre = bookInfo.categories?.[0] || ''; // Prend la première catégorie
+
+        // Recherche de l'ISBN (13 ou 10)
+        let isbn13 = '';
+        let isbn10 = '';
+        if (bookInfo.industryIdentifiers) {
+            isbn13 = bookInfo.industryIdentifiers.find(id => id.type === 'ISBN_13')?.identifier || '';
+            isbn10 = bookInfo.industryIdentifiers.find(id => id.type === 'ISBN_10')?.identifier || '';
+        }
+        const isbn = isbn13 || isbn10; // Prend ISBN-13 en priorité
+
+        // Création de l'élément HTML pour ce résultat
+        const resultItem = document.createElement('div');
+        resultItem.className = 'api-result-item flex items-start p-2 border-b border-gray-200'; // Style pour chaque résultat
+
+        // Image
+        const imgElement = document.createElement('img');
+        imgElement.src = coverUrl;
+        imgElement.alt = `Couverture de ${title}`;
+        imgElement.className = 'w-16 h-24 object-contain mr-3 flex-shrink-0'; // Taille fixe pour l'image
+        resultItem.appendChild(imgElement);
+
+        // Infos Texte
+        const textContainer = document.createElement('div');
+        textContainer.className = 'flex-grow';
+        textContainer.innerHTML = `
+            <h4 class="font-semibold text-etagere">${title}</h4>
+            <p class="text-sm text-gray-600">${authors}</p>
+            <p class="text-xs text-gray-500">${publisher ? publisher + ' ' : ''}${publishedDate ? '('+publishedDate.substring(0, 4)+')' : ''}</p> `;
+        resultItem.appendChild(textContainer);
+
+        // Bouton "Ajouter"
+        const addButton = document.createElement('button');
+        addButton.textContent = 'Ajouter';
+        addButton.className = 'add-from-api-button bg-green-500 hover:bg-green-700 text-white text-xs font-bold py-1 px-2 rounded ml-2 flex-shrink-0';
+
+        // Stocke TOUTES les données nécessaires pour pré-remplir le formulaire
+        addButton.dataset.title = title;
+        addButton.dataset.author = authors; // Stocke la chaîne d'auteurs jointe
+        addButton.dataset.coverUrl = coverUrl;
+        addButton.dataset.publisher = publisher;
+        addButton.dataset.publishedDate = publishedDate;
+        addButton.dataset.pageCount = pageCount || ''; // Stocke chaîne vide si null
+        addButton.dataset.genre = genre;
+        addButton.dataset.isbn = isbn; // Stocke l'ISBN trouvé
+
+        // L'écouteur de clic sera ajouté via délégation
+        resultItem.appendChild(addButton);
+
+        resultList.appendChild(resultItem); // Ajoute cet item à la liste des résultats
+    });
+
+    resultsContainer.appendChild(resultList); // Ajoute la liste complète au conteneur principal
+}
+
+
 // --------- Gestion du formulaire ---------
 async function handleFormSubmit(event) {
     event.preventDefault();
@@ -548,6 +685,11 @@ async function handleFormSubmit(event) {
         resetForm(); // Réinitialise et cache le formulaire
         const bookFormElement = document.getElementById('book-form');
         if(bookFormElement) bookFormElement.classList.add('hidden');
+
+        const searchInputApi = document.getElementById('api-search-input');
+        if (searchInputApi) {
+            searchInputApi.value = ''; // Vide le champ de recherche
+        }
 
 
     } catch (error) {
@@ -749,10 +891,7 @@ function displayEtageres(etageres) {
 
 
 
-/**
- * Récupère les étagères depuis l'API et peuple le menu déroulant des genres.
- * @param {string} [selectedValue] - Optionnel: La valeur du genre à pré-sélectionner.
- */
+
 async function populateGenreDropdown(selectedValue = '') {
     const genreSelect = document.getElementById('book-genre');
     if (!genreSelect) return; // Quitte si l'élément n'existe pas
@@ -794,6 +933,8 @@ function applyFilterOrSort() {
 // --------- Initialisation et écouteurs d'événements ---------
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    console.log("DOM prêt. Vérification élément #api-search-message:", document.getElementById('api-search-message'));
     // 1. Chargement initial
     fetchBooks();
     fetchEtageres().then(displayEtageres); // MAINTENANT ACCESSIBLE !
@@ -893,8 +1034,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeTagName.textContent = clickedTag;
                 activeTagDisplay.classList.remove('hidden');
 
-                // APPELLE applyFilterOrSort pour réinitialiser la page et recharger
-                applyFilterOrSort(); // <-- MODIFICATION ICI
+                
+                applyFilterOrSort(); 
 
                 // Optionnel : Mettre en évidence le filtre actif
                 // updateActiveTagDisplay(currentTagFilter);
@@ -972,6 +1113,115 @@ document.addEventListener('DOMContentLoaded', () => {
             // Pas besoin de vérifier la dernière page ici, car updatePaginationControls désactive le bouton
             currentPage++; // Incrémente la page
             fetchBooks(); // Recharge les livres pour la nouvelle page
+        });
+    }
+
+    // --- Gestion de la Recherche API par Titre ---
+    const searchInput = document.getElementById('api-search-input');
+    const searchButton = document.getElementById('api-search-button');
+    const searchResultsContainer = document.getElementById('api-search-results');
+    const searchMessageElement = document.getElementById('api-search-message');
+
+    if (searchButton && searchInput && searchResultsContainer && searchMessageElement) { // Vérifie que tous les éléments existent
+
+        searchButton.addEventListener('click', async () => { // async car on attend searchBooksAPI
+            const query = searchInput.value.trim(); // Récupère la recherche de l'utilisateur
+
+            if (!query) {
+                displayError("Veuillez entrer un titre à rechercher.");
+                searchInput.focus(); // Remet le focus sur le champ
+                return;
+            }
+
+            // 1. Préparer la zone de résultats (afficher "chargement")
+            searchMessageElement.textContent = 'Recherche en cours...'; // Affiche message de chargement
+            searchMessageElement.classList.remove('hidden'); // Assure que le message est visible
+            searchResultsContainer.classList.remove('hidden'); // Assure que le conteneur est visible
+
+            // 2. Appeler la fonction de recherche API
+            const results = await searchBooksAPI(query); // Appelle la fonction que nous avons créée
+
+            // 3. Afficher les résultats (ou un message si aucun résultat/erreur)
+            // La fonction displayAPISearchResults s'occupera de masquer/modifier le message
+            displayAPISearchResults(results); // Appelle la fonction d'affichage (à créer ensuite)
+        });
+
+        // Optionnel : Déclencher la recherche en appuyant sur "Entrée" dans le champ de recherche
+        searchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Empêche le comportement par défaut (qui pourrait soumettre un formulaire parent)
+                searchButton.click(); // Simule un clic sur le bouton de recherche
+            }
+        });
+
+    } else {
+        console.error("Élément(s) manquant(s) pour la recherche API par titre.");
+    }
+
+    // --- Gestion du clic sur le bouton "Ajouter" dans les résultats de recherche API --- (NOUVEAU BLOC)
+    const searchResultsContainerElement = document.getElementById('api-search-results'); // Récupère le conteneur à nouveau
+
+    if (searchResultsContainerElement) {
+        searchResultsContainerElement.addEventListener('click', async (event) => {
+            // Vérifie si l'élément cliqué est un bouton "Ajouter" de l'API
+            const addButton = event.target.closest('button.add-from-api-button');
+
+            if (addButton) {
+                console.log("Bouton 'Ajouter' d'un résultat API cliqué.");
+                event.preventDefault(); // Au cas où ce serait un lien stylé en bouton
+
+                // 1. Récupérer les données stockées dans les attributs data-* du bouton cliqué
+                const bookDataFromAPI = {
+                    title: addButton.dataset.title || '',
+                    author: addButton.dataset.author || '',
+                    coverUrl: addButton.dataset.coverUrl || '',
+                    publisher: addButton.dataset.publisher || '',
+                    publishedDate: addButton.dataset.publishedDate || '',
+                    pageCount: addButton.dataset.pageCount || '',
+                    genre: addButton.dataset.genre || '',
+                    isbn: addButton.dataset.isbn || ''
+                    // Note: status, startDate, endDate, tags, notes ne sont pas pré-remplis depuis l'API ici
+                };
+                console.log("Données récupérées du bouton pour pré-remplissage:", bookDataFromAPI);
+
+                  //  Réinitialiser le formulaire principal
+                  resetForm();
+
+                  //  PEUPLER LE DROPDOWN GENRE AVANT DE PRÉ-SÉLECTIONNER (NOUVEAU)
+                  await populateGenreDropdown(bookDataFromAPI.genre); // Appelle et attend que le dropdown soit peuplé
+                                                                      // Passe le genre de l'API pour essayer de le pré-sélectionner
+
+                // 2. Pré-remplir le formulaire principal (#book-form)
+                resetForm(); // Commence par réinitialiser le formulaire (efface aussi l'ID caché)
+                document.getElementById('book-title').value = bookDataFromAPI.title;
+                document.getElementById('book-author').value = bookDataFromAPI.author;
+                document.getElementById('book-coverUrl').value = bookDataFromAPI.coverUrl;
+                document.getElementById('book-publisher').value = bookDataFromAPI.publisher;
+                document.getElementById('book-publishedDate').value = bookDataFromAPI.publishedDate;
+                document.getElementById('book-pageCount').value = bookDataFromAPI.pageCount;
+                document.getElementById('book-genre').value = bookDataFromAPI.genre;
+                document.getElementById('book-isbn').value = bookDataFromAPI.isbn;
+                // Laisse status, startDate, endDate, tags, notes vides pour l'utilisateur
+
+                // 3. Modifier le titre du formulaire (optionnel)
+                 const formTitle = document.getElementById('form-title');
+                 if(formTitle) formTitle.textContent = "Vérifier et Ajouter le livre";
+
+                // 4. Afficher le formulaire principal
+                const bookForm = document.getElementById('book-form');
+                if (bookForm) bookForm.classList.remove('hidden');
+                 const addBookButtonMain = document.getElementById("add-book-button");
+                 if (addBookButtonMain) addBookButtonMain.classList.add("hidden"); // Cache le bouton principal "Ajouter"
+
+                // 5. Cacher/Vider les résultats de la recherche API
+                searchResultsContainerElement.classList.add('hidden');
+                searchResultsContainerElement.innerHTML = ''; // Vide le contenu
+
+                // 6. Faire défiler vers le formulaire (optionnel)
+                if (bookForm) {
+                    window.scrollTo({ top: bookForm.offsetTop - 20, behavior: 'smooth' });
+                }
+            }
         });
     }
 }); // FIN de DOMContentLoaded
