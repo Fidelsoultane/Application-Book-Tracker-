@@ -65,7 +65,7 @@ function displaySuccessMessage(message) {
 }
 
 function createBookCard(book) {
-    const card = createElementWithClasses('div', 'bg-white rounded-lg shadow-md p-4 relative');
+    const card = createElementWithClasses('div', 'bg-white rounded-lg shadow-md pt-10 p-4 relative');
     card.dataset.bookId = book._id;
 
     const imgContainer = createElementWithClasses('div', 'flex justify-center');
@@ -114,6 +114,26 @@ function createBookCard(book) {
         const genre = createElementWithClasses('p', 'text-sm text-gray-500');
         genre.textContent = `Genre: ${book.genre}`;
         card.appendChild(genre);
+    }
+
+    // --- Affichage de la Notation (Étoiles Statiques sur la carte) ---
+    if (book.rating !== undefined && book.rating !== null && book.rating > 0) { // Affiche si note > 0
+        const ratingContainer = createElementWithClasses('div', 'text-yellow-400 mt-1 mb-2'); // Conteneur + couleur
+        ratingContainer.title = `Note : ${book.rating} / 5`; // Infobulle
+
+        for (let i = 1; i <= 5; i++) { // Boucle 5 fois
+            const starIcon = createElementWithClasses('i', 'fa-star mr-0.5'); // Icône étoile + petite marge
+            if (i <= book.rating) {
+                starIcon.classList.add('fas'); // fas = étoile pleine (Font Awesome Solid)
+            } else {
+                starIcon.classList.add('far'); // far = étoile vide (Font Awesome Regular)
+            }
+            ratingContainer.appendChild(starIcon);
+        }
+        // Insertion dans la carte (ajustez le sélecteur si besoin)
+        const textInfoContainer = card.querySelector('.p-4 > div:first-of-type'); // Cible le div des infos principales
+        if (textInfoContainer) textInfoContainer.appendChild(ratingContainer);
+        else card.appendChild(ratingContainer); // Fallback
     }
 
      // --- Affichage de l'indicateur de notes --- (NOUVEAU BLOC)
@@ -348,6 +368,8 @@ async function editBook(book) {
     document.getElementById('book-endDate').value = book.endDate ? new Date(book.endDate).toISOString().split('T')[0] : ''; // Format YYYY-MM-DD
     document.getElementById('book-coverUrl').value = book.coverUrl || '';
     document.getElementById('book-notes').value = book.notes || ''; // PRÉ-REMPLIT LES NOTES
+     // Mettre à jour l'affichage des étoiles ET le champ caché rating
+     updateStarInputDisplay(book.rating || 0); // Appelle la fonction utilitaire
 
 
     document.getElementById('form-title').textContent = "Modifier le livre";
@@ -374,6 +396,9 @@ if (notesTextArea) notesTextArea.value = '';
     // Réinitialise le select du genre à la première option ("-- Sélectionner --")
     const genreSelect = document.getElementById('book-genre');
     if (genreSelect) genreSelect.selectedIndex = 0; // Remet à la première option
+
+    updateStarInputDisplay(0); // Réinitialise les étoiles visuellement et l'input caché à 0
+
 
     const addBookButton = document.getElementById("add-book-button");
     if (addBookButton) addBookButton.classList.remove("hidden");
@@ -591,6 +616,26 @@ function displayAPISearchResults(results) {
     resultsContainer.appendChild(resultList); // Ajoute la liste complète au conteneur principal
 }
 
+function updateStarInputDisplay(rating) {
+    const container = document.getElementById('rating-input-container');
+    if (!container) return;
+    const stars = container.querySelectorAll('i'); // Sélectionne toutes les icônes étoile dans le formulaire
+    stars.forEach(star => {
+        const starValue = parseInt(star.dataset.value); // Récupère la valeur de l'étoile (1-5)
+        if (starValue <= rating) {
+            // Étoile pleine (ou sélectionnée)
+            star.classList.remove('far'); // Enlève la classe vide
+            star.classList.add('fas', 'text-yellow-400'); // Ajoute pleine et couleur
+        } else {
+            // Étoile vide
+            star.classList.remove('fas', 'text-yellow-400'); // Enlève pleine et couleur
+            star.classList.add('far'); // Ajoute vide
+        }
+    });
+     // Met à jour la valeur du champ caché (important !)
+     const ratingValueInput = document.getElementById('book-rating-value');
+     if(ratingValueInput) ratingValueInput.value = rating;
+}
 
 // --------- Gestion du formulaire ---------
 async function handleFormSubmit(event) {
@@ -611,6 +656,8 @@ async function handleFormSubmit(event) {
     const tagsString = document.getElementById('book-tags').value;
     const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()).filter(tag => tag !== "") : [];
     const notes = document.getElementById('book-notes').value.trim(); // RÉCUPÈRE LES NOTES
+    // RÉCUPÈRE LA NOTE depuis l'input caché (Convertit en nombre entier)
+    const rating = parseInt(document.getElementById('book-rating-value').value) || 0;
 
 
     let bookData; // Déclaration de bookData *avant* le if/else
@@ -635,7 +682,8 @@ async function handleFormSubmit(event) {
                 endDate: endDate,
                 tags: tags,
                 notes: notes, // AJOUTÉ ICI
-                isbn: isbn // Assure que l'ISBN est bien là
+                isbn: isbn, // Assure que l'ISBN est bien là
+                rating
              };
             console.log("bookData après récupération de l'API et fusion:", bookData);
         } else {
@@ -645,7 +693,7 @@ async function handleFormSubmit(event) {
                  return; // Sortir si l'ISBN est invalide ET les infos manuelles manquent
             }
              console.log("ISBN non trouvé, ajout manuel avec les données saisies.");
-             bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes };
+             bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes, rating };
         }
     } else {
         // Pas d'ISBN fourni OU Modification (bookId existe)
@@ -655,7 +703,7 @@ async function handleFormSubmit(event) {
         }
         // Pour la modification (bookId existe), on utilise les données du formulaire
         // Pour l'ajout manuel (pas d'ISBN), on utilise aussi les données du formulaire
-        bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes };
+        bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes, rating };
         console.log("bookData pour ajout manuel ou modification:", bookData);
     }
 
@@ -1224,4 +1272,57 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- Gestion des étoiles interactives dans le formulaire ---
+    const ratingContainer = document.getElementById('rating-input-container');
+    const ratingValueInput = document.getElementById('book-rating-value'); // L'input caché
+    const clearRatingButton = document.getElementById('clear-rating-button');
+
+    if (ratingContainer && ratingValueInput) {
+        const stars = ratingContainer.querySelectorAll('i'); // Toutes les icônes étoile
+
+        // Effet au survol
+        ratingContainer.addEventListener('mouseover', (event) => {
+            if (event.target.tagName === 'I') {
+                const hoverValue = parseInt(event.target.dataset.value);
+                stars.forEach(star => {
+                    const starValue = parseInt(star.dataset.value);
+                    if (starValue <= hoverValue) {
+                        star.classList.remove('far');
+                        star.classList.add('fas', 'text-yellow-400');
+                    } else {
+                        star.classList.remove('fas', 'text-yellow-400');
+                        star.classList.add('far');
+                    }
+                });
+            }
+        });
+
+        // Réinitialiser au "mouseout" pour afficher la note réellement sélectionnée
+        ratingContainer.addEventListener('mouseout', () => {
+            const currentRating = parseInt(ratingValueInput.value) || 0;
+            updateStarInputDisplay(currentRating); // Réaffiche la note sélectionnée
+        });
+
+        // Sélection au clic
+        ratingContainer.addEventListener('click', (event) => {
+            if (event.target.tagName === 'I') {
+                const clickedValue = parseInt(event.target.dataset.value);
+                ratingValueInput.value = clickedValue; // Met à jour la valeur cachée
+                updateStarInputDisplay(clickedValue); // Met à jour l'affichage permanent
+            }
+        });
+
+         // Bouton Effacer la note
+         if(clearRatingButton) {
+             clearRatingButton.addEventListener('click', () => {
+                 ratingValueInput.value = 0; // Remet la valeur cachée à 0
+                 updateStarInputDisplay(0); // Met à jour l'affichage (toutes vides)
+             });
+         }
+
+    } else {
+        console.error("Conteneur de notation ou input caché introuvable.");
+    }
+
 }); // FIN de DOMContentLoaded

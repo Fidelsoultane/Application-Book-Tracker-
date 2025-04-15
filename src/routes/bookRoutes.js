@@ -124,12 +124,16 @@ router.get('/books', async (req, res) => {
 router.put('/books/:id', async (req, res) => {
   try {
       const { id } = req.params;
-      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes } = req.body;
+      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes, rating } = req.body;
 
       // Validation (similaire à POST)
       if (!title || !author) {
           return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
       }
+      // Validation spécifique pour rating (si fourni)
+      if (rating !== undefined && rating !== null && (typeof rating !== 'number' || rating < 0 || rating > 5)) {
+        return res.status(400).json({ message: 'La note doit être un nombre entre 0 et 5.' });
+   }
       if (startDate && isNaN(Date.parse(startDate))) {
           return res.status(400).json({ message: 'La date de début doit être une date valide.' });
       }
@@ -161,9 +165,11 @@ router.put('/books/:id', async (req, res) => {
               endDate,   // Ajout des dates
               tags,
               notes,
+              rating,
           },
           { new: true, runValidators: true } // Important: runValidators pour la validation Mongoose
       );
+    
 
       if (!updatedBook) {
         return res.status(404).json({ message: "Livre non trouvé." });

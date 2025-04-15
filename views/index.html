@@ -113,6 +113,20 @@
                     <option value="Souhaité">Souhaité</option>
                 </select>
             </div>
+
+            <div class="mb-4">
+                <label class="block text-etagere text-sm font-bold mb-1">Votre Note :</label>
+                <div id="rating-input-container" class="flex items-center text-gray-400 text-2xl">
+                    <i class="far fa-star cursor-pointer hover:text-yellow-400" data-value="1" title="Noter 1/5"></i>
+                    <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="2" title="Noter 2/5"></i>
+                    <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="3" title="Noter 3/5"></i>
+                    <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="4" title="Noter 4/5"></i>
+                    <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="5" title="Noter 5/5"></i>
+                    <button type="button" id="clear-rating-button" class="ml-3 text-xs text-red-500 hover:text-red-700" title="Effacer la note">(Effacer)</button>
+                </div>
+                <input type="hidden" id="book-rating-value" value="0">
+            </div>
+
             <div class="mb-4">
                 <label for="book-startDate" class="block text-etagere text-sm font-bold mb-1">Date de début de lecture:</label>
                 <input type="date" id="book-startDate"

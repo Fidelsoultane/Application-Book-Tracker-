@@ -14,7 +14,13 @@ const bookSchema = new mongoose.Schema({
     startDate: { type: Date },
     endDate: { type: Date },
     tags: { type: [String], default: [] }, // Ajout du champ tags (tableau de strings)
-    notes: { type: String, default: '' } // AJOUT DU CHAMP NOTES
+    notes: { type: String, default: '' }, // AJOUT DU CHAMP NOTES
+    rating: { // AJOUT DU CHAMP RATING
+        type: Number,
+        min: 0,   // Note minimale (0 ou 0.5 si vous voulez des demi-étoiles)
+        max: 5,   // Note maximale
+        default: 0 // Note par défaut (0 signifie non noté)
+    }
 }, { timestamps: true });
 
 const Book = mongoose.model('Book', bookSchema);
