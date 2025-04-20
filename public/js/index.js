@@ -520,76 +520,112 @@ async function searchBooksAPI(query) {
 }
 
 function displayAPISearchResults(results) {
-    console.log("Entrée dans displayAPISearchResults. Tentative de trouver les éléments...");
-    const resultsContainer = document.getElementById('api-search-results');
-    console.log("resultsContainer trouvé:", resultsContainer); // Qu'est-ce qui est logué ici ?
-    const messageElement = document.getElementById('api-search-message');
-    console.log("messageElement trouvé:", messageElement);     // Et ici ?
+    console.log("--- Debug displayAPISearchResults ---"); // Log d'entrée
 
-    if (!resultsContainer || !messageElement) {
-        console.error("Éléments nécessaires pour l'affichage des résultats API non trouvés.");
-        return;
+    const resultsContainer = document.getElementById('api-search-results');
+    if (!resultsContainer) {
+        console.error("Conteneur #api-search-results non trouvé ! Impossible d'afficher les résultats.");
+        return; // Sortie si le conteneur principal manque
     }
 
-    // Vide le contenu précédent (y compris le message "Chargement...")
-    resultsContainer.innerHTML = '';
-    messageElement.textContent = ''; // Vide le message
-    messageElement.classList.add('hidden'); // Cache la zone de message par défaut
+    // Vide seulement les anciens items de résultat (ceux avec la classe .api-result-item)
+    const previousResultItems = resultsContainer.querySelectorAll('.api-result-item');
+    console.log(`Display Results: Nettoyage de ${previousResultItems.length} ancien(s) item(s).`);
+    previousResultItems.forEach(item => item.remove());
+
+    // Récupère ou crée l'élément message à l'intérieur du conteneur
+    let messageElement = resultsContainer.querySelector('#api-search-message'); // Cherche à l'intérieur
+    if (!messageElement) {
+        console.warn("#api-search-message non trouvé, tentative de recréation.");
+        messageElement = document.createElement('p');
+        messageElement.id = 'api-search-message';
+        messageElement.className = 'text-center text-gray-500'; // Applique les classes nécessaires
+        // Ajoute l'élément message au début du conteneur s'il a été recréé
+        resultsContainer.insertBefore(messageElement, resultsContainer.firstChild);
+    }
+    console.log("Display Results: Élément message trouvé ou créé:", messageElement);
+
+    // Assure que le conteneur est visible car on va y mettre quelque chose
+    resultsContainer.classList.remove('hidden');
+    console.log("Display Results: Container classList après remove('hidden'):", resultsContainer.classList.toString());
 
     // Cas 1 : Erreur ou Aucun Résultat
     if (!results || results.length === 0) {
         messageElement.textContent = 'Aucun livre trouvé pour cette recherche.';
         messageElement.classList.remove('hidden'); // Affiche le message
-        resultsContainer.appendChild(messageElement); // Ajoute le message au conteneur
+        console.log("Display Results: Aucun résultat trouvé, message affiché.");
+        // Assure qu'une éventuelle liste précédente (resultList div) est enlevée
+        const oldResultList = resultsContainer.querySelector('.space-y-3'); // Trouve le conteneur de la liste précédente
+        if(oldResultList) oldResultList.remove();
         return; // Sort de la fonction
     }
 
     // Cas 2 : Des résultats ont été trouvés
-    console.log(`Affichage de ${results.length} résultat(s) de l'API.`);
-    const resultList = document.createElement('div'); // Utilise une div comme conteneur principal pour les résultats
-    resultList.className = 'space-y-3'; // Espace vertical entre les résultats
+    console.log(`Display Results: Préparation affichage ${results.length} résultat(s).`);
+    messageElement.textContent = ''; // Vide le message
+    messageElement.classList.add('hidden'); // Cache le message car on a des résultats
 
-    results.forEach(item => {
-        if (!item.volumeInfo) return; // Ignore les items sans volumeInfo
+    // Crée le conteneur pour la nouvelle liste de résultats
+    const resultList = document.createElement('div');
+    resultList.className = 'space-y-3'; // Pour l'espacement vertical des items
 
+    // Boucle sur les résultats reçus de l'API
+    results.forEach((item, index) => {
+        if (!item.volumeInfo) {
+             console.warn(`Display Results: Item ${index + 1} ignoré (pas de volumeInfo)`);
+             return; // Ignore cet item s'il manque volumeInfo
+        }
         const bookInfo = item.volumeInfo;
 
         // Extraction des données (avec gestion des cas où des infos manquent)
         const title = bookInfo.title || 'Titre inconnu';
         const authors = bookInfo.authors ? bookInfo.authors.join(', ') : 'Auteur inconnu';
-        const coverUrl = bookInfo.imageLinks?.thumbnail || bookInfo.imageLinks?.smallThumbnail || 'images/default-book-cover.png';
+        const coverUrl = bookInfo.imageLinks?.thumbnail || bookInfo.imageLinks?.smallThumbnail || 'images/default-book-cover.png'; // Image par défaut locale
         const publisher = bookInfo.publisher || '';
         const publishedDate = bookInfo.publishedDate || '';
-        const pageCount = bookInfo.pageCount || null;
+        const pageCount = bookInfo.pageCount || ''; // Mettre chaîne vide plutôt que null pour dataset
         const genre = bookInfo.categories?.[0] || ''; // Prend la première catégorie
-
-        // Recherche de l'ISBN (13 ou 10)
         let isbn13 = '';
         let isbn10 = '';
         if (bookInfo.industryIdentifiers) {
             isbn13 = bookInfo.industryIdentifiers.find(id => id.type === 'ISBN_13')?.identifier || '';
             isbn10 = bookInfo.industryIdentifiers.find(id => id.type === 'ISBN_10')?.identifier || '';
         }
-        const isbn = isbn13 || isbn10; // Prend ISBN-13 en priorité
+        const isbn = isbn13 || isbn10;
 
         // Création de l'élément HTML pour ce résultat
         const resultItem = document.createElement('div');
-        resultItem.className = 'api-result-item flex items-start p-2 border-b border-gray-200'; // Style pour chaque résultat
+        // Important : ajouter la classe .api-result-item pour pouvoir les supprimer au prochain affichage
+        resultItem.className = 'api-result-item flex items-start p-2 border-b border-gray-200';
+
+        console.log(`Display Results: Création item ${index + 1} - Titre: ${title}`); // LOG CRÉATION ITEM
 
         // Image
         const imgElement = document.createElement('img');
         imgElement.src = coverUrl;
         imgElement.alt = `Couverture de ${title}`;
-        imgElement.className = 'w-16 h-24 object-contain mr-3 flex-shrink-0'; // Taille fixe pour l'image
+        imgElement.className = 'w-16 h-24 object-contain mr-3 flex-shrink-0';
         resultItem.appendChild(imgElement);
 
         // Infos Texte
         const textContainer = document.createElement('div');
         textContainer.className = 'flex-grow';
-        textContainer.innerHTML = `
-            <h4 class="font-semibold text-etagere">${title}</h4>
-            <p class="text-sm text-gray-600">${authors}</p>
-            <p class="text-xs text-gray-500">${publisher ? publisher + ' ' : ''}${publishedDate ? '('+publishedDate.substring(0, 4)+')' : ''}</p> `;
+        // Utilisation de textContent pour éviter les problèmes d'injection HTML simple
+        const titleH4 = document.createElement('h4');
+        titleH4.className = 'font-semibold text-etagere';
+        titleH4.textContent = title;
+        textContainer.appendChild(titleH4);
+
+        const authorP = document.createElement('p');
+        authorP.className = 'text-sm text-gray-600';
+        authorP.textContent = authors;
+        textContainer.appendChild(authorP);
+
+        const pubP = document.createElement('p');
+        pubP.className = 'text-xs text-gray-500';
+        pubP.textContent = `${publisher ? publisher + ' ' : ''}${publishedDate ? '('+publishedDate.substring(0, 4)+')' : ''}`;
+        textContainer.appendChild(pubP);
+
         resultItem.appendChild(textContainer);
 
         // Bouton "Ajouter"
@@ -597,23 +633,24 @@ function displayAPISearchResults(results) {
         addButton.textContent = 'Ajouter';
         addButton.className = 'add-from-api-button bg-green-500 hover:bg-green-700 text-white text-xs font-bold py-1 px-2 rounded ml-2 flex-shrink-0';
 
-        // Stocke TOUTES les données nécessaires pour pré-remplir le formulaire
+        // Stocke TOUTES les données nécessaires dans le dataset
         addButton.dataset.title = title;
-        addButton.dataset.author = authors; // Stocke la chaîne d'auteurs jointe
+        addButton.dataset.author = authors;
         addButton.dataset.coverUrl = coverUrl;
         addButton.dataset.publisher = publisher;
         addButton.dataset.publishedDate = publishedDate;
-        addButton.dataset.pageCount = pageCount || ''; // Stocke chaîne vide si null
+        addButton.dataset.pageCount = pageCount; // pageCount peut être ''
         addButton.dataset.genre = genre;
-        addButton.dataset.isbn = isbn; // Stocke l'ISBN trouvé
+        addButton.dataset.isbn = isbn;
 
-        // L'écouteur de clic sera ajouté via délégation
-        resultItem.appendChild(addButton);
+        resultItem.appendChild(addButton); // Ajoute le bouton à l'item
 
         resultList.appendChild(resultItem); // Ajoute cet item à la liste des résultats
     });
 
-    resultsContainer.appendChild(resultList); // Ajoute la liste complète au conteneur principal
+    console.log("Display Results: Fin de la boucle. resultList contient:", resultList.childNodes.length, "éléments enfants"); // LOG FIN BOUCLE
+    resultsContainer.appendChild(resultList); // Ajoute la nouvelle liste (div) au conteneur principal
+    console.log("Display Results: resultList ajouté au container."); // LOG FINAL APPEND
 }
 
 function updateStarInputDisplay(rating) {
@@ -855,6 +892,17 @@ function displayEtageres(etageres) {
          const sortSelect = document.getElementById('sort-select');
          if (sortSelect) {
              sortSelect.selectedIndex = 0; // Remet à la première option ("-- Non trié --" ou "-- Choisir --")
+         }
+
+          // --- AJOUT : Masquer et vider les résultats de recherche API ---
+        const searchResultsContainer = document.getElementById('api-search-results');
+        if (searchResultsContainer) {
+            searchResultsContainer.classList.add('hidden');
+            searchResultsContainer.innerHTML = ''; // Vide aussi le contenu
+        }
+        const searchInputApi = document.getElementById('api-search-input');
+        if (searchInputApi) { // Optionnel : vider aussi le champ de recherche API
+             searchInputApi.value = '';
          }
 
          applyFilterOrSort();
@@ -1165,33 +1213,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Gestion de la Recherche API par Titre ---
-    const searchInput = document.getElementById('api-search-input');
+    const searchInput = document.getElementById('api-search-input'); // Récupéré à nouveau pour clarté
     const searchButton = document.getElementById('api-search-button');
-    const searchResultsContainer = document.getElementById('api-search-results');
-    const searchMessageElement = document.getElementById('api-search-message');
+    const searchResultsContainer = document.getElementById('api-search-results'); // Conteneur principal
+    const searchMessageElement = document.getElementById('api-search-message'); // Élément pour messages
 
-    if (searchButton && searchInput && searchResultsContainer && searchMessageElement) { // Vérifie que tous les éléments existent
+    if (searchButton && searchInput && searchResultsContainer && searchMessageElement) {
+        searchButton.addEventListener('click', async () => {
+            const query = searchInput.value.trim();
+            if (!query) { /* ... gestion erreur ... */ return; }
 
-        searchButton.addEventListener('click', async () => { // async car on attend searchBooksAPI
-            const query = searchInput.value.trim(); // Récupère la recherche de l'utilisateur
-
-            if (!query) {
-                displayError("Veuillez entrer un titre à rechercher.");
-                searchInput.focus(); // Remet le focus sur le champ
-                return;
+            // 1. Préparer la zone de résultats : AFFICHER "chargement" dans l'élément message
+            searchResultsContainer.innerHTML = ''; // Vide anciens résultats/messages DANS le conteneur
+            // Recrée ou récupère l'élément message à l'intérieur
+            let msgElem = document.getElementById('api-search-message');
+            if (!msgElem) {
+                 msgElem = document.createElement('p');
+                 msgElem.id = 'api-search-message';
+                 msgElem.className = 'text-center text-gray-500';
+                 searchResultsContainer.appendChild(msgElem);
             }
+            msgElem.textContent = 'Recherche en cours...';
+            msgElem.classList.remove('hidden');
+            searchResultsContainer.classList.remove('hidden'); // REND LE CONTENEUR VISIBLE ICI
 
-            // 1. Préparer la zone de résultats (afficher "chargement")
-            searchMessageElement.textContent = 'Recherche en cours...'; // Affiche message de chargement
-            searchMessageElement.classList.remove('hidden'); // Assure que le message est visible
-            searchResultsContainer.classList.remove('hidden'); // Assure que le conteneur est visible
+            console.log("Search Click: Container rendu visible, affichage chargement."); // LOG DEBUG
 
             // 2. Appeler la fonction de recherche API
-            const results = await searchBooksAPI(query); // Appelle la fonction que nous avons créée
+            const results = await searchBooksAPI(query);
 
-            // 3. Afficher les résultats (ou un message si aucun résultat/erreur)
-            // La fonction displayAPISearchResults s'occupera de masquer/modifier le message
-            displayAPISearchResults(results); // Appelle la fonction d'affichage (à créer ensuite)
+            // 3. Afficher les résultats (displayAPISearchResults gérera la visibilité finale)
+            displayAPISearchResults(results);
         });
 
         // Optionnel : Déclencher la recherche en appuyant sur "Entrée" dans le champ de recherche
@@ -1204,6 +1256,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } else {
         console.error("Élément(s) manquant(s) pour la recherche API par titre.");
+    }
+
+    // --- Gestion du VIDAGE du champ de recherche API titre --- (NOUVEAU)
+    const searchInputForClear = document.getElementById('api-search-input'); // Récupère l'input à nouveau si besoin
+    const searchResultsContainerForClear = document.getElementById('api-search-results'); // Récupère le conteneur
+
+    if (searchInputForClear && searchResultsContainerForClear) {
+        searchInputForClear.addEventListener('input', () => {
+            // Si l'utilisateur efface le champ, on cache et vide les résultats
+            if (searchInputForClear.value.trim() === '') {
+                searchResultsContainerForClear.classList.add('hidden');
+                searchResultsContainerForClear.innerHTML = ''; // Vide le contenu
+                 // Optionnel: Vider aussi le message P
+                 const msgElem = document.getElementById('api-search-message');
+                 if(msgElem) msgElem.textContent = '';
+
+                 console.log("Champ de recherche API vidé, résultats cachés."); // Log débogage
+            }
+        });
     }
 
     // --- Gestion du clic sur le bouton "Ajouter" dans les résultats de recherche API --- (NOUVEAU BLOC)
