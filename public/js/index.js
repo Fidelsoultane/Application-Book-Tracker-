@@ -131,6 +131,32 @@ function createBookCard(book) {
         textInfo.appendChild(ratingContainer);
     }
 
+    // --- Affichage de la Progression --- (NOUVEAU BLOC)
+    if (book.status === 'En cours' && book.pageCount && book.pageCount > 0) {
+        const progressContainer = createElementWithClasses('div', 'mt-1 text-xs text-gray-600');
+        const currentPage = book.currentPage || 0;
+        // Assurez-vous que pageCount est bien un nombre pour le calcul
+        const totalPages = parseInt(book.pageCount) || 0;
+        const percentage = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0; // Évite division par zéro
+        progressContainer.textContent = `Progression : ${currentPage} / ${totalPages} pages (${percentage}%)`;
+        // Barre de progression (optionnel, mais sympa)
+        const progressBarContainer = createElementWithClasses('div', 'w-full bg-gray-200 rounded-full h-1.5 mt-1');
+        const progressBar = createElementWithClasses('div', 'bg-blue-500 h-1.5 rounded-full');
+        progressBar.style.width = `${percentage}%`; // Définit la largeur en %
+        progressBarContainer.appendChild(progressBar);
+        progressContainer.appendChild(progressBarContainer); // Ajoute la barre sous le texte
+
+        // Ajouter après les étoiles de notation ou le genre
+        const ratingElement = card.querySelector('.text-yellow-400'); // Trouve les étoiles
+        if (ratingElement) {
+            ratingElement.insertAdjacentElement('afterend', progressContainer);
+        } else {
+             const genreElement = card.querySelector('p.text-xs.text-gray-500:last-of-type'); // Trouve le genre ou autre dernier élément
+              if (genreElement) genreElement.insertAdjacentElement('afterend', progressContainer);
+              else textInfo.appendChild(progressContainer); // Fallback
+        }
+    }
+
     content.appendChild(textInfo); // Ajoute le bloc d'infos principales AU CONTENEUR SCROLLABLE
 
     // --- Section Infos Secondaires & Tags ---
@@ -364,6 +390,8 @@ async function editBook(book) {
     document.getElementById('book-author').value = Array.isArray(book.author) ? book.author.join(', ') : (book.author || ''); // Gère le tableau d'auteurs
     document.getElementById('book-isbn').value = book.isbn || '';
     document.getElementById('book-status').value = book.status || 'À lire';
+    document.getElementById('book-pageCount').value = book.pageCount || '';
+    document.getElementById('book-currentPage').value = book.currentPage || '0'; // Pré-remplit currentPage
     document.getElementById('book-genre').value = book.genre || ''; // Pré-remplit le genre
     document.getElementById('book-publisher').value = book.publisher || '';
     document.getElementById('book-publishedDate').value = book.publishedDate || '';
@@ -403,6 +431,9 @@ if (notesTextArea) notesTextArea.value = '';
     if (genreSelect) genreSelect.selectedIndex = 0; // Remet à la première option
 
     updateStarInputDisplay(0); // Réinitialise les étoiles visuellement et l'input caché à 0
+
+    const currentPageInput = document.getElementById('book-currentPage');
+    if (currentPageInput) currentPageInput.value = '0'; // Remet à 0
 
 
     const addBookButton = document.getElementById("add-book-button");
@@ -691,7 +722,8 @@ async function handleFormSubmit(event) {
     const coverUrl = document.getElementById('book-coverUrl').value;
     const publisher = document.getElementById('book-publisher').value;
     const publishedDate = document.getElementById('book-publishedDate').value;
-    const pageCount = document.getElementById('book-pageCount').value;
+    const pageCount = parseInt(document.getElementById('book-pageCount').value) || null; // Convertit en nombre ou null
+    const currentPage = parseInt(document.getElementById('book-currentPage').value) || 0; // Convertit en nombre, défaut 0
     const genre = document.getElementById('book-genre').value;
     const startDate = document.getElementById('book-startDate').value || null; // Envoyer null si vide
     const endDate = document.getElementById('book-endDate').value || null;     // Envoyer null si vide
@@ -700,9 +732,16 @@ async function handleFormSubmit(event) {
     const notes = document.getElementById('book-notes').value.trim(); // RÉCUPÈRE LES NOTES
     // RÉCUPÈRE LA NOTE depuis l'input caché (Convertit en nombre entier)
     const rating = parseInt(document.getElementById('book-rating-value').value) || 0;
+    
 
 
     let bookData; // Déclaration de bookData *avant* le if/else
+
+    // Validation simple currentPage vs pageCount côté client (optionnel)
+    if (pageCount !== null && currentPage > pageCount) {
+        displayError(`La page actuelle (<span class="math-inline">\{currentPage\}\) ne peut pas dépasser le nombre total de pages \(</span>{pageCount}).`);
+        return; // Arrête la soumission
+   }
 
     if (isbn && !bookId) { // Recherche ISBN seulement si on AJOUTE un livre (pas de bookId)
         const fetchedData = await fetchBookDataFromISBN(isbn);
@@ -725,7 +764,8 @@ async function handleFormSubmit(event) {
                 tags: tags,
                 notes: notes, // AJOUTÉ ICI
                 isbn: isbn, // Assure que l'ISBN est bien là
-                rating
+                rating,
+                currentPage,
              };
             console.log("bookData après récupération de l'API et fusion:", bookData);
         } else {
@@ -735,7 +775,7 @@ async function handleFormSubmit(event) {
                  return; // Sortir si l'ISBN est invalide ET les infos manuelles manquent
             }
              console.log("ISBN non trouvé, ajout manuel avec les données saisies.");
-             bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes, rating };
+             bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes, rating, currentPage };
         }
     } else {
         // Pas d'ISBN fourni OU Modification (bookId existe)
@@ -745,8 +785,8 @@ async function handleFormSubmit(event) {
         }
         // Pour la modification (bookId existe), on utilise les données du formulaire
         // Pour l'ajout manuel (pas d'ISBN), on utilise aussi les données du formulaire
-        bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes, rating };
-        console.log("bookData pour ajout manuel ou modification:", bookData);
+        bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes, rating, currentPage };
+        console.log("Données finales envoyées (avec currentPage):", bookData);
     }
 
     // --- Envoi au serveur ---

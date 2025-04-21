@@ -7,7 +7,7 @@ const Book = require('../models/Book');
 // Ajouter un livre
 router.post('/books', async (req, res) => {
   try {
-      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes } = req.body;
+      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes, rating, currentPage } = req.body;
 
       // Validation (plus complète, incluant les dates)
       if (!title) {
@@ -29,6 +29,19 @@ router.post('/books', async (req, res) => {
           return res.status(400).json({ message: 'La date de début doit être antérieure à la date de fin.' });
       }
 
+      // Validation pour currentPage (si fourni)
+      if (currentPage !== undefined && (typeof currentPage !== 'number' || currentPage < 0)) {
+        return res.status(400).json({ message: 'La page actuelle doit être un nombre positif ou zéro.' });
+   }
+   // Validation pour pageCount (si fourni)
+    if (pageCount !== undefined && (typeof pageCount !== 'number' || pageCount < 0)) {
+        return res.status(400).json({ message: 'Le nombre de pages doit être un nombre positif ou zéro.' });
+   }
+   // Validation currentPage <= pageCount (si les deux sont fournis)
+    if (pageCount !== undefined && currentPage !== undefined && currentPage > pageCount) {
+        return res.status(400).json({ message: 'La page actuelle ne peut pas dépasser le nombre total de pages.' });
+    }
+
 
       const newBook = new Book({
           title,
@@ -44,6 +57,8 @@ router.post('/books', async (req, res) => {
           endDate,   // Ajout des dates
           tags,
           notes,
+          rating,
+          currentPage: currentPage || 0,
       });
 
       console.log("Objet newBook (avec notes):", newBook);
@@ -124,7 +139,7 @@ router.get('/books', async (req, res) => {
 router.put('/books/:id', async (req, res) => {
   try {
       const { id } = req.params;
-      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes, rating } = req.body;
+      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes, rating, currentPage } = req.body;
 
       // Validation (similaire à POST)
       if (!title || !author) {
@@ -143,6 +158,21 @@ router.put('/books/:id', async (req, res) => {
      if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
           return res.status(400).json({message: 'La date de début doit être antérieure à la date de fin'});
       }
+
+      if (currentPage !== undefined && currentPage !== null && (typeof currentPage !== 'number' || currentPage < 0)) {
+        return res.status(400).json({ message: 'La page actuelle doit être un nombre positif ou zéro.' });
+     }
+      // Validation pour pageCount (si fourni)
+      if (pageCount !== undefined && pageCount !== null && (typeof pageCount !== 'number' || pageCount < 0)) {
+         return res.status(400).json({ message: 'Le nombre de pages doit être un nombre positif ou zéro.' });
+      }
+       // Validation currentPage <= pageCount (si les deux sont fournis)
+       // Attention: il faut récupérer pageCount du document existant si pageCount n'est pas dans req.body
+       const existingPageCount = pageCount !== undefined ? pageCount : (await Book.findById(id, 'pageCount'))?.pageCount;
+       if (existingPageCount !== undefined && currentPage !== undefined && currentPage !== null && currentPage > existingPageCount) {
+          return res.status(400).json({ message: `La page actuelle (<span class="math-inline">\{currentPage\}\) ne peut pas dépasser le nombre total de pages \(</span>{existingPageCount}).` });
+       }
+
 
       const existingBook = await Book.findById(id); // Vérifie si le livre existe
       if (!existingBook) {
@@ -166,6 +196,7 @@ router.put('/books/:id', async (req, res) => {
               tags,
               notes,
               rating,
+              currentPage,
           },
           { new: true, runValidators: true } // Important: runValidators pour la validation Mongoose
       );

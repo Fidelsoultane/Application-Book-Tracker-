@@ -15,12 +15,12 @@ const bookSchema = new mongoose.Schema({
     endDate: { type: Date },
     tags: { type: [String], default: [] }, // Ajout du champ tags (tableau de strings)
     notes: { type: String, default: '' }, // AJOUT DU CHAMP NOTES
-    rating: { // AJOUT DU CHAMP RATING
+    rating: { type: Number, min: 0, max: 5, default: 0 },
+    currentPage: { // AJOUT DU CHAMP PAGE ACTUELLE
         type: Number,
-        min: 0,   // Note minimale (0 ou 0.5 si vous voulez des demi-étoiles)
-        max: 5,   // Note maximale
-        default: 0 // Note par défaut (0 signifie non noté)
-    }
+        min: 0,      // Ne peut pas être négatif
+        default: 0   // Page par défaut
+        }
 }, { timestamps: true });
 
 // --- AJOUT DES INDEX ---
