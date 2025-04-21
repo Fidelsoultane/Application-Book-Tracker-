@@ -65,145 +65,150 @@ function displaySuccessMessage(message) {
 }
 
 function createBookCard(book) {
-    const card = createElementWithClasses('div', 'bg-white rounded-lg shadow-md pt-10 p-4 relative');
+    // --- Conteneur Principal de la Carte ---
+    // Hauteur fixe (ex: h-[30rem] = 480px). Ajustez cette valeur si nécessaire !
+    // overflow-hidden sur la carte principale pour s'assurer que rien ne dépasse globalement.
+    const card = createElementWithClasses('div', 'book-card w-64 h-[30rem] bg-white rounded-lg shadow-lg overflow-hidden flex flex-col transition-shadow duration-300 hover:shadow-xl relative');
     card.dataset.bookId = book._id;
 
-    const imgContainer = createElementWithClasses('div', 'flex justify-center');
-    const img = createElementWithClasses('img', 'book-cover h-48 w-48 object-cover rounded-md');
-    img.src = book.coverUrl || 'images/default-book-cover.png'; // Utilisez le chemin correct
+    // --- Image de Couverture ---
+    const imgContainer = createElementWithClasses('div', 'h-48 w-full flex items-center justify-center bg-gray-100 flex-shrink-0'); // Hauteur réduite à h-48 peut-être ?
+    const img = createElementWithClasses('img', 'book-cover object-contain h-full w-full');
+    img.src = book.coverUrl || 'images/default-book-cover.png';
     img.alt = `Couverture de ${book.title}`;
     imgContainer.appendChild(img);
     card.appendChild(imgContainer);
 
-    const title = createElementWithClasses('h3', 'text-lg font-semibold mt-2 text-gray-800');
-    title.textContent = book.title;
-    card.appendChild(title);
+    // --- Conteneur pour le Contenu Textuel (qui peut défiler) ---
+    const content = createElementWithClasses('div', 'p-4 flex-grow flex flex-col justify-between overflow-y-auto');
 
-    const author = createElementWithClasses('p', 'text-gray-600');
+
+    // --- Section Infos Principales ---
+    const textInfo = document.createElement('div'); // Ce conteneur ne scrollera pas directement
+
+    // Titre (SANS truncate)
+    const title = createElementWithClasses('h3', 'text-lg font-bold text-etagere mb-1');
+    title.textContent = book.title || 'Titre inconnu';
+    textInfo.appendChild(title);
+
+    // Auteur (SANS truncate)
+    const author = createElementWithClasses('p', 'text-sm text-gray-700 mb-2');
     author.textContent = Array.isArray(book.author) ? book.author.join(', ') : (book.author || 'Auteur inconnu');
-    card.appendChild(author);
+    textInfo.appendChild(author);
 
-    const status = createElementWithClasses('p', 'text-sm text-gray-500 mt-1');
-    status.textContent = `Statut: ${book.status}`;
-    card.appendChild(status);
-
-    if (book.publisher) {
-        const publisher = createElementWithClasses('p', 'text-sm text-gray-500');
-        publisher.textContent = `Éditeur: ${book.publisher}`;
-        card.appendChild(publisher);
+    // Statut et Indicateur de Notes
+    const statusContainer = createElementWithClasses('div', 'flex items-center text-xs text-accent mb-1');
+    const statusText = document.createElement('span');
+    statusText.textContent = `Statut : ${book.status || 'Non défini'}`;
+    statusContainer.appendChild(statusText);
+    if (book.notes && book.notes.trim() !== '') {
+        const noteIndicatorContainer = createElementWithClasses('span', 'ml-2');
+        const noteIndicatorIcon = createElementWithClasses('i', 'note-indicator-icon far fa-sticky-note text-gray-500 cursor-pointer hover:text-blue-600');
+        noteIndicatorIcon.title = "Voir les notes";
+        noteIndicatorIcon.addEventListener('click', (e) => { e.stopPropagation(); showNoteModal(book); });
+        noteIndicatorContainer.appendChild(noteIndicatorIcon);
+        statusContainer.appendChild(noteIndicatorContainer);
     }
+    textInfo.appendChild(statusContainer);
 
-    if (book.publishedDate) {
-        const publishedDate = createElementWithClasses('p', 'text-sm text-gray-500');
-        publishedDate.textContent = `Date de publication: ${book.publishedDate}`;
-        card.appendChild(publishedDate);
-    }
-
-    if (book.pageCount) {
-        const pageCount = createElementWithClasses('p', 'text-sm text-gray-500');
-        pageCount.textContent = `Nombre de pages: ${book.pageCount}`;
-        card.appendChild(pageCount);
-    }
-
-    if (book.isbn) {
-        const isbn = createElementWithClasses('p', 'text-sm text-gray-500');
-        isbn.textContent = `ISBN: ${book.isbn}`;
-        card.appendChild(isbn);
-    }
+    // Genre
     if (book.genre) {
-        const genre = createElementWithClasses('p', 'text-sm text-gray-500');
-        genre.textContent = `Genre: ${book.genre}`;
-        card.appendChild(genre);
+        const genre = createElementWithClasses('p', 'text-xs text-gray-500 mb-2');
+        genre.textContent = `Genre : ${book.genre}`;
+        textInfo.appendChild(genre);
     }
 
-    // --- Affichage de la Notation (Étoiles Statiques sur la carte) ---
-    if (book.rating !== undefined && book.rating !== null && book.rating > 0) { // Affiche si note > 0
-        const ratingContainer = createElementWithClasses('div', 'text-yellow-400 mt-1 mb-2'); // Conteneur + couleur
-        ratingContainer.title = `Note : ${book.rating} / 5`; // Infobulle
-
-        for (let i = 1; i <= 5; i++) { // Boucle 5 fois
-            const starIcon = createElementWithClasses('i', 'fa-star mr-0.5'); // Icône étoile + petite marge
-            if (i <= book.rating) {
-                starIcon.classList.add('fas'); // fas = étoile pleine (Font Awesome Solid)
-            } else {
-                starIcon.classList.add('far'); // far = étoile vide (Font Awesome Regular)
-            }
+     // Notation (Étoiles Statiques)
+     if (book.rating !== undefined && book.rating !== null && book.rating > 0) {
+        const ratingContainer = createElementWithClasses('div', 'text-yellow-400 mt-1 mb-2');
+        ratingContainer.title = `Note : ${book.rating} / 5`;
+        for (let i = 1; i <= 5; i++) {
+            const starIcon = createElementWithClasses('i', 'fa-star mr-0.5');
+            if (i <= book.rating) starIcon.classList.add('fas');
+            else starIcon.classList.add('far');
             ratingContainer.appendChild(starIcon);
         }
-        // Insertion dans la carte (ajustez le sélecteur si besoin)
-        const textInfoContainer = card.querySelector('.p-4 > div:first-of-type'); // Cible le div des infos principales
-        if (textInfoContainer) textInfoContainer.appendChild(ratingContainer);
-        else card.appendChild(ratingContainer); // Fallback
+        textInfo.appendChild(ratingContainer);
     }
 
-     // --- Affichage de l'indicateur de notes --- (NOUVEAU BLOC)
-     if (book.notes && book.notes.trim() !== '') {
-        const noteIndicatorContainer = createElementWithClasses('span', 'ml-2'); // Conteneur pour l'icône
+    content.appendChild(textInfo); // Ajoute le bloc d'infos principales AU CONTENEUR SCROLLABLE
 
-        const noteIndicatorIcon = createElementWithClasses('i', 'note-indicator-icon far fa-sticky-note text-gray-400 cursor-pointer hover:text-blue-500'); // Ajout cursor-pointer et classe
-        noteIndicatorIcon.title = "Voir les notes"; // Infobulle
+    // --- Section Infos Secondaires & Tags ---
+    const secondaryInfo = document.createElement('div');
+    // Pas besoin de mt-auto ici car le conteneur parent scroll
+    secondaryInfo.className = 'border-t border-gray-200 pt-2 mt-2'; // Ajoute une marge top manuellement
 
-        // Ajout de l'écouteur de clic sur l'icône
-        noteIndicatorIcon.addEventListener('click', (event) => {
-            event.stopPropagation(); // Empêche le clic de remonter (ex: au LI parent)
-            showNoteModal(book); // Appelle la fonction pour afficher la modale
-        });
-
-        noteIndicatorContainer.appendChild(noteIndicatorIcon);
-
-        // Ajouter l'indicateur (par exemple, après le statut)
-        const statusElement = card.querySelector('p.text-sm.text-gray-500');
-        if (statusElement) {
-            statusElement.appendChild(noteIndicatorContainer);
-        } else {
-            card.appendChild(noteIndicatorContainer);
-        }
+    // Éditeur, Date Pub, Pages, ISBN (SANS truncate)
+    if (book.publisher) {
+        const publisher = createElementWithClasses('p', 'text-xs text-gray-500');
+        publisher.textContent = `Éditeur: ${book.publisher}`;
+        secondaryInfo.appendChild(publisher);
+    }
+    if (book.publishedDate) {
+        const publishedDate = createElementWithClasses('p', 'text-xs text-gray-500');
+        publishedDate.textContent = `Publication: ${book.publishedDate}`;
+        secondaryInfo.appendChild(publishedDate);
+    }
+     if (book.pageCount) {
+        const pageCount = createElementWithClasses('p', 'text-xs text-gray-500');
+        pageCount.textContent = `Pages: ${book.pageCount}`;
+        secondaryInfo.appendChild(pageCount);
+    }
+    if (book.isbn) {
+        const isbn = createElementWithClasses('p', 'text-xs text-gray-500');
+        isbn.textContent = `ISBN: ${book.isbn}`;
+        secondaryInfo.appendChild(isbn);
     }
 
-    // Affichage des dates de début et de fin (conditionnel)
+    // Dates de lecture
     if (book.startDate) {
-        const startDate = createElementWithClasses('p', 'text-sm text-gray-500');
-        startDate.textContent = `Début de lecture: ${new Date(book.startDate).toLocaleDateString()}`; // Formatage de la date
-        card.appendChild(startDate);
+        const startDate = createElementWithClasses('p', 'text-xs text-gray-500 mt-1');
+        startDate.textContent = `Début : ${new Date(book.startDate).toLocaleDateString()}`;
+        secondaryInfo.appendChild(startDate);
     }
-
     if (book.endDate) {
-        const endDate = createElementWithClasses('p', 'text-sm text-gray-500');
-        endDate.textContent = `Fin de lecture: ${new Date(book.endDate).toLocaleDateString()}`;  // Formatage de la date
-        card.appendChild(endDate);
+        const endDate = createElementWithClasses('p', 'text-xs text-gray-500');
+        endDate.textContent = `Fin : ${new Date(book.endDate).toLocaleDateString()}`;
+        secondaryInfo.appendChild(endDate);
     }
 
-    const actionsContainer = createElementWithClasses('div', 'absolute top-2 right-2 flex space-x-2');
-    const editButton = createElementWithClasses('button', 'edit-button bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs');
-    editButton.innerHTML = '&#9998;'; // Utiliser Font Awesome <i class="fas fa-pencil-alt"></i> si intégré
-    editButton.addEventListener('click', () => editBook(book));
+    // Tags
+    if (book.tags && book.tags.length > 0) {
+        const tagsContainer = createElementWithClasses('div', 'mt-2 flex flex-wrap');
+        book.tags.forEach(tag => {
+            const tagElement = createElementWithClasses('a', 'tag-link bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-xs mr-1 mb-1 cursor-pointer hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400');
+            tagElement.textContent = tag;
+            tagElement.dataset.tag = tag;
+            tagElement.href = "#";
+            tagsContainer.appendChild(tagElement);
+        });
+        secondaryInfo.appendChild(tagsContainer);
+    }
+
+    content.appendChild(secondaryInfo); // Ajoute le bloc d'infos secondaires/tags AU CONTENEUR SCROLLABLE
+    card.appendChild(content); // Ajoute le conteneur SCROLLABLE à la carte
+
+    // --- Boutons d'Action (positionnés absolument par rapport à 'card') ---
+    const actionsContainer = createElementWithClasses('div', 'absolute top-2 right-2 flex space-x-1'); // Reste absolute
+    const editButton = createElementWithClasses('button', 'edit-button bg-blue-500 hover:bg-blue-700 text-white font-bold p-1 rounded text-xs leading-none');
+    editButton.innerHTML = '<i class="fas fa-pencil-alt w-3 h-3"></i>';
+    editButton.title = "Modifier";
+    editButton.addEventListener('click', (e) => { e.stopPropagation(); editBook(book); });
     actionsContainer.appendChild(editButton);
 
-    const deleteButton = createElementWithClasses('button', 'delete-button bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs');
-    deleteButton.innerHTML = '&#10006;'; // Utiliser Font Awesome <i class="fas fa-trash"></i> si intégré
-    deleteButton.addEventListener('click', () => deleteBook(book._id));
+    const deleteButton = createElementWithClasses('button', 'delete-button bg-red-500 hover:bg-red-700 text-white font-bold p-1 rounded text-xs leading-none');
+    deleteButton.innerHTML = '<i class="fas fa-trash w-3 h-3"></i>';
+    deleteButton.title = "Supprimer";
+    deleteButton.addEventListener('click', (e) => {
+         e.stopPropagation();
+         if (confirm(`Êtes-vous sûr de vouloir supprimer "${book.title}" ?`)) { deleteBook(book._id); }
+    });
     actionsContainer.appendChild(deleteButton);
-     // Affichage des tags
-     if (book.tags && book.tags.length > 0) {
-        const tagsContainer = createElementWithClasses('div', 'mt-2 flex flex-wrap'); // Le conteneur
-        book.tags.forEach(tag => {
-            // Crée un lien <a> pour chaque tag
-            const tagElement = createElementWithClasses('a', 'tag-link bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-xs mr-1 mb-1 cursor-pointer hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400'); // Ajout de classes cliquables
-            tagElement.textContent = tag;
-            tagElement.dataset.tag = tag; // Stocke le nom du tag
-            tagElement.href = "#"; // Empêche le comportement par défaut mais rend cliquable
-              // L'écouteur sera ajouté via délégation sur #book-list
-              tagsContainer.appendChild(tagElement);
-            });
-            card.appendChild(tagsContainer);
-        }
 
-
-    card.appendChild(actionsContainer);
+    card.appendChild(actionsContainer); // Ajoute les boutons (toujours en absolu)
 
     return card;
 }
-
 // --- NOUVELLE FONCTION : Afficher la modale de note ---
 function showNoteModal(book) {
     const modal = document.getElementById('note-modal');
