@@ -710,11 +710,29 @@ function updateStarInputDisplay(rating) {
      if(ratingValueInput) ratingValueInput.value = rating;
 }
 
+function prefillBookForm(bookData) {
+    console.log("Pré-remplissage du formulaire avec:", bookData);
+
+    document.getElementById('book-title').value = bookData.title || '';
+    // Gère le cas où l'auteur de l'API est un tableau
+    document.getElementById('book-author').value = Array.isArray(bookData.author) ? bookData.author.join(', ') : (bookData.author || '');
+    document.getElementById('book-coverUrl').value = bookData.coverUrl || '';
+    document.getElementById('book-publisher').value = bookData.publisher || '';
+    document.getElementById('book-publishedDate').value = bookData.publishedDate || '';
+    document.getElementById('book-pageCount').value = bookData.pageCount || '';
+    document.getElementById('book-genre').value = bookData.genre || '';
+    document.getElementById('book-isbn').value = bookData.isbn || ''; // Met aussi à jour l'ISBN si trouvé via titre par ex.
+
+    // Optionnel : Mettre à jour le menu déroulant genre si pas déjà fait
+     populateGenreDropdown(bookData.genre); // Assurez-vous que cette fonction existe
+}
+
 // --------- Gestion du formulaire ---------
 async function handleFormSubmit(event) {
     event.preventDefault();
 
     const bookId = document.getElementById('book-id').value;
+    // Récupère TOUTES les valeurs ACTUELLES du formulaire
     const isbn = document.getElementById('book-isbn').value;
     const title = document.getElementById('book-title').value;
     const author = document.getElementById('book-author').value;
@@ -723,76 +741,38 @@ async function handleFormSubmit(event) {
     const publisher = document.getElementById('book-publisher').value;
     const publishedDate = document.getElementById('book-publishedDate').value;
     const pageCount = parseInt(document.getElementById('book-pageCount').value) || null; // Convertit en nombre ou null
-    const currentPage = parseInt(document.getElementById('book-currentPage').value) || 0; // Convertit en nombre, défaut 0
     const genre = document.getElementById('book-genre').value;
-    const startDate = document.getElementById('book-startDate').value || null; // Envoyer null si vide
-    const endDate = document.getElementById('book-endDate').value || null;     // Envoyer null si vide
+    const startDate = document.getElementById('book-startDate').value || null;
+    const endDate = document.getElementById('book-endDate').value || null;
     const tagsString = document.getElementById('book-tags').value;
     const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()).filter(tag => tag !== "") : [];
-    const notes = document.getElementById('book-notes').value.trim(); // RÉCUPÈRE LES NOTES
-    // RÉCUPÈRE LA NOTE depuis l'input caché (Convertit en nombre entier)
+    const notes = document.getElementById('book-notes').value.trim();
     const rating = parseInt(document.getElementById('book-rating-value').value) || 0;
-    
+     const currentPage = parseInt(document.getElementById('book-currentPage').value) || 0; // Récupère currentPage
 
-
-    let bookData; // Déclaration de bookData *avant* le if/else
-
-    // Validation simple currentPage vs pageCount côté client (optionnel)
-    if (pageCount !== null && currentPage > pageCount) {
-        displayError(`La page actuelle (<span class="math-inline">\{currentPage\}\) ne peut pas dépasser le nombre total de pages \(</span>{pageCount}).`);
-        return; // Arrête la soumission
-   }
-
-    if (isbn && !bookId) { // Recherche ISBN seulement si on AJOUTE un livre (pas de bookId)
-        const fetchedData = await fetchBookDataFromISBN(isbn);
-
-        if (fetchedData) {
-            // Fusionne les données de l'API avec les données du formulaire (pour status, startDate, endDate, tags, genre)
-            // Priorise les valeurs du formulaire si elles existent
-            bookData = {
-                ...fetchedData,
-                title: title || fetchedData.title, // Garde le titre du formulaire si saisi
-                author: author || fetchedData.author, // Garde l'auteur du formulaire si saisi
-                status: status || "À lire",
-                coverUrl: coverUrl || fetchedData.coverUrl,
-                publisher: publisher || fetchedData.publisher,
-                publishedDate: publishedDate || fetchedData.publishedDate,
-                pageCount: pageCount || fetchedData.pageCount,
-                genre: genre || fetchedData.genre,
-                startDate: startDate,
-                endDate: endDate,
-                tags: tags,
-                notes: notes, // AJOUTÉ ICI
-                isbn: isbn, // Assure que l'ISBN est bien là
-                rating,
-                currentPage,
-             };
-            console.log("bookData après récupération de l'API et fusion:", bookData);
-        } else {
-            // Si la recherche ISBN échoue MAIS que l'utilisateur a rempli le titre/auteur, on continue en manuel
-            if (!title || !author) {
-    
-                 return; // Sortir si l'ISBN est invalide ET les infos manuelles manquent
-            }
-             console.log("ISBN non trouvé, ajout manuel avec les données saisies.");
-             bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes, rating, currentPage };
-        }
-    } else {
-        // Pas d'ISBN fourni OU Modification (bookId existe)
-        if (!title || !author) {
-            displayError("Veuillez remplir les champs titre et auteur.");
-            return;
-        }
-        // Pour la modification (bookId existe), on utilise les données du formulaire
-        // Pour l'ajout manuel (pas d'ISBN), on utilise aussi les données du formulaire
-        bookData = { title, author, status, coverUrl, isbn, publisher, publishedDate, pageCount, genre, startDate, endDate, tags, notes, rating, currentPage };
-        console.log("Données finales envoyées (avec currentPage):", bookData);
+    // Validation de base
+    if (!title || !author) {
+        displayError("Veuillez remplir les champs titre et auteur.");
+        return;
     }
+     // Validation currentPage vs pageCount
+     if (pageCount !== null && currentPage > pageCount) {
+         displayError(`La page actuelle (<span class="math-inline">\{currentPage\}\) ne peut pas dépasser le nombre total de pages \(</span>{pageCount}).`);
+         return;
+     }
+
+    // Construit l'objet de données DIRECTEMENT à partir des champs du formulaire
+    const bookData = {
+        title, author, status, coverUrl, isbn, publisher, publishedDate,
+        pageCount, genre, startDate, endDate, tags, notes, rating, currentPage // Inclut toutes les données
+    };
+
+    console.log("Données finales envoyées au serveur :", bookData);
 
     // --- Envoi au serveur ---
     try {
         let response;
-        let method = bookId ? 'PUT' : 'POST'; // Détermine la méthode HTTP
+        let method = bookId ? 'PUT' : 'POST';
         let apiUrl = bookId ? `/api/books/${bookId}` : '/api/books';
 
         response = await fetch(apiUrl, {
@@ -802,29 +782,27 @@ async function handleFormSubmit(event) {
         });
 
         if (!response.ok) {
-             // Essayons d'obtenir plus de détails sur l'erreur du serveur
-            let errorMsg = `Erreur HTTP: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMsg = errorData.message || errorMsg;
-            } catch (e) {/* Ignore */}
-            throw new Error(errorMsg);
+           let errorMsg = `Erreur HTTP: ${response.status}`;
+           try { const errorData = await response.json(); errorMsg = errorData.message || errorMsg; } catch (e) {/* Ignore */}
+           throw new Error(errorMsg);
         }
-        displaySuccessMessage(bookId ? "Livre modifié avec succès !" : "Livre ajouté avec succès !"); // Message de succès
-        fetchBooks(); // Recharge la liste des livres
-        resetForm(); // Réinitialise et cache le formulaire
+
+        displaySuccessMessage(bookId ? "Livre modifié !" : "Livre ajouté !");
+        fetchBooks();
+        resetForm();
         const bookFormElement = document.getElementById('book-form');
         if(bookFormElement) bookFormElement.classList.add('hidden');
-
         const searchInputApi = document.getElementById('api-search-input');
-        if (searchInputApi) {
-            searchInputApi.value = ''; // Vide le champ de recherche
-        }
-
+        if (searchInputApi) searchInputApi.value = '';
+        const searchResultsContainerElement = document.getElementById('api-search-results');
+         if (searchResultsContainerElement) {
+             searchResultsContainerElement.classList.add('hidden');
+             searchResultsContainerElement.innerHTML = '';
+         }
 
     } catch (error) {
         console.error("Erreur lors de l'enregistrement du livre:", error);
-        displayError(error.message || "Impossible d'enregistrer le livre. Veuillez réessayer.");
+        displayError(error.message || "Impossible d'enregistrer le livre.");
     }
 }
 // --------- Fonctions pour gérer les étagères (AJOUTÉES ICI) ---------
@@ -1439,6 +1417,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } else {
         console.error("Conteneur de notation ou input caché introuvable.");
+    }
+
+    // index.js (DANS document.addEventListener('DOMContentLoaded', ...))
+
+    // --- Gestion du bouton "Vérifier ISBN" dans le formulaire ---
+    const checkIsbnButton = document.getElementById('check-isbn-button');
+    const isbnInputInForm = document.getElementById('book-isbn'); // Input ISBN dans le formulaire
+
+    if (checkIsbnButton && isbnInputInForm) {
+        checkIsbnButton.addEventListener('click', async () => {
+            const isbnValue = isbnInputInForm.value.trim();
+            if (!isbnValue) {
+                displayError("Veuillez entrer un ISBN à vérifier.");
+                isbnInputInForm.focus();
+                return;
+            }
+
+            // Indicateur de chargement simple sur le bouton
+            checkIsbnButton.textContent = "Vérif...";
+            checkIsbnButton.disabled = true;
+
+            const fetchedData = await fetchBookDataFromISBN(isbnValue); // Appelle l'API
+
+            checkIsbnButton.textContent = "Vérifier"; // Rétablit le texte
+            checkIsbnButton.disabled = false; // Réactive
+
+            if (fetchedData) {
+                // Pré-remplit le formulaire avec les données trouvées
+                prefillBookForm(fetchedData);
+                displaySuccessMessage("Informations du livre trouvées et pré-remplies !");
+            }
+            // Si fetchedData est null, fetchBookDataFromISBN a déjà affiché l'erreur
+        });
+    } else {
+         console.error("Bouton ou input ISBN pour la vérification non trouvé.");
     }
 
 }); // FIN de DOMContentLoaded
