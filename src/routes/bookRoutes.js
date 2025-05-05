@@ -4,79 +4,53 @@ const express = require('express');
 const router = express.Router();
 const Book = require('../models/Book');
 
-// Ajouter un livre
 router.post('/books', async (req, res) => {
-  try {
-      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes, rating, currentPage } = req.body;
+    try {
+        const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes, rating, currentPage } = req.body;
 
-      // Validation (plus complète, incluant les dates)
-      if (!title) {
-          return res.status(400).json({ message: 'Le titre est obligatoire.' });
-      }
-      if (!author) {
-          return res.status(400).json({ message: 'L\'auteur est obligatoire.' });
-      }
+        // Validation Minimale (Obligatoire)
+        if (!title) return res.status(400).json({ message: 'Le titre est obligatoire.' });
+        if (!author) return res.status(400).json({ message: 'L\'auteur est obligatoire.' });
 
-      // Validation des dates (si elles sont fournies)
-      if (startDate && isNaN(Date.parse(startDate))) {
-          return res.status(400).json({ message: 'La date de début doit être une date valide.' });
-      }
-      if (endDate && isNaN(Date.parse(endDate))) {
-          return res.status(400).json({ message: 'La date de fin doit être une date valide.' });
-      }
-      // Validation supplémentaire: startDate doit être antérieure à endDate
-      if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-          return res.status(400).json({ message: 'La date de début doit être antérieure à la date de fin.' });
-      }
+        // Validation Dates (Optionnelle mais utile)
+        if (startDate && isNaN(Date.parse(startDate))) return res.status(400).json({ message: 'Date de début invalide.' });
+        if (endDate && isNaN(Date.parse(endDate))) return res.status(400).json({ message: 'Date de fin invalide.' });
+        if (startDate && endDate && new Date(startDate) > new Date(endDate)) return res.status(400).json({ message: 'La date de début doit être antérieure à la date de fin.' });
 
-      // Validation pour currentPage (si fourni)
-      if (currentPage !== undefined && (typeof currentPage !== 'number' || currentPage < 0)) {
-        return res.status(400).json({ message: 'La page actuelle doit être un nombre positif ou zéro.' });
-   }
-   // Validation pour pageCount (si fourni)
-    if (pageCount !== undefined && (typeof pageCount !== 'number' || pageCount < 0)) {
-        return res.status(400).json({ message: 'Le nombre de pages doit être un nombre positif ou zéro.' });
-   }
-   // Validation currentPage <= pageCount (si les deux sont fournis)
-    if (pageCount !== undefined && currentPage !== undefined && currentPage > pageCount) {
-        return res.status(400).json({ message: 'La page actuelle ne peut pas dépasser le nombre total de pages.' });
-    }
+        // Validation croisée currentPage <= pageCount (si les deux sont fournis et valides numériquement)
+        // Mongoose gérera si ce ne sont pas des nombres ou s'ils sont < 0 via le schéma
+        const numPageCount = (typeof pageCount === 'number' && pageCount >= 0) ? pageCount : null;
+        const numCurrentPage = (typeof currentPage === 'number' && currentPage >= 0) ? currentPage : null; // Utilise la valeur ou null
 
+        if (numPageCount !== null && numCurrentPage !== null && numCurrentPage > numPageCount) {
+            // CORRECTION SYNTAXE MESSAGE: Utilisation de ${...}
+            return res.status(400).json({ message: `La page actuelle (${numCurrentPage}) ne peut pas dépasser le nombre total de pages (${numPageCount}).` });
+        }
 
-      const newBook = new Book({
-          title,
-          author,
-          status,
-          coverUrl,
-          publisher,
-          publishedDate,
-          pageCount,
-          isbn,
-          genre,
-          startDate, // Ajout des dates
-          endDate,   // Ajout des dates
-          tags,
-          notes,
-          rating,
-          currentPage: currentPage || 0,
-      });
+        // Création avec toutes les données - Mongoose validera les types et 'min'
+        const newBook = new Book({
+            title, author, status, coverUrl, publisher, publishedDate,
+            pageCount, // Laisser Mongoose valider (type: Number, min: 0)
+            isbn, genre, startDate, endDate, tags, notes, rating,
+            currentPage // Laisser Mongoose valider (type: Number, min: 0, default: 0)
+        });
 
-      console.log("Objet newBook (avec notes):", newBook);
-        const savedBook = await newBook.save();
+        console.log("Objet newBook (avant save):", newBook);
+        const savedBook = await newBook.save(); // Déclenche les validateurs du schéma
         console.log("Livre enregistré:", savedBook);
-      res.status(201).json(savedBook);
+        res.status(201).json(savedBook);
 
-  } catch (error) {
-      console.error("Erreur dans la route POST /api/books:", error);
-      if (error.name === 'ValidationError') {
-          const messages = Object.values(error.errors).map(val => val.message);
-          return res.status(400).json({ message: messages });
-      } else if (error.code === 11000) { // Gestion des doublons (si vous avez un index unique sur l'ISBN)
-          return res.status(409).json({ message: 'Un livre avec cet ISBN existe déjà.' });
-      } else {
-          res.status(500).json({ message: 'Erreur lors de la création du livre.' });
-      }
-  }
+    } catch (error) {
+        console.error("Erreur dans la route POST /api/books:", error);
+        if (error.name === 'ValidationError') { // Important de bien gérer cette erreur ici
+             const messages = Object.values(error.errors).map(val => val.message);
+             return res.status(400).json({ message: messages.join('. ') }); // Renvoie les erreurs de validation Mongoose
+        } else if (error.code === 11000) {
+            return res.status(409).json({ message: 'Un livre avec cet ISBN existe déjà.' });
+        } else {
+            res.status(500).json({ message: 'Erreur serveur lors de la création du livre.' });
+        }
+    }
 });
 
 router.get('/books', async (req, res) => {
@@ -137,89 +111,64 @@ router.get('/books', async (req, res) => {
 
 // Mettre à jour un livre
 router.put('/books/:id', async (req, res) => {
-  try {
-      const { id } = req.params;
-      const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes, rating, currentPage } = req.body;
+    try {
+        const { id } = req.params;
+        const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes, rating, currentPage } = req.body;
 
-      // Validation (similaire à POST)
-      if (!title || !author) {
-          return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
-      }
-      // Validation spécifique pour rating (si fourni)
-      if (rating !== undefined && rating !== null && (typeof rating !== 'number' || rating < 0 || rating > 5)) {
-        return res.status(400).json({ message: 'La note doit être un nombre entre 0 et 5.' });
-   }
-      if (startDate && isNaN(Date.parse(startDate))) {
-          return res.status(400).json({ message: 'La date de début doit être une date valide.' });
-      }
-      if (endDate && isNaN(Date.parse(endDate))) {
-          return res.status(400).json({ message: 'La date de fin doit être une date valide.' });
-      }
-     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-          return res.status(400).json({message: 'La date de début doit être antérieure à la date de fin'});
-      }
+        // Validation Minimale
+        if (!title || !author) return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
+        // Validation Dates
+        if (startDate && isNaN(Date.parse(startDate))) return res.status(400).json({ message: 'Date de début invalide.' });
+        if (endDate && isNaN(Date.parse(endDate))) return res.status(400).json({ message: 'Date de fin invalide.' });
+        if (startDate && endDate && new Date(startDate) > new Date(endDate)) return res.status(400).json({ message: 'La date de début doit être antérieure à la date de fin.' });
+         // Validation Rating (simple check ici, Mongoose fera le reste)
+         if (rating !== undefined && rating !== null && typeof rating !== 'number') {
+             return res.status(400).json({ message: 'La note doit être un nombre.' });
+         }
 
-      if (currentPage !== undefined && currentPage !== null && (typeof currentPage !== 'number' || currentPage < 0)) {
-        return res.status(400).json({ message: 'La page actuelle doit être un nombre positif ou zéro.' });
-     }
-      // Validation pour pageCount (si fourni)
-      if (pageCount !== undefined && pageCount !== null && (typeof pageCount !== 'number' || pageCount < 0)) {
-         return res.status(400).json({ message: 'Le nombre de pages doit être un nombre positif ou zéro.' });
-      }
-       // Validation currentPage <= pageCount (si les deux sont fournis)
-       // Attention: il faut récupérer pageCount du document existant si pageCount n'est pas dans req.body
-       const existingPageCount = pageCount !== undefined ? pageCount : (await Book.findById(id, 'pageCount'))?.pageCount;
-       if (existingPageCount !== undefined && currentPage !== undefined && currentPage !== null && currentPage > existingPageCount) {
-          return res.status(400).json({ message: `La page actuelle (<span class="math-inline">\{currentPage\}\) ne peut pas dépasser le nombre total de pages \(</span>{existingPageCount}).` });
-       }
+        // Validation croisée currentPage <= pageCount
+        // Récupère les valeurs numériques potentielles du corps de la requête
+         const numCurrentPage = (typeof currentPage === 'number' && currentPage >= 0) ? currentPage : null;
+         const numPageCount = (typeof pageCount === 'number' && pageCount >= 0) ? pageCount : null;
 
+         let pageCountForValidation = numPageCount;
+         // Si on met à jour currentPage mais PAS pageCount, il faut chercher l'ancien pageCount pour comparer
+         if (numPageCount === null && pageCount === undefined && numCurrentPage !== null) {
+             const existingBookData = await Book.findById(id, 'pageCount'); // Ne récupère que pageCount
+             if (existingBookData && typeof existingBookData.pageCount === 'number' && existingBookData.pageCount >= 0) {
+                 pageCountForValidation = existingBookData.pageCount;
+             }
+         }
 
-      const existingBook = await Book.findById(id); // Vérifie si le livre existe
-      if (!existingBook) {
-          return res.status(404).json({ message: 'Livre non trouvé.' });
-      }
+        if (pageCountForValidation !== null && numCurrentPage !== null && numCurrentPage > pageCountForValidation) {
+             // CORRECTION SYNTAXE MESSAGE: Utilisation de ${...}
+            return res.status(400).json({ message: `La page actuelle (${numCurrentPage}) ne peut pas dépasser le nombre total de pages (${pageCountForValidation}).` });
+        }
 
-      const updatedBook = await Book.findByIdAndUpdate(
-          id,
-          {
-              title,
-              author,
-              status,
-              coverUrl,
-              publisher,
-              publishedDate,
-              pageCount,
-              isbn,
-              genre,
-              startDate, // Ajout des dates
-              endDate,   // Ajout des dates
-              tags,
-              notes,
-              rating,
-              currentPage,
-          },
-          { new: true, runValidators: true } // Important: runValidators pour la validation Mongoose
-      );
-    
+        // Prépare l'objet de mise à jour - On envoie tout le corps tel quel,
+        // Mongoose/findByIdAndUpdate ne mettra à jour que les champs présents.
+        // Les validateurs du schéma (type, min, max) seront exécutés grâce à runValidators: true
+        const updateData = req.body;
 
-      if (!updatedBook) {
-        return res.status(404).json({ message: "Livre non trouvé." });
+        const updatedBook = await Book.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+
+        if (!updatedBook) {
+            return res.status(404).json({ message: "Livre non trouvé." });
+        }
+        console.log("Livre mis à jour :", updatedBook);
+        res.status(200).json(updatedBook);
+
+    } catch (error) {
+        console.error("Erreur dans la route PUT /api/books/:id:", error);
+        if (error.name === 'ValidationError') { // Important de bien gérer cette erreur
+             const messages = Object.values(error.errors).map(val => val.message);
+             return res.status(400).json({ message: messages.join('. ') }); // Renvoie les erreurs de validation Mongoose
+        } else if (error.code === 11000) {
+           return res.status(409).json({ message: 'Donnée conflictuelle (ISBN ou autre contrainte unique).' });
+        } else {
+           res.status(500).json({ message: 'Erreur serveur lors de la modification du livre.' });
+        }
     }
-
-    console.log("Livre mis à jour (avec notes):", updatedBook);
-    res.status(200).json(updatedBook);
-
-  } catch (error) {
-      console.error("Erreur dans la route PUT /api/books/:id:", error);
-      if (error.name === 'ValidationError') {
-          const messages = Object.values(error.errors).map(val => val.message);
-          return res.status(400).json({ message: messages });
-      } else if (error.code === 11000) {
-         return res.status(409).json({ message: 'Donnée conflictuelle (ISBN ou autre contrainte unique).' });
-   } else {
-          res.status(500).json({ message: 'Erreur lors de la modification du livre.' });
-      }
-  }
 });
 
 // Supprimer un livre

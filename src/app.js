@@ -1,9 +1,10 @@
-// server.js
+
+require('dotenv').config(); 
 
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
 const path = require('path');
+const cors = require('cors');
 const bookRoutes = require('./routes/bookRoutes');
 const etagereRoutes = require('./routes/etagereRoutes');
 
@@ -12,6 +13,9 @@ const PORT = process.env.PORT || 3000;
 
 // **Configuration de la base de données MongoDB**
 const DB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/booktrackerDB';
+
+
+
 
 mongoose.connect(DB_URI, {
     useNewUrlParser: true,

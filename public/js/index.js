@@ -1,9 +1,4 @@
 
-
-// index.js
-
-
-
 // --------- Fonctions utilitaires ---------
 
 function createElementWithClasses(tag, classNames) {
@@ -26,10 +21,7 @@ function hideLoading() {
     }
 }
 
-/**
- * Affiche un message d'erreur à l'utilisateur via Toastify.
- * @param {string} message - Le message d'erreur à afficher.
- */
+
 function displayError(message) {
     Toastify({
         text: message || "Une erreur est survenue.", // Message par défaut
@@ -45,10 +37,6 @@ function displayError(message) {
     }).showToast();
 }
 
-/**
- * Affiche un message de succès à l'utilisateur via Toastify.
- * @param {string} message - Le message de succès à afficher.
- */
 function displaySuccessMessage(message) {
     Toastify({
         text: message || "Opération réussie.", // Message par défaut
@@ -65,9 +53,7 @@ function displaySuccessMessage(message) {
 }
 
 function createBookCard(book) {
-    // --- Conteneur Principal de la Carte ---
-    // Hauteur fixe (ex: h-[30rem] = 480px). Ajustez cette valeur si nécessaire !
-    // overflow-hidden sur la carte principale pour s'assurer que rien ne dépasse globalement.
+    
     const card = createElementWithClasses('div', 'book-card w-64 h-[30rem] bg-white rounded-lg shadow-lg overflow-hidden flex flex-col transition-shadow duration-300 hover:shadow-xl relative');
     card.dataset.bookId = book._id;
 
@@ -84,7 +70,7 @@ function createBookCard(book) {
 
 
     // --- Section Infos Principales ---
-    const textInfo = document.createElement('div'); // Ce conteneur ne scrollera pas directement
+    const textInfo = document.createElement('div'); 
 
     // Titre (SANS truncate)
     const title = createElementWithClasses('h3', 'text-lg font-bold text-etagere mb-1');
@@ -723,8 +709,8 @@ function prefillBookForm(bookData) {
     document.getElementById('book-genre').value = bookData.genre || '';
     document.getElementById('book-isbn').value = bookData.isbn || ''; // Met aussi à jour l'ISBN si trouvé via titre par ex.
 
-    // Optionnel : Mettre à jour le menu déroulant genre si pas déjà fait
-     populateGenreDropdown(bookData.genre); // Assurez-vous que cette fonction existe
+    // Optionnel : Mettre à jour le menu déroulant genre 
+     populateGenreDropdown(bookData.genre); 
 }
 
 // --------- Gestion du formulaire ---------
@@ -740,7 +726,14 @@ async function handleFormSubmit(event) {
     const coverUrl = document.getElementById('book-coverUrl').value;
     const publisher = document.getElementById('book-publisher').value;
     const publishedDate = document.getElementById('book-publishedDate').value;
-    const pageCount = parseInt(document.getElementById('book-pageCount').value) || null; // Convertit en nombre ou null
+    const pageCountInput = document.getElementById('book-pageCount');
+const pageCountValue = pageCountInput.value.trim();
+const pageCount = pageCountValue === '' ? null : parseInt(pageCountValue); // null si vide, sinon Number
+
+const currentPageInput = document.getElementById('book-currentPage');
+const currentPageValue = currentPageInput.value.trim();
+const currentPage = currentPageValue === '' ? 0 : parseInt(currentPageValue); // 0 si vide, sinon Number
+
     const genre = document.getElementById('book-genre').value;
     const startDate = document.getElementById('book-startDate').value || null;
     const endDate = document.getElementById('book-endDate').value || null;
@@ -748,18 +741,27 @@ async function handleFormSubmit(event) {
     const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()).filter(tag => tag !== "") : [];
     const notes = document.getElementById('book-notes').value.trim();
     const rating = parseInt(document.getElementById('book-rating-value').value) || 0;
-     const currentPage = parseInt(document.getElementById('book-currentPage').value) || 0; // Récupère currentPage
+  
 
     // Validation de base
     if (!title || !author) {
         displayError("Veuillez remplir les champs titre et auteur.");
         return;
     }
-     // Validation currentPage vs pageCount
-     if (pageCount !== null && currentPage > pageCount) {
-         displayError(`La page actuelle (<span class="math-inline">\{currentPage\}\) ne peut pas dépasser le nombre total de pages \(</span>{pageCount}).`);
-         return;
-     }
+    // Validation des nombres côté client (recommandé)
+if (pageCount !== null && (isNaN(pageCount) || pageCount < 0 || !Number.isInteger(pageCount))) {
+    displayError("Le nombre de pages doit être un nombre entier positif ou zéro (ou laissé vide).");
+    return;
+}
+if (isNaN(currentPage) || currentPage < 0 || !Number.isInteger(currentPage)) {
+     displayError("La page actuelle doit être un nombre entier positif ou zéro.");
+     return;
+}
+// Validation currentPage <= pageCount
+if (pageCount !== null && currentPage > pageCount) {
+    displayError(`La page actuelle (${currentPage}) ne peut pas dépasser le nombre total de pages (${pageCount}).`);
+     return;
+}
 
     // Construit l'objet de données DIRECTEMENT à partir des champs du formulaire
     const bookData = {
@@ -805,7 +807,7 @@ async function handleFormSubmit(event) {
         displayError(error.message || "Impossible d'enregistrer le livre.");
     }
 }
-// --------- Fonctions pour gérer les étagères (AJOUTÉES ICI) ---------
+// --------- Fonctions pour gérer les étagères  ---------
 
 async function fetchEtageres() {
     try {
@@ -838,7 +840,7 @@ async function deleteEtagere(etagereId) {
             throw new Error(errorMsg);
         }
 
-        // Pas besoin de lire le corps de la réponse pour un DELETE réussi en général
+        
         return true; // Indique le succès
 
     } catch (error) {
@@ -1011,41 +1013,54 @@ function displayEtageres(etageres) {
 
 
 
-async function populateGenreDropdown(selectedValue = '') {
-    const genreSelect = document.getElementById('book-genre');
-    if (!genreSelect) return; // Quitte si l'élément n'existe pas
+// index.js (Modifier populateGenreDropdown)
 
-    const currentValue = genreSelect.value; // Sauvegarde la valeur actuelle (utile si on rafraîchit)
-
+async function populateGenreDropdown(genreNameToSelect = null) { // Ajout paramètre optionnel
+    console.log("Peuplement du dropdown Genre...");
     try {
-        const etageres = await fetchEtageres(); // Réutilise la fonction existante
-
-        // Vide les options actuelles (sauf la première "-- Sélectionner --")
-        genreSelect.length = 1; // Garde seulement la première option
-
-        etageres.forEach(etagere => {
-            const option = document.createElement('option');
-            option.value = etagere.name; // La valeur de l'option est le nom de l'étagère
-            option.textContent = etagere.name; // Le texte affiché est aussi le nom
-            genreSelect.appendChild(option);
-        });
-
-        // Pré-sélectionne la valeur si fournie (pour l'édition) ou restaure la valeur actuelle
-        if (selectedValue) {
-            genreSelect.value = selectedValue;
-        } else {
-            genreSelect.value = currentValue; // Restaure la valeur précédente si aucune sélection spécifique n'est demandée
+        
+        const response = await fetch('/api/etageres'); // Utilise la route des étagères
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        const genres = await response.json();
+        const selectElement = document.getElementById('book-genre');
+        if (!selectElement) {
+             console.error("Élément select #book-genre non trouvé.");
+             return;
         }
 
+        const currentValue = selectElement.value; // Sauvegarde la valeur actuelle au cas où
+        selectElement.innerHTML = '<option value="">-- Sélectionner un genre --</option>';
+
+        genres.forEach(genre => {
+            const option = document.createElement('option');
+            option.value = genre.name;
+            option.textContent = genre.name;
+            selectElement.appendChild(option);
+            // Pré-sélection après ajout OU si on recharge les options et qu'une valeur existait
+             if (genreNameToSelect && genre.name === genreNameToSelect) {
+                option.selected = true;
+            } else if (!genreNameToSelect && genre.name === currentValue) {
+                option.selected = true; // Maintient la sélection précédente si pas de nouvelle sélection
+            }
+        });
+
+         // Si un nouveau genre a été ajouté et sélectionné, on le log
+         if (genreNameToSelect && selectElement.value === genreNameToSelect) {
+             console.log(`Genre "${genreNameToSelect}" sélectionné dans le dropdown.`);
+         }
+
     } catch (error) {
-        console.error("Erreur lors du peuplement du dropdown des genres:", error);
-        // Optionnel: Afficher un message à l'utilisateur
+        console.error("Erreur lors de la récupération/population des genres:", error);
+        displayError("Impossible de charger les genres."); // Informer l'utilisateur
     }
 }
 
 function applyFilterOrSort() {
-    currentPage = 1; // RÉINITIALISE LA PAGE à 1
-    fetchBooks();
+    console.log("applyFilterOrSort appelée, réinitialisation page et fetch..."); // Log pour débogage
+    currentPage = 1; // Réinitialise à la page 1
+    fetchBooks();    // Appelle la fonction pour récupérer les livres
 }
 
 
@@ -1452,6 +1467,120 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     } else {
          console.error("Bouton ou input ISBN pour la vérification non trouvé.");
+    }
+
+    const addGenreModal = document.getElementById('add-genre-modal');
+    const addNewGenreButton = document.getElementById('add-new-genre-button');
+    const cancelNewGenreButton = document.getElementById('cancel-new-genre-button');
+    const saveNewGenreButton = document.getElementById('save-new-genre-button');
+    const newGenreModalInput = document.getElementById('new-genre-modal-input');
+    const addGenreModalError = document.getElementById('add-genre-modal-error');
+    const bookFormElement = document.getElementById('book-form'); // Pour savoir si le formulaire principal est visible
+
+    if (addGenreModal && addNewGenreButton && cancelNewGenreButton && saveNewGenreButton && newGenreModalInput && addGenreModalError && bookFormElement) {
+
+        // Ouvrir la modale
+        addNewGenreButton.addEventListener('click', () => {
+            // Ne pas ouvrir si le formulaire principal n'est pas visible
+            if (bookFormElement.classList.contains('hidden')) return;
+
+            newGenreModalInput.value = ''; // Vide le champ
+            addGenreModalError.textContent = ''; // Vide message erreur
+            addGenreModal.classList.remove('hidden'); // Affiche la modale
+            newGenreModalInput.focus(); // Met le focus dans le champ
+        });
+
+        // Fonction pour fermer la modale
+        const closeGenreModal = () => {
+            addGenreModal.classList.add('hidden');
+        };
+
+        // Fermer la modale (Annuler)
+        cancelNewGenreButton.addEventListener('click', closeGenreModal);
+
+        // Enregistrer le nouveau genre
+        saveNewGenreButton.addEventListener('click', async () => {
+            const newGenreName = newGenreModalInput.value.trim();
+            addGenreModalError.textContent = ''; // Vide message erreur précédent
+
+            if (!newGenreName) {
+                addGenreModalError.textContent = "Le nom du genre ne peut pas être vide.";
+                return;
+            }
+
+            saveNewGenreButton.disabled = true;
+            saveNewGenreButton.textContent = 'Sauvegarde...';
+
+            try {
+                 // Utilise la bonne route API pour les étagères/genres
+                const response = await fetch('/api/etageres', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newGenreName })
+                });
+
+                if (!response.ok) {
+                   let errorMsg = `Erreur: ${response.status}`;
+                   try {
+                       const errorData = await response.json();
+                       // Spécifiquement pour le code 409 (Conflict)
+                        if (response.status === 409) {
+                            errorMsg = errorData.message || `Le genre "${newGenreName}" existe déjà.`;
+                        } else {
+                           errorMsg = errorData.message || `Impossible d'ajouter le genre (${response.status}).`;
+                        }
+                   } catch(e) {
+                       errorMsg = `Impossible d'ajouter le genre (${response.status}). Réponse invalide du serveur.`;
+                   }
+                   throw new Error(errorMsg);
+                }
+
+                const addedGenre = await response.json();
+
+                // Succès !
+                closeGenreModal();
+        displaySuccessMessage(`Genre "${addedGenre.name}" ajouté !`);
+        await populateGenreDropdown(addedGenre.name); // Met à jour le select DANS le formulaire
+
+         // Mettre à jour la liste des étagères dans la sidebar (CORRECTION ICI) :
+         fetchEtageres().then(displayEtageres); // Récupère la liste à jour PUIS l'affiche
+
+                // Re-peupler le dropdown ET sélectionner le nouveau genre
+                await populateGenreDropdown(addedGenre.name);
+
+                // Mettre à jour la liste des étagères dans la sidebar
+                fetchEtageres().then(displayEtageres);
+
+            } catch (error) {
+                console.error("Erreur lors de l'ajout du genre:", error);
+                // Affiche l'erreur dans la modale pour que l'utilisateur la voie
+                addGenreModalError.textContent = error.message;
+            } finally {
+                // Réactiver bouton même en cas d'erreur
+                saveNewGenreButton.disabled = false;
+                saveNewGenreButton.textContent = 'Enregistrer';
+            }
+        });
+
+         // Permettre de sauver avec Entrée dans le champ input de la modale
+         newGenreModalInput.addEventListener('keypress', (event) => {
+             if (event.key === 'Enter') {
+                 event.preventDefault(); // Empêche la soumission du formulaire principal si la modale est par-dessus
+                 saveNewGenreButton.click(); // Simule un clic sur le bouton Enregistrer
+             }
+         });
+
+          // Fermer la modale si on clique en dehors (sur le fond semi-transparent)
+          addGenreModal.addEventListener('click', (event) => {
+             // Si le clic est directement sur l'élément modal (le fond)
+             if (event.target === addGenreModal) {
+                 closeGenreModal();
+             }
+         });
+
+
+    } else {
+        console.warn("Éléments requis pour la modale d'ajout de genre non trouvés dans le DOM.");
     }
 
 }); // FIN de DOMContentLoaded
