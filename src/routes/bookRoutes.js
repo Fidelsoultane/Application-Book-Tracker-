@@ -4,9 +4,11 @@ const express = require('express');
 const router = express.Router();
 const Book = require('../models/Book');
 
-router.post('/books', async (req, res) => {
+router.post('/', async (req, res) => {
+    
     try {
         const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes, rating, currentPage } = req.body;
+        const userId = req.user.userId;
 
         // Validation Minimale (Obligatoire)
         if (!title) return res.status(400).json({ message: 'Le titre est obligatoire.' });
@@ -29,13 +31,14 @@ router.post('/books', async (req, res) => {
 
         // Création avec toutes les données - Mongoose validera les types et 'min'
         const newBook = new Book({
+            userId: userId,
             title, author, status, coverUrl, publisher, publishedDate,
             pageCount, // Laisser Mongoose valider (type: Number, min: 0)
             isbn, genre, startDate, endDate, tags, notes, rating,
             currentPage // Laisser Mongoose valider (type: Number, min: 0, default: 0)
         });
 
-        console.log("Objet newBook (avant save):", newBook);
+        console.log("Objet newBook (avec userId):", newBook);
         const savedBook = await newBook.save(); // Déclenche les validateurs du schéma
         console.log("Livre enregistré:", savedBook);
         res.status(201).json(savedBook);
@@ -53,9 +56,11 @@ router.post('/books', async (req, res) => {
     }
 });
 
-router.get('/books', async (req, res) => {
+router.get('/', async (req, res) => {
+
     try {
         console.log("Requête GET /api/books reçue. Query params:", req.query);
+        const userId = req.user.userId;
 
         // --- Pagination Parameters ---
         const page = parseInt(req.query.page) || 1; // Page actuelle, défaut = 1
@@ -63,7 +68,9 @@ router.get('/books', async (req, res) => {
         const skip = (page - 1) * limit; // Nombre de documents à sauter
 
         // --- Filtres ---
-        const query = {};
+        const query = {
+            userId: userId,
+        };
         if (req.query.status && req.query.status !== 'Tous') { query.status = req.query.status; }
         if (req.query.genre && req.query.genre !== 'Tous') { query.genre = req.query.genre; }
         if (req.query.tags) { query.tags = { $in: [req.query.tags] }; }
@@ -89,11 +96,10 @@ router.get('/books', async (req, res) => {
 
         // 2. Récupérer les livres pour la page actuelle, avec filtres, tri et pagination
         const books = await Book.find(query)
-                                  .sort(sortOptions)
-                                  .skip(skip)   // Saute les documents des pages précédentes
-                                  .limit(limit); // Limite au nombre de livres par page
-
-        console.log(`Livres récupérés: ${books.length} sur un total de ${totalBooks}`);
+        .sort(sortOptions)
+        .skip(skip)   // Saute les documents des pages précédentes
+        .limit(limit); // Limite au nombre de livres par page
+         console.log(`Livres récupérés pour user ${userId}: ${books.length} sur un total de ${totalBooks}`);
 
         // --- Renvoyer la réponse ---
         res.status(200).json({
@@ -110,10 +116,12 @@ router.get('/books', async (req, res) => {
 });
 
 // Mettre à jour un livre
-router.put('/books/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
+    
     try {
         const { id } = req.params;
         const { title, author, status, coverUrl, publisher, publishedDate, pageCount, isbn, genre, startDate, endDate, tags, notes, rating, currentPage } = req.body;
+        const userId = req.user.userId;
 
         // Validation Minimale
         if (!title || !author) return res.status(400).json({ message: 'Le titre et l\'auteur sont obligatoires.' });
@@ -145,6 +153,17 @@ router.put('/books/:id', async (req, res) => {
             return res.status(400).json({ message: `La page actuelle (${numCurrentPage}) ne peut pas dépasser le nombre total de pages (${pageCountForValidation}).` });
         }
 
+  // --- Vérification d'Appartenance --- (AJOUTÉ)
+  const existingBook = await Book.findById(id);
+  if (!existingBook) {
+      return res.status(404).json({ message: "Livre non trouvé." });
+  }
+  // Compare l'userId du livre avec notre ID de test
+  if (existingBook.userId.toString() !== userId) {
+       console.log(`Tentative de modification non autorisée par ${userId} sur le livre ${id} appartenant à ${existingBook.userId}`);
+      return res.status(403).json({ message: "Accès non autorisé." });
+  }
+
         // Prépare l'objet de mise à jour - On envoie tout le corps tel quel,
         // Mongoose/findByIdAndUpdate ne mettra à jour que les champs présents.
         // Les validateurs du schéma (type, min, max) seront exécutés grâce à runValidators: true
@@ -172,20 +191,32 @@ router.put('/books/:id', async (req, res) => {
 });
 
 // Supprimer un livre
-router.delete('/books/:id', async (req, res) => { // **ROUTE DELETE /books/:id**
+router.delete('/:id', async (req, res) => { 
+   
   try {
       const bookId = req.params.id;
-      const deletedBook = await Book.findByIdAndDelete(bookId);
+      const userId = req.user.userId;
 
-      if (!deletedBook) {
-          return res.status(404).json({ message: 'Livre non trouvé' });
-      }
+// --- Vérification d'Appartenance --- (AJOUTÉ)
+const bookToDelete = await Book.findById(bookId);
+if (!bookToDelete) {
+    return res.status(404).json({ message: 'Livre non trouvé' });
+}
+if (bookToDelete.userId.toString() !== userId) {
+     console.log(`Tentative de suppression non autorisée par ${userId} sur le livre ${bookId} appartenant à ${bookToDelete.userId}`);
+    return res.status(403).json({ message: "Accès non autorisé." }); // 403 Forbidden
+}
 
-      res.json({ message: 'Livre supprimé avec succès' });
-  } catch (error) {
-      res.status(500).json({ message: 'Erreur serveur lors de la suppression du livre' });
-  }
-});
+         // Si l'utilisateur est propriétaire, on supprime
+         await Book.findByIdAndDelete(bookId);
+         console.log(`Livre ${bookId} supprimé par user ${userId}`);
+         res.status(200).json({ message: 'Livre supprimé avec succès' }); // Statut 200 ou 204
+ 
+     } catch (error) {
+         console.error("Erreur serveur lors de la suppression du livre:", error);
+         res.status(500).json({ message: 'Erreur serveur lors de la suppression du livre' });
+     }
+ });
 
 module.exports = router;
 

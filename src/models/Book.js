@@ -2,6 +2,14 @@
 const mongoose = require('mongoose');
 
 const bookSchema = new mongoose.Schema({
+
+    userId: {
+        type: mongoose.Schema.Types.ObjectId, // Type spécial pour stocker l'ID d'un autre document Mongoose
+        ref: 'User', // Indique que cet ID fait référence à un document du modèle 'User'
+        required: true, // Un livre doit obligatoirement appartenir à un utilisateur
+        index: true // Bon pour les performances si on cherche souvent les livres d'un utilisateur
+    },
+
     title: { type: String, required: true },
     author: { type: [String], required: true }, // ou type: String
     status: { type: String, required: true, default: 'À lire', enum: ['À lire', 'En cours', 'Terminé', 'Souhaité'] },

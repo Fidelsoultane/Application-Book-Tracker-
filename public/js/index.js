@@ -244,6 +244,20 @@ function hideNoteModal() {
     }
 }
 
+function getAuthHeaders() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    const token = localStorage.getItem('authToken');
+    // LOGS DE DÉBOGAGE CRUCIAUX
+    console.log('getAuthHeaders CALLED. Token from localStorage:', token);
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    console.log('getAuthHeaders RETURNING headers:', headers);
+    return headers;
+}
+
 // --------- Gestion des livres ---------
 
 let currentStatusFilter = "Tous"; // Renommé pour clarté
@@ -258,7 +272,7 @@ async function fetchBooks() {
     try {
         showLoading();
 
-        let url = '/api/books?'; // Commence par '?'
+        let url = '/api/books/?'; // Commence par '?'
 
         // --- Ajout des paramètres de pagination --- (VÉRIFIEZ CES LIGNES)
         url += `page=${currentPage}&limit=${booksPerPage}&`;
@@ -278,20 +292,36 @@ async function fetchBooks() {
 
         console.log("Fetching URL:", url); // Doit maintenant inclure page et limit
 
-        const response = await fetch(url);
+        const response = await fetch(url, { 
+            method: 'GET', 
+            headers: getAuthHeaders() 
+        });
+
         if (!response.ok) {
+            if (response.status === 401) { // Gérer spécifiquement le 401
+                displayError("Session expirée ou non autorisé. Veuillez vous reconnecter.");
+                // Optionnel : Déconnecter l'utilisateur côté client
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userInfo');
+                updateAuthStateUI();
+                displayBooks([]);
+                updatePaginationControls(0);
+                // Vider aussi les étagères, etc.
+                const menuEtagere = document.getElementById('menu-etagere');
+                if (menuEtagere) menuEtagere.innerHTML = '';
+                return; // Arrête le traitement
+            }
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
         const data = await response.json();
-
-        console.log("Données reçues du serveur (pagination):", data);
-
-        displayBooks(data.books); // Affiche les livres de la page
-        updatePaginationControls(data.totalBooks); // Met à jour les boutons
-
+        displayBooks(data.books);
+        updatePaginationControls(data.totalBooks);
     } catch (error) {
         console.error("Erreur lors de la récupération des livres:", error);
-        displayError("Impossible de récupérer les livres. Veuillez réessayer.");
+        // N'affiche plus l'erreur générique si c'était un 401 déjà géré
+        if (!error.message.includes("Session expirée")) {
+             displayError("Impossible de récupérer les livres. Veuillez réessayer.");
+        }
         displayBooks([]);
         updatePaginationControls(0);
     } finally {
@@ -350,6 +380,7 @@ async function deleteBook(bookId) {
     try {
         const response = await fetch(`/api/books/${bookId}`, {
             method: 'DELETE',
+            headers: getAuthHeaders()
         });
 
         if (!response.ok) {
@@ -488,7 +519,7 @@ async function fetchBookDataFromISBN(isbn) {
                 return null; // Échec final après toutes les tentatives
             }
           
-        } // Fin du catch
+        } 
         
     // ... (fin de la boucle while) ...
     // Si la boucle se termine sans succès (maxAttempts atteint sans réponse OK)
@@ -779,7 +810,7 @@ if (pageCount !== null && currentPage > pageCount) {
 
         response = await fetch(apiUrl, {
             method: method,
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(bookData),
         });
 
@@ -807,20 +838,58 @@ if (pageCount !== null && currentPage > pageCount) {
         displayError(error.message || "Impossible d'enregistrer le livre.");
     }
 }
+
+function updateAuthStateUI() {
+    const token = localStorage.getItem('authToken');
+    const userInfoDiv = document.getElementById('user-info');
+    const authLinksDiv = document.getElementById('auth-links');
+    const userGreetingSpan = document.getElementById('user-greeting');
+
+    if (token) {
+        // Utilisateur connecté
+        if (authLinksDiv) authLinksDiv.classList.add('hidden'); // Cache Connexion/Inscription
+        if (userInfoDiv) userInfoDiv.classList.remove('hidden'); // Affiche Bonjour/Déconnexion
+        if (userGreetingSpan) {
+             // Essaie de récupérer le nom d'utilisateur stocké
+             try {
+                const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+                userGreetingSpan.textContent = `Bonjour, ${userInfo?.username || 'Utilisateur'} !`;
+             } catch(e) {
+                 userGreetingSpan.textContent = 'Bonjour !';
+             }
+        }
+    } else {
+        // Utilisateur déconnecté
+        if (authLinksDiv) authLinksDiv.classList.remove('hidden'); // Affiche Connexion/Inscription
+        if (userInfoDiv) userInfoDiv.classList.add('hidden'); // Cache Bonjour/Déconnexion
+    }
+     console.log("UI mise à jour pour l'état d'authentification.");
+}
+
+
+
 // --------- Fonctions pour gérer les étagères  ---------
 
 async function fetchEtageres() {
     try {
-        const response = await fetch('/api/etageres');
+        const response = await fetch('/api/etageres', {
+            method: 'GET',
+            headers: getAuthHeaders() // <<< AJOUTER CECI
+        });
         if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
+            if (response.status === 401) {
+                console.warn("Accès non autorisé pour récupérer les étagères.");
+                // Ne pas afficher d'erreur ici si fetchBooks le fait déjà ou si l'UI est gérée
+                return [];
+            }
+            throw new Error(`Erreur HTTP: ${response.status}`);
         }
         const etageres = await response.json();
         return etageres;
     } catch (error) {
         console.error("Erreur lors de la récupération des étagères:", error);
-        displayError("Impossible de récupérer les étagères. Veuillez réessayer.");
-        return []; // Retourne un tableau vide en cas d'erreur
+        // displayError("Impossible de récupérer les étagères."); // Peut-être redondant si fetchBooks échoue aussi
+        return [];
     }
 }
 
@@ -828,6 +897,7 @@ async function deleteEtagere(etagereId) {
     try {
         const response = await fetch(`/api/etageres/${etagereId}`, { // Appel à l'API DELETE
             method: 'DELETE',
+            headers: getAuthHeaders()
         });
 
         if (!response.ok) {
@@ -851,12 +921,12 @@ async function deleteEtagere(etagereId) {
 }
 
 async function createEtagere(etagereData) {
+    console.log('--- Attempting createEtagere with data:', etagereData); // LOG C
+    console.log('Token in localStorage AT THE START of createEtagere:', localStorage.getItem('authToken')); // LOG D
     try {
         const response = await fetch('/api/etageres', { // Appel à l'API POST
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(etagereData),
         });
 
@@ -1016,10 +1086,15 @@ function displayEtageres(etageres) {
 // index.js (Modifier populateGenreDropdown)
 
 async function populateGenreDropdown(genreNameToSelect = null) { // Ajout paramètre optionnel
-    console.log("Peuplement du dropdown Genre...");
+    console.log("Peuplement du dropdown Genre... Vérification token AVANT fetchEtageres.");
+    // const tokenForDropdown = localStorage.getItem('authToken'); // Test supplémentaire
+    // console.log("Token dans localStorage (populateGenreDropdown):", tokenForDropdown);
     try {
         
-        const response = await fetch('/api/etageres'); // Utilise la route des étagères
+        const response = await fetch('/api/etageres', { // Cet appel utilise fetchEtageres qui appelle getAuthHeaders
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
@@ -1068,10 +1143,268 @@ function applyFilterOrSort() {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    console.log("DOM prêt. Vérification élément #api-search-message:", document.getElementById('api-search-message'));
-    // 1. Chargement initial
+    console.log("DOM prêt."); // Log initial
+
+    // Met à jour l'UI en fonction de l'état de connexion initial
+    updateAuthStateUI(); // APPEL INITIAL
+
+    // 1. Chargement initial des données (sera modifié ensuite pour utiliser le token)
     fetchBooks();
-    fetchEtageres().then(displayEtageres); // MAINTENANT ACCESSIBLE !
+    fetchEtageres().then(displayEtageres);
+
+    // --- Gestion de la Soumission du Formulaire d'Inscription ---
+    const registerForm = document.getElementById('register-form');
+    const registerUsernameInput = document.getElementById('register-username');
+    const registerEmailInput = document.getElementById('register-email');
+    const registerPasswordInput = document.getElementById('register-password');
+    const registerErrorMessage = document.getElementById('register-error-message');
+    const registerModalElement = document.getElementById('register-modal');
+
+    if (registerForm && registerUsernameInput && registerEmailInput && registerPasswordInput && registerErrorMessage && registerModalElement) {
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            registerErrorMessage.textContent = ''; // Vide l'ancien message d'erreur
+
+            const username = registerUsernameInput.value.trim();
+            const email = registerEmailInput.value.trim();
+            const password = registerPasswordInput.value.trim(); // Le backend validera la longueur
+
+            // Validation simple côté client
+            if (!username || !email || !password) {
+                registerErrorMessage.textContent = "Tous les champs sont requis.";
+                return;
+            }
+            if (password.length < 6) {
+                registerErrorMessage.textContent = "Le mot de passe doit contenir au moins 6 caractères.";
+                return;
+            }
+
+            try {
+                // Appel à l'API d'inscription
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, email, password }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || `Erreur HTTP: ${response.status}`);
+                }
+
+                // --- Inscription Réussie ---
+                console.log("Inscription réussie:", data);
+                displaySuccessMessage(data.message || "Inscription réussie ! Vous pouvez maintenant vous connecter.");
+
+                closeModal(registerModalElement); // Ferme la modale d'inscription
+
+                // Optionnel : Ouvrir automatiquement la modale de connexion ?
+                // openModal(document.getElementById('login-modal'));
+
+                // OU Optionnel : Tenter de connecter l'utilisateur automatiquement (plus complexe)
+                // Pour l'instant, l'utilisateur devra se connecter manuellement.
+
+            } catch (error) {
+                console.error("Erreur lors de la tentative d'inscription:", error);
+                registerErrorMessage.textContent = error.message || "Impossible de s'inscrire.";
+                // Optionnel: displayError(error.message || "Impossible de s'inscrire.");
+            }
+        });
+    } else {
+        console.error("Élément(s) manquant(s) pour le formulaire d'inscription.");
+    }
+
+        // --- Gestion Affichage Initial Auth & Modales ---
+        const authLinks = document.getElementById('auth-links'); // Liens Connexion/Inscription
+        const userInfo = document.getElementById('user-info'); // Infos utilisateur connecté
+        const loginShowButton = document.getElementById('login-show-button');
+        const registerShowButton = document.getElementById('register-show-button');
+        const registerModal = document.getElementById('register-modal');
+        const loginModal = document.getElementById('login-modal');
+        const modalCloseButtons = document.querySelectorAll('.modal-close-button'); // Tous les boutons de fermeture
+    
+        // Fonction pour ouvrir une modale
+        const openModal = (modalElement) => {
+            if (modalElement) {
+                modalElement.classList.remove('hidden');
+            }
+        };
+    
+        // Fonction pour fermer une modale
+        const closeModal = (modalElement) => {
+             if (modalElement) {
+                modalElement.classList.add('hidden');
+                // Optionnel: Vider les champs et messages d'erreur en fermant
+                const form = modalElement.querySelector('form');
+                if (form) form.reset();
+                const errorMsg = modalElement.querySelector('[id$="-error-message"]'); // Trouve l'élément d'erreur
+                if (errorMsg) errorMsg.textContent = '';
+             }
+        };
+    
+        // Écouteurs pour ouvrir les modales
+        if (loginShowButton && loginModal) {
+            loginShowButton.addEventListener('click', () => openModal(loginModal));
+        }
+        if (registerShowButton && registerModal) {
+            registerShowButton.addEventListener('click', () => openModal(registerModal));
+        }
+    
+        // Écouteurs pour fermer les modales via les boutons (X ou Annuler)
+        modalCloseButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const modalId = button.dataset.modalId; // Récupère l'ID depuis data-modal-id
+                const modalToClose = document.getElementById(modalId);
+                closeModal(modalToClose);
+            });
+        });
+    
+        // Écouteurs pour fermer les modales en cliquant sur le fond
+         [loginModal, registerModal].forEach(modal => {
+             if (modal) {
+                modal.addEventListener('click', (event) => {
+                    if (event.target === modal) { // Si le clic est sur le fond directement
+                        closeModal(modal);
+                    }
+                });
+             }
+         });
+
+ // --- Gestion de la Soumission du Formulaire de Connexion ---
+ const loginForm = document.getElementById('login-form');
+ const loginEmailInput = document.getElementById('login-email');
+ const loginPasswordInput = document.getElementById('login-password');
+ const loginErrorMessage = document.getElementById('login-error-message');
+ const loginModalElement = document.getElementById('login-modal'); // Pour le fermer
+
+ if (loginForm && loginEmailInput && loginPasswordInput && loginErrorMessage && loginModalElement) {
+     loginForm.addEventListener('submit', async (event) => {
+         event.preventDefault(); // Empêche le rechargement
+         loginErrorMessage.textContent = ''; // Vide l'ancien message d'erreur
+
+         const email = loginEmailInput.value.trim();
+         const password = loginPasswordInput.value.trim(); // Ne pas trimmer les mdp normalement, mais ok ici
+
+         // Validation simple côté client
+         if (!email || !password) {
+             loginErrorMessage.textContent = 'Email et mot de passe sont requis.';
+             return;
+         }
+
+         try {
+             // Appel à l'API de connexion
+             const response = await fetch('/api/auth/login', {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json',
+                 },
+                 body: JSON.stringify({ email, password }),
+             });
+
+             const data = await response.json(); // Attend la réponse JSON
+
+             if (!response.ok) {
+                 // Si le statut HTTP n'est pas OK (ex: 400, 401, 500)
+                 throw new Error(data.message || `Erreur HTTP: ${response.status}`);
+             }
+
+             // --- Connexion Réussie ---
+             console.log("Connexion réussie:", data);
+             displaySuccessMessage(data.message || "Connexion réussie !");
+
+             // 1. Stocker le Token JWT (TRÈS IMPORTANT)
+             // localStorage persiste même après fermeture du navigateur
+             // sessionStorage persiste seulement pour la session du navigateur
+             if (data.token) {
+                 localStorage.setItem('authToken', data.token); // Stocke le token
+                 // Optionnel: stocker aussi les infos utilisateur de base
+                 localStorage.setItem('userInfo', JSON.stringify({
+                     userId: data.userId,
+                     username: data.username
+                 }));
+                  console.log("Token stocké dans localStorage.");
+             } else {
+                  console.error("Aucun token reçu après login réussi !");
+                  displayError("Problème lors de la connexion, token manquant.");
+                  return; // Arrête si pas de token
+             }
+
+
+             // 2. Mettre à jour l'interface utilisateur (état connecté)
+             updateAuthStateUI(); // Appelle la fonction pour maj l'UI
+
+             // 3. Fermer la modale de connexion
+             closeModal(loginModalElement); // Appelle la fonction pour fermer
+
+             // 4. Recharger les données de l'utilisateur connecté !
+             currentPage = 1; // Réinitialise la page
+             fetchBooks();    // Recharge les livres (maintenant avec le token)
+             fetchEtageres().then(displayEtageres); // Recharge les étagères (maintenant avec le token)
+
+
+         } catch (error) {
+             console.error("Erreur lors de la tentative de connexion:", error);
+             // Affiche l'erreur dans la modale
+             loginErrorMessage.textContent = error.message || "Impossible de se connecter.";
+              // Optionnel: afficher aussi un toast
+              // displayError(error.message || "Impossible de se connecter.");
+         }
+     });
+ } else {
+     console.error("Élément(s) manquant(s) pour le formulaire de connexion.");
+ }
+
+ // --- Gestion du Bouton de Déconnexion ---
+ const logoutButton = document.getElementById('logout-button');
+ if (logoutButton) {
+     logoutButton.addEventListener('click', () => {
+         console.log("Déconnexion demandée.");
+
+         // 1. Supprimer le token et les infos utilisateur du localStorage
+         localStorage.removeItem('authToken');
+         localStorage.removeItem('userInfo'); // Si vous stockez aussi userInfo
+
+         // 2. Mettre à jour l'interface pour refléter l'état déconnecté
+         updateAuthStateUI();
+
+         // 3. Effacer les données spécifiques à l'utilisateur de la page
+         // (Optionnel mais recommandé pour une déconnexion propre)
+         displayBooks([]); // Affiche une liste de livres vide
+         const menuEtagere = document.getElementById('menu-etagere');
+         if (menuEtagere) menuEtagere.innerHTML = ''; // Vide les étagères
+         const bookList = document.getElementById('book-list');
+         if (bookList) bookList.innerHTML = '<p class="text-center text-gray-500 col-span-full">Veuillez vous connecter pour voir vos livres.</p>';
+
+
+         // Réinitialiser les filtres et la pagination à leur état par défaut
+         currentStatusFilter = "Tous";
+         currentGenreFilter = "Tous";
+         currentTagFilter = null;
+         currentPublisherFilter = "";
+         currentPage = 1;
+         const sortSelect = document.getElementById('sort-select');
+         if (sortSelect) sortSelect.selectedIndex = 0;
+         const publisherInput = document.getElementById('filter-publisher');
+         if (publisherInput) publisherInput.value = "";
+         const activeTagDisplay = document.getElementById('active-tag-filter-display');
+         if (activeTagDisplay) activeTagDisplay.classList.add('hidden');
+
+
+         // Optionnel: Afficher un message de succès pour la déconnexion
+         displaySuccessMessage("Vous avez été déconnecté avec succès.");
+
+         // Optionnel: Rediriger vers une page de connexion ou la page d'accueil publique
+         // window.location.href = '/login.html'; // Si vous aviez une page dédiée
+     });
+ } else {
+     console.error("Bouton de déconnexion #logout-button non trouvé.");
+ }
+
+
+
 
    // 2. Gestion du formulaire
     document.getElementById('book-form').addEventListener('submit', handleFormSubmit);
@@ -1501,7 +1834,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Enregistrer le nouveau genre
         saveNewGenreButton.addEventListener('click', async () => {
             const newGenreName = newGenreModalInput.value.trim();
-            addGenreModalError.textContent = ''; // Vide message erreur précédent
+            addGenreModalError.textContent = '';
 
             if (!newGenreName) {
                 addGenreModalError.textContent = "Le nom du genre ne peut pas être vide.";
@@ -1511,11 +1844,13 @@ document.addEventListener('DOMContentLoaded', () => {
             saveNewGenreButton.disabled = true;
             saveNewGenreButton.textContent = 'Sauvegarde...';
 
+            console.log("SAVE GENRE MODAL: Token in localStorage BEFORE calling createEtagere:", localStorage.getItem('authToken')); // LOG E (gardez-le pour vérifier)
+
             try {
-                 // Utilise la bonne route API pour les étagères/genres
-                const response = await fetch('/api/etageres', {
+                // Utilise la bonne route API pour les étagères/genres
+                const response = await fetch('/api/etageres', { // Appel à l'API POST
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(), // <<<< UTILISE getAuthHeaders() ICI
                     body: JSON.stringify({ name: newGenreName })
                 });
 
@@ -1523,9 +1858,10 @@ document.addEventListener('DOMContentLoaded', () => {
                    let errorMsg = `Erreur: ${response.status}`;
                    try {
                        const errorData = await response.json();
-                       // Spécifiquement pour le code 409 (Conflict)
-                        if (response.status === 409) {
+                        if (response.status === 409) { // Conflit (duplicata)
                             errorMsg = errorData.message || `Le genre "${newGenreName}" existe déjà.`;
+                        } else if (response.status === 401) { // Non autorisé
+                            errorMsg = errorData.message || "Non autorisé. Veuillez vous reconnecter.";
                         } else {
                            errorMsg = errorData.message || `Impossible d'ajouter le genre (${response.status}).`;
                         }
@@ -1539,29 +1875,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Succès !
                 closeGenreModal();
-        displaySuccessMessage(`Genre "${addedGenre.name}" ajouté !`);
-        await populateGenreDropdown(addedGenre.name); // Met à jour le select DANS le formulaire
-
-         // Mettre à jour la liste des étagères dans la sidebar (CORRECTION ICI) :
-         fetchEtageres().then(displayEtageres); // Récupère la liste à jour PUIS l'affiche
-
-                // Re-peupler le dropdown ET sélectionner le nouveau genre
+                displaySuccessMessage(`Genre "${addedGenre.name}" ajouté !`);
                 await populateGenreDropdown(addedGenre.name);
-
-                // Mettre à jour la liste des étagères dans la sidebar
                 fetchEtageres().then(displayEtageres);
 
             } catch (error) {
                 console.error("Erreur lors de l'ajout du genre:", error);
-                // Affiche l'erreur dans la modale pour que l'utilisateur la voie
                 addGenreModalError.textContent = error.message;
             } finally {
-                // Réactiver bouton même en cas d'erreur
                 saveNewGenreButton.disabled = false;
                 saveNewGenreButton.textContent = 'Enregistrer';
             }
         });
-
+        
          // Permettre de sauver avec Entrée dans le champ input de la modale
          newGenreModalInput.addEventListener('keypress', (event) => {
              if (event.key === 'Enter') {

@@ -7,6 +7,8 @@ const path = require('path');
 const cors = require('cors');
 const bookRoutes = require('./routes/bookRoutes');
 const etagereRoutes = require('./routes/etagereRoutes');
+const authRoutes = require('./routes/authRoutes');
+const { protect } = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,12 +37,19 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, '../public'))); // Sert les fichiers du dossier 'public'
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views', 'index.html'));
+    res.sendFile(path.resolve(__dirname, '../views', 'index.html'));
 });
 
+// --- Routes Publiques (Authentification) ---
+app.use('/api/auth', authRoutes); 
+
+
+
+
 // Routes pour les livres
-app.use('/api', bookRoutes);
-app.use('/api/etageres', etagereRoutes);
+app.use('/api/books', protect, bookRoutes);
+app.use('/api/etageres', protect, etagereRoutes);
+
 
 app.listen(PORT, () => {
     console.log(`Serveur démarré sur le port ${PORT}`);
