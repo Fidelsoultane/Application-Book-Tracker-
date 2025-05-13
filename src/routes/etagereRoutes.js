@@ -12,8 +12,8 @@ router.post('/', async (req, res) => {
         const { name } = req.body;
 
         // Validation : Le nom est obligatoire et ne doit pas être vide.
-        if (!name) {
-            return res.status(400).json({ message: "Le nom de l'étagère est obligatoire." });
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            return res.status(400).json({ message: 'Le nom de l\'étagère est obligatoire et ne peut pas être vide.' });
         }
 
         const trimmedName = name.trim(); // Supprime les espaces blancs au début et à la fin
@@ -118,51 +118,41 @@ router.put('/:id', async (req, res) => {
 
 // --- Supprimer une étagère par son ID (DELETE /api/etageres/:id) ---
 router.delete('/:id', async (req, res) => {
-    try {
-    
-        const { id } = req.params;
-        const deletedEtagere = await Etagere.findByIdAndDelete(id);
+    // Récupère l'ID de l'utilisateur depuis req.user (injecté par le middleware 'protect')
+    if (!req.user || !req.user.userId) {
+        console.error("DELETE /api/etageres/:id - Erreur: userId manquant dans req.user");
+        return res.status(401).json({ message: "Utilisateur non authentifié ou ID utilisateur manquant." });
+    }
+    const userId = req.user.userId;
 
-        if (!deletedEtagere) {
+    try {
+        const { id } = req.params; // ID de l'étagère à supprimer
+
+        // 1. Trouver l'étagère pour vérifier son existence ET son propriétaire
+        const etagereToDelete = await Etagere.findById(id);
+
+        if (!etagereToDelete) {
             return res.status(404).json({ message: "Étagère non trouvée." });
         }
 
-        res.status(200).json({ message: "Étagère supprimée avec succès." });
+        // 2. VÉRIFICATION D'APPARTENANCE ESSENTIELLE
+        if (etagereToDelete.userId.toString() !== userId) {
+            console.log(`Tentative de suppression non autorisée par utilisateur ${userId} sur étagère ${id} appartenant à ${etagereToDelete.userId}`);
+            return res.status(403).json({ message: "Accès non autorisé." }); // 403 Forbidden
+        }
+
+        // 3. Si l'utilisateur est propriétaire, on supprime
+        await Etagere.findByIdAndDelete(id);
+        console.log(`Étagère ${id} supprimée par user ${userId}`);
+
+        // Optionnel : Mettre à jour les livres qui utilisaient cette étagère
+        // await Book.updateMany({ userId: userId, genre: etagereToDelete.name }, { $set: { genre: '' } });
+
+        res.status(200).json({ message: "Étagère supprimée avec succès." }); // Ou statut 204
 
     } catch (error) {
-        console.error("Erreur lors de la suppression de l'étagère:", error);
-        res.status(500).json({ message: "Erreur lors de la suppression de l'étagère." });
-    }
-});
-
-// --- Supprimer une étagère par son NOM (DELETE /api/etageres/name/:name) ---
-// Utile si vous n'avez pas l'ID, mais *attention* aux doublons (même si le schéma impose l'unicité)
-router.delete('/name/:name', async (req, res) => {
-    
-    try {
-        const userId = req.user.userId;
-        const { name } = req.params;
-
-         // --- Vérification d'Appartenance --- (AJOUTÉ)
-         const etagereToDelete = await Etagere.findById(id);
-         if (!etagereToDelete) {
-             return res.status(404).json({ message: "Étagère non trouvée." });
-         }
-         if (etagereToDelete.userId.toString() !== userId) {
-              console.log(`Tentative de suppression non autorisée par ${userId} sur étagère ${id}`);
-             return res.status(403).json({ message: "Accès non autorisé." });
-         }
-
-         await Etagere.findByIdAndDelete(id);
-         console.log(`Étagère ${id} supprimée par user ${userId}`);
-
-         await Book.updateMany({ userId: userId, genre: etagereToDelete.name }, { $set: { genre: '' } });
-
-        res.status(200).json({ message: "Étagère supprimée avec succès." });
-
-    } catch (error) {
-        console.error("Erreur lors de la suppression de l'étagère (par nom):", error);
-        res.status(500).json({ message: "Erreur lors de la suppression de l'étagère." });
+        console.error("Erreur serveur lors de la suppression de l'étagère:", error);
+        res.status(500).json({ message: "Erreur serveur lors de la suppression de l'étagère." });
     }
 });
 
