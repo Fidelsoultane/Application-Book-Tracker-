@@ -8,6 +8,9 @@
     "test": "jest",
     "build:css": "npx tailwindcss -i ./public/css/styles.css -o ./public/css/output.css --watch"
   },
+  "engines": { 
+    "node": "22.11" 
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
