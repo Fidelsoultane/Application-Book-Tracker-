@@ -25,14 +25,14 @@ app.use('/api/etageres', protect, etagereRoutes);
 // Servir le Frontend
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '..', 'public', 'index.html'));
+    res.sendFile(path.resolve(__dirname, '..', 'views', 'index.html'));
 });
 
 // Fonction pour démarrer le serveur et connecter la DB
 const startApp = async () => {
     try {
         const DB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/booktrackerDB';
-        console.log("DB_URI pour app principale:", DB_URI); // Pour voir quelle DB est utilisée
+        
 
         // Enlever les options dépréciées
         await mongoose.connect(DB_URI);
