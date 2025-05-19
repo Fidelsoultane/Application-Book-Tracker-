@@ -117,33 +117,104 @@ function createBookCard(book) {
         textInfo.appendChild(ratingContainer);
     }
 
-    // --- Affichage de la Progression --- (NOUVEAU BLOC)
-    if (book.status === 'En cours' && book.pageCount && book.pageCount > 0) {
-        const progressContainer = createElementWithClasses('div', 'mt-1 text-xs text-gray-600');
-        const currentPage = book.currentPage || 0;
-        // Assurez-vous que pageCount est bien un nombre pour le calcul
-        const totalPages = parseInt(book.pageCount) || 0;
-        const percentage = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0; // Évite division par zéro
-        progressContainer.textContent = `Progression : ${currentPage} / ${totalPages} pages (${percentage}%)`;
-        // Barre de progression (optionnel, mais sympa)
-        const progressBarContainer = createElementWithClasses('div', 'w-full bg-gray-200 rounded-full h-1.5 mt-1');
-        const progressBar = createElementWithClasses('div', 'bg-blue-500 h-1.5 rounded-full');
-        progressBar.style.width = `${percentage}%`; // Définit la largeur en %
-        progressBarContainer.appendChild(progressBar);
-        progressContainer.appendChild(progressBarContainer); // Ajoute la barre sous le texte
+    console.log(`Livre: ${book.title}, Statut: ${book.status}, PageCount: ${book.pageCount}, CurrentPage: ${book.currentPage}`);
 
-        // Ajouter après les étoiles de notation ou le genre
-        const ratingElement = card.querySelector('.text-yellow-400'); // Trouve les étoiles
-        if (ratingElement) {
-            ratingElement.insertAdjacentElement('afterend', progressContainer);
-        } else {
-             const genreElement = card.querySelector('p.text-xs.text-gray-500:last-of-type'); // Trouve le genre ou autre dernier élément
-              if (genreElement) genreElement.insertAdjacentElement('afterend', progressContainer);
-              else textInfo.appendChild(progressContainer); // Fallback
-        }
+
+// --- Affichage de la Progression ---
+if (book.status === 'En cours' && book.pageCount && parseInt(book.pageCount, 10) > 0) { // Assurez-vous que pageCount est comparé comme un nombre
+    console.log(`[${book.title}] - Affichage progression: OUI (Statut: ${book.status}, PageCount: ${book.pageCount})`);
+
+    const progressOuterContainer = createElementWithClasses('div', 'mt-2');
+    // ... (création progressTextContainer, progressBarContainer, et leur ajout à progressOuterContainer) ...
+    // ... (le code que vous avez pour afficher le texte et la barre de progression) ...
+    const progressTextContainer = createElementWithClasses('div', 'text-xs text-gray-600');
+    const currentPageForDisplay = book.currentPage || 0;
+    const totalPagesForDisplay = parseInt(book.pageCount, 10) || 0;
+    const percentageForDisplay = totalPagesForDisplay > 0 ? Math.round((currentPageForDisplay / totalPagesForDisplay) * 100) : 0;
+    progressTextContainer.textContent = `Progression : ${currentPageForDisplay} / ${totalPagesForDisplay} pages (${percentageForDisplay}%)`;
+    progressOuterContainer.appendChild(progressTextContainer);
+
+    const progressBarContainer = createElementWithClasses('div', 'w-full bg-gray-200 rounded-full h-1.5 mt-1 dark:bg-gray-700');
+    const progressBar = createElementWithClasses('div', 'bg-blue-600 h-1.5 rounded-full dark:bg-blue-500');
+    progressBar.style.width = `${percentageForDisplay}%`;
+    progressBarContainer.appendChild(progressBar);
+    progressOuterContainer.appendChild(progressBarContainer);
+
+
+    // --- Section spécifique aux Boutons d'action pour la progression ---
+    console.log(`[${book.title}] - Entrée dans la section création boutons de progression.`);
+    const progressActions = createElementWithClasses('div', 'mt-1 flex items-center space-x-2');
+
+    const currentBookPageForButtons = book.currentPage || 0;
+    const totalBookPagesForButtons = parseInt(book.pageCount, 10) || 0; // Assurez-vous que c'est un nombre
+
+    // Bouton +1 Page
+    if (totalBookPagesForButtons > 0) { // On ne peut incrémenter que s'il y a des pages
+        const incrementPageButton = createElementWithClasses('button', 'increment-page-btn text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-1.5 py-0.5 rounded');
+        incrementPageButton.textContent = "+1 Page";
+        incrementPageButton.title = "Augmenter la page actuelle de 1";
+        incrementPageButton.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (currentBookPageForButtons < totalBookPagesForButtons) {
+                await updateBookProgress(book, currentBookPageForButtons + 1, totalBookPagesForButtons);
+            } else {
+                displayError("Vous êtes déjà à la dernière page !");
+            }
+        });
+        progressActions.appendChild(incrementPageButton);
+        console.log(`[${book.title}] - Bouton '+1 Page' AJOUTÉ.`);
+    } else {
+        console.log(`[${book.title}] - Bouton '+1 Page' NON ajouté (totalBookPagesForButtons <= 0).`);
     }
 
-    content.appendChild(textInfo); // Ajoute le bloc d'infos principales AU CONTENEUR SCROLLABLE
+
+    // Bouton Terminé
+    if (currentBookPageForButtons < totalBookPagesForButtons && totalBookPagesForButtons > 0) {
+        console.log(`[${book.title}] - Condition pour bouton 'Terminé' VRAIE (page ${currentBookPageForButtons}/${totalBookPagesForButtons}).`);
+        const markAsReadButton = createElementWithClasses('button', 'mark-as-read-card-btn text-xs bg-green-100 hover:bg-green-200 text-green-700 px-1.5 py-0.5 rounded');
+        markAsReadButton.textContent = "Terminé";
+        markAsReadButton.title = "Marquer comme terminé";
+        markAsReadButton.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await updateBookProgress(book, totalBookPagesForButtons, totalBookPagesForButtons, 'Terminé');
+        });
+        progressActions.appendChild(markAsReadButton);
+        console.log(`[${book.title}] - Bouton 'Terminé' AJOUTÉ.`);
+    } else {
+         console.log(`[${book.title}] - Bouton 'Terminé' NON ajouté (condition fausse : page ${currentBookPageForButtons}/${totalBookPagesForButtons}).`);
+    }
+
+    // Vérifier si des boutons ont été ajoutés à progressActions
+    if (progressActions.hasChildNodes()) {
+        progressOuterContainer.appendChild(progressActions);
+        console.log(`[${book.title}] - 'progressActions' (avec enfants) AJOUTÉ à 'progressOuterContainer'.`);
+    } else {
+        console.log(`[${book.title}] - 'progressActions' est VIDE, non ajouté à 'progressOuterContainer'.`);
+    }
+    // --- Fin Boutons d'action ---
+
+    // Insertion de progressOuterContainer dans la carte
+    const ratingElement = card.querySelector('.text-yellow-400');
+    if (ratingElement) {
+        ratingElement.insertAdjacentElement('afterend', progressOuterContainer);
+    } else {
+        const genreElement = card.querySelector('p.text-xs.text-gray-500:last-of-type');
+        if (genreElement) {
+            genreElement.insertAdjacentElement('afterend', progressOuterContainer);
+        } else {
+            const textInfoDiv = card.querySelector('.p-4 > div:first-of-type');
+            if(textInfoDiv) {
+                textInfoDiv.appendChild(progressOuterContainer);
+            } else {
+                card.appendChild(progressOuterContainer);
+            }
+        }
+    }
+    console.log(`[${book.title}] - 'progressOuterContainer' (contenant texte, barre ET boutons) inséré dans la carte.`);
+
+} else {
+    console.log(`[${book.title}] - PAS d'affichage de progression/boutons (Condition Principale FAUSSE: Statut: ${book.status}, PageCount: ${book.pageCount})`);
+}
 
     // --- Section Infos Secondaires & Tags ---
     const secondaryInfo = document.createElement('div');
@@ -272,7 +343,7 @@ async function fetchBooks() {
     try {
         showLoading();
 
-        let url = '/api/books/?'; // Commence par '?'
+        let url = '/api/books?'; // Commence par '?'
 
         // --- Ajout des paramètres de pagination --- (VÉRIFIEZ CES LIGNES)
         url += `page=${currentPage}&limit=${booksPerPage}&`;
@@ -297,6 +368,10 @@ async function fetchBooks() {
             headers: getAuthHeaders() 
         });
 
+         console.log("FETCHBOOKS - Statut de la réponse:", response.status, response.statusText);
+        const responseBodyText = await response.text(); // Lire la réponse comme texte d'abord
+        console.log("FETCHBOOKS - Corps brut de la réponse:", responseBodyText);
+
         if (!response.ok) {
             if (response.status === 401) { // Gérer spécifiquement le 401
                 displayError("Session expirée ou non autorisé. Veuillez vous reconnecter.");
@@ -311,9 +386,20 @@ async function fetchBooks() {
                 if (menuEtagere) menuEtagere.innerHTML = '';
                 return; // Arrête le traitement
             }
-            throw new Error(`Erreur HTTP: ${response.status}`);
+
+            // Essaye de parser comme JSON si ce n'est pas 401, ou utilise le texte si échec
+            let errorDetail = responseBodyText;
+            try {
+                const errorJson = JSON.parse(responseBodyText);
+                errorDetail = errorJson.message || JSON.stringify(errorJson);
+            } catch(e) { /* Ce n'était pas du JSON, on garde le texte */ }
+            throw new Error(`Erreur HTTP: ${response.status} - ${errorDetail}`);
         }
-        const data = await response.json();
+           
+       const data = JSON.parse(responseBodyText); // Maintenant on parse le texte en JSON
+        console.log("FETCHBOOKS - Données JSON parsées (data):", data);
+        console.log("FETCHBOOKS - data.books (avant appel à displayBooks):", data.books);
+        console.log("FETCHBOOKS - Nombre de livres reçus:", data.books ? data.books.length : 'undefined ou null');
         displayBooks(data.books);
         updatePaginationControls(data.totalBooks);
     } catch (error) {
@@ -356,6 +442,7 @@ function updatePaginationControls(totalBooks) {
 }
 
 function displayBooks(books) {
+      console.log("DISPLAYBOOKS - Fonction appelée. Argument 'books':", books);
     const bookList = document.getElementById('book-list');
     if (!bookList) return; // Sécurité
     bookList.innerHTML = '';
@@ -483,10 +570,15 @@ async function fetchBookDataFromISBN(isbn) {
                 const bookData = data.items[0].volumeInfo;
                 console.log("bookData extrait:", bookData);
 
+                let coverUrlFromAPI = bookData.imageLinks?.thumbnail || bookData.imageLinks?.smallThumbnail || '';
+if (coverUrlFromAPI && coverUrlFromAPI.startsWith('http://')) {
+    coverUrlFromAPI = coverUrlFromAPI.replace(/^http:\/\//i, 'https://');
+}
+
                 const extractedData = {
                     title: bookData.title,
                     author: bookData.authors ? bookData.authors.join(', ') : '', // Prend tous les auteurs
-                    coverUrl: bookData.imageLinks?.thumbnail || bookData.imageLinks?.smallThumbnail || '', // Prend la miniature disponible
+                    coverUrl: coverUrlFromAPI,
                     publisher: bookData.publisher,
                     publishedDate: bookData.publishedDate,
                     pageCount: bookData.pageCount,
@@ -573,71 +665,73 @@ async function searchBooksAPI(query) {
 }
 
 function displayAPISearchResults(results) {
-    console.log("--- Debug displayAPISearchResults ---"); // Log d'entrée
+    console.log("--- Debug displayAPISearchResults ---");
 
     const resultsContainer = document.getElementById('api-search-results');
     if (!resultsContainer) {
         console.error("Conteneur #api-search-results non trouvé ! Impossible d'afficher les résultats.");
-        return; // Sortie si le conteneur principal manque
+        return;
     }
 
-    // Vide seulement les anciens items de résultat (ceux avec la classe .api-result-item)
+    // Vide seulement les anciens items de résultat
     const previousResultItems = resultsContainer.querySelectorAll('.api-result-item');
     console.log(`Display Results: Nettoyage de ${previousResultItems.length} ancien(s) item(s).`);
     previousResultItems.forEach(item => item.remove());
 
-    // Récupère ou crée l'élément message à l'intérieur du conteneur
-    let messageElement = resultsContainer.querySelector('#api-search-message'); // Cherche à l'intérieur
+    // Récupère ou crée l'élément message
+    let messageElement = resultsContainer.querySelector('#api-search-message');
     if (!messageElement) {
         console.warn("#api-search-message non trouvé, tentative de recréation.");
         messageElement = document.createElement('p');
         messageElement.id = 'api-search-message';
-        messageElement.className = 'text-center text-gray-500'; // Applique les classes nécessaires
-        // Ajoute l'élément message au début du conteneur s'il a été recréé
+        messageElement.className = 'text-center text-gray-500';
         resultsContainer.insertBefore(messageElement, resultsContainer.firstChild);
     }
     console.log("Display Results: Élément message trouvé ou créé:", messageElement);
 
-    // Assure que le conteneur est visible car on va y mettre quelque chose
     resultsContainer.classList.remove('hidden');
     console.log("Display Results: Container classList après remove('hidden'):", resultsContainer.classList.toString());
 
     // Cas 1 : Erreur ou Aucun Résultat
     if (!results || results.length === 0) {
         messageElement.textContent = 'Aucun livre trouvé pour cette recherche.';
-        messageElement.classList.remove('hidden'); // Affiche le message
+        messageElement.classList.remove('hidden');
         console.log("Display Results: Aucun résultat trouvé, message affiché.");
-        // Assure qu'une éventuelle liste précédente (resultList div) est enlevée
-        const oldResultList = resultsContainer.querySelector('.space-y-3'); // Trouve le conteneur de la liste précédente
+        const oldResultList = resultsContainer.querySelector('.space-y-3');
         if(oldResultList) oldResultList.remove();
-        return; // Sort de la fonction
+        return;
     }
 
     // Cas 2 : Des résultats ont été trouvés
     console.log(`Display Results: Préparation affichage ${results.length} résultat(s).`);
-    messageElement.textContent = ''; // Vide le message
-    messageElement.classList.add('hidden'); // Cache le message car on a des résultats
+    messageElement.textContent = '';
+    messageElement.classList.add('hidden');
 
-    // Crée le conteneur pour la nouvelle liste de résultats
     const resultList = document.createElement('div');
-    resultList.className = 'space-y-3'; // Pour l'espacement vertical des items
+    resultList.className = 'space-y-3';
 
-    // Boucle sur les résultats reçus de l'API
     results.forEach((item, index) => {
         if (!item.volumeInfo) {
              console.warn(`Display Results: Item ${index + 1} ignoré (pas de volumeInfo)`);
-             return; // Ignore cet item s'il manque volumeInfo
+             return;
         }
-        const bookInfo = item.volumeInfo;
+        const bookInfo = item.volumeInfo; // bookInfo est défini pour cet item
 
-        // Extraction des données (avec gestion des cas où des infos manquent)
+        // --- EXTRACTION ET CORRECTION DE coverUrl ICI ---
+        let coverUrl = bookInfo.imageLinks?.thumbnail || bookInfo.imageLinks?.smallThumbnail || 'images/default-book-cover.png';
+        // Ne modifiez que si ce n'est PAS votre image par défaut locale et si elle commence par http://
+        if (coverUrl && coverUrl.startsWith('http://')) {
+            coverUrl = coverUrl.replace(/^http:\/\//i, 'https://');
+            console.log(`Display Results: URL couverture item ${index + 1} corrigée en HTTPS: ${coverUrl}`);
+        }
+        // --- FIN CORRECTION coverUrl ---
+
         const title = bookInfo.title || 'Titre inconnu';
         const authors = bookInfo.authors ? bookInfo.authors.join(', ') : 'Auteur inconnu';
-        const coverUrl = bookInfo.imageLinks?.thumbnail || bookInfo.imageLinks?.smallThumbnail || 'images/default-book-cover.png'; // Image par défaut locale
         const publisher = bookInfo.publisher || '';
         const publishedDate = bookInfo.publishedDate || '';
-        const pageCount = bookInfo.pageCount || ''; // Mettre chaîne vide plutôt que null pour dataset
-        const genre = bookInfo.categories?.[0] || ''; // Prend la première catégorie
+        const pageCount = bookInfo.pageCount || '';
+        const genre = bookInfo.categories?.[0] || '';
         let isbn13 = '';
         let isbn10 = '';
         if (bookInfo.industryIdentifiers) {
@@ -646,16 +740,13 @@ function displayAPISearchResults(results) {
         }
         const isbn = isbn13 || isbn10;
 
-        // Création de l'élément HTML pour ce résultat
         const resultItem = document.createElement('div');
-        // Important : ajouter la classe .api-result-item pour pouvoir les supprimer au prochain affichage
         resultItem.className = 'api-result-item flex items-start p-2 border-b border-gray-200';
-
-        console.log(`Display Results: Création item ${index + 1} - Titre: ${title}`); // LOG CRÉATION ITEM
+        console.log(`Display Results: Création item ${index + 1} - Titre: ${title}`);
 
         // Image
         const imgElement = document.createElement('img');
-        imgElement.src = coverUrl;
+        imgElement.src = coverUrl; // Utilise la variable 'coverUrl' corrigée
         imgElement.alt = `Couverture de ${title}`;
         imgElement.className = 'w-16 h-24 object-contain mr-3 flex-shrink-0';
         resultItem.appendChild(imgElement);
@@ -663,47 +754,35 @@ function displayAPISearchResults(results) {
         // Infos Texte
         const textContainer = document.createElement('div');
         textContainer.className = 'flex-grow';
-        // Utilisation de textContent pour éviter les problèmes d'injection HTML simple
-        const titleH4 = document.createElement('h4');
-        titleH4.className = 'font-semibold text-etagere';
-        titleH4.textContent = title;
-        textContainer.appendChild(titleH4);
-
-        const authorP = document.createElement('p');
-        authorP.className = 'text-sm text-gray-600';
-        authorP.textContent = authors;
-        textContainer.appendChild(authorP);
-
-        const pubP = document.createElement('p');
-        pubP.className = 'text-xs text-gray-500';
-        pubP.textContent = `${publisher ? publisher + ' ' : ''}${publishedDate ? '('+publishedDate.substring(0, 4)+')' : ''}`;
-        textContainer.appendChild(pubP);
-
+        // ... (création titleH4, authorP, pubP comme avant) ...
+        const titleH4 = document.createElement('h4'); titleH4.className = 'font-semibold text-etagere'; titleH4.textContent = title; textContainer.appendChild(titleH4);
+        const authorP = document.createElement('p'); authorP.className = 'text-sm text-gray-600'; authorP.textContent = authors; textContainer.appendChild(authorP);
+        const pubP = document.createElement('p'); pubP.className = 'text-xs text-gray-500'; pubP.textContent = `${publisher ? publisher + ' ' : ''}${publishedDate ? '('+publishedDate.substring(0, 4)+')' : ''}`; textContainer.appendChild(pubP);
         resultItem.appendChild(textContainer);
+
 
         // Bouton "Ajouter"
         const addButton = document.createElement('button');
         addButton.textContent = 'Ajouter';
         addButton.className = 'add-from-api-button bg-green-500 hover:bg-green-700 text-white text-xs font-bold py-1 px-2 rounded ml-2 flex-shrink-0';
 
-        // Stocke TOUTES les données nécessaires dans le dataset
+        // Stocke TOUTES les données nécessaires dans le dataset, Y COMPRIS L'URL CORRIGÉE
         addButton.dataset.title = title;
         addButton.dataset.author = authors;
-        addButton.dataset.coverUrl = coverUrl;
+        addButton.dataset.coverUrl = coverUrl; // Utilise la variable 'coverUrl' corrigée
         addButton.dataset.publisher = publisher;
         addButton.dataset.publishedDate = publishedDate;
-        addButton.dataset.pageCount = pageCount; // pageCount peut être ''
+        addButton.dataset.pageCount = pageCount;
         addButton.dataset.genre = genre;
         addButton.dataset.isbn = isbn;
 
-        resultItem.appendChild(addButton); // Ajoute le bouton à l'item
-
-        resultList.appendChild(resultItem); // Ajoute cet item à la liste des résultats
+        resultItem.appendChild(addButton);
+        resultList.appendChild(resultItem);
     });
 
-    console.log("Display Results: Fin de la boucle. resultList contient:", resultList.childNodes.length, "éléments enfants"); // LOG FIN BOUCLE
-    resultsContainer.appendChild(resultList); // Ajoute la nouvelle liste (div) au conteneur principal
-    console.log("Display Results: resultList ajouté au container."); // LOG FINAL APPEND
+    console.log("Display Results: Fin de la boucle. resultList contient:", resultList.childNodes.length, "éléments enfants");
+    resultsContainer.appendChild(resultList);
+    console.log("Display Results: resultList ajouté au container.");
 }
 
 function updateStarInputDisplay(rating) {
@@ -744,6 +823,56 @@ function prefillBookForm(bookData) {
      populateGenreDropdown(bookData.genre); 
 }
 
+async function updateBookProgress(book, newCurrentPage, totalPages, newStatus = null) {
+    console.log(`Mise à jour progression pour: ${book.title}, Nouvelle page: ${newCurrentPage}, Statut: ${newStatus}`);
+
+    const updateData = {
+        currentPage: newCurrentPage
+    };
+
+    if (newStatus) { // Si un nouveau statut est explicitement fourni (ex: "Terminé")
+        updateData.status = newStatus;
+        if (newStatus === 'Terminé') {
+            updateData.currentPage = totalPages; // Assure que la page actuelle est le total
+            updateData.endDate = new Date().toISOString().split('T')[0];
+            if (!book.startDate) {
+                updateData.startDate = updateData.endDate;
+            }
+        } else if (newStatus !== 'Terminé') { // Si on repasse à "En cours" par ex.
+             updateData.endDate = null;
+        }
+    } else if (newCurrentPage >= totalPages) { // Si on atteint la dernière page sans forcer un statut
+        updateData.currentPage = totalPages;
+        updateData.status = 'Terminé';
+        updateData.endDate = new Date().toISOString().split('T')[0];
+        if (!book.startDate) {
+            updateData.startDate = updateData.endDate;
+        }
+    }
+
+    console.log("Données envoyées pour mise à jour progression:", updateData);
+
+    try {
+        const response = await fetch(`/api/books/${book._id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(), // Important pour l'authentification
+            body: JSON.stringify(updateData)
+        });
+
+        if (!response.ok) {
+            let errorMsg = `Erreur HTTP: ${response.status}`;
+            try { const errorData = await response.json(); errorMsg = errorData.message || errorMsg; } catch (e) {/* Ignore */}
+            throw new Error(errorMsg);
+        }
+
+        displaySuccessMessage("Progression mise à jour !");
+        fetchBooks(); // Recharge tous les livres pour refléter le changement
+
+    } catch (error) {
+        console.error("Erreur lors de la mise à jour de la progression:", error);
+        displayError(error.message || "Impossible de mettre à jour la progression.");
+    }
+}
 // --------- Gestion du formulaire ---------
 async function handleFormSubmit(event) {
     event.preventDefault();
@@ -1679,10 +1808,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                   //  PEUPLER LE DROPDOWN GENRE AVANT DE PRÉ-SÉLECTIONNER (NOUVEAU)
                   await populateGenreDropdown(bookDataFromAPI.genre); // Appelle et attend que le dropdown soit peuplé
-                                                                      // Passe le genre de l'API pour essayer de le pré-sélectionner
-
+                                                                      
                 // 2. Pré-remplir le formulaire principal (#book-form)
-                resetForm(); // Commence par réinitialiser le formulaire (efface aussi l'ID caché)
+                
                 document.getElementById('book-title').value = bookDataFromAPI.title;
                 document.getElementById('book-author').value = bookDataFromAPI.author;
                 document.getElementById('book-coverUrl').value = bookDataFromAPI.coverUrl;
@@ -1767,7 +1895,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Conteneur de notation ou input caché introuvable.");
     }
 
-    // index.js (DANS document.addEventListener('DOMContentLoaded', ...))
+    
 
     // --- Gestion du bouton "Vérifier ISBN" dans le formulaire ---
     const checkIsbnButton = document.getElementById('check-isbn-button');
@@ -1909,4 +2037,4 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn("Éléments requis pour la modale d'ajout de genre non trouvés dans le DOM.");
     }
 
-}); // FIN de DOMContentLoaded
+}); 
