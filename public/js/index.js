@@ -1002,6 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('authToken', data.token);
                     localStorage.setItem('userInfo', JSON.stringify({ userId: data.userId, username: data.username }));
                     console.log("Token stocké dans localStorage.");
+                    console.log("UserInfo stocké:", { userId: data.userId, username: data.username });
                 } else {
                     throw new Error("Problème lors de la connexion, token manquant.");
                 }
