@@ -117,33 +117,113 @@ function createBookCard(book) {
         textInfo.appendChild(ratingContainer);
     }
 
-    // --- Affichage de la Progression --- (NOUVEAU BLOC)
-    if (book.status === 'En cours' && book.pageCount && book.pageCount > 0) {
-        const progressContainer = createElementWithClasses('div', 'mt-1 text-xs text-gray-600');
-        const currentPage = book.currentPage || 0;
-        // Assurez-vous que pageCount est bien un nombre pour le calcul
-        const totalPages = parseInt(book.pageCount) || 0;
-        const percentage = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0; // Évite division par zéro
-        progressContainer.textContent = `Progression : ${currentPage} / ${totalPages} pages (${percentage}%)`;
-        // Barre de progression (optionnel, mais sympa)
-        const progressBarContainer = createElementWithClasses('div', 'w-full bg-gray-200 rounded-full h-1.5 mt-1');
-        const progressBar = createElementWithClasses('div', 'bg-blue-500 h-1.5 rounded-full');
-        progressBar.style.width = `${percentage}%`; // Définit la largeur en %
-        progressBarContainer.appendChild(progressBar);
-        progressContainer.appendChild(progressBarContainer); // Ajoute la barre sous le texte
+    
+    // --- Affichage de la Progression ---
+    if (book.status === 'En cours' && book.pageCount && parseInt(book.pageCount, 10) > 0) {
+        console.log(`[${book.title}] - CONDITION VRAIE: Affichage progression et boutons (Statut: ${book.status}, PageCount: ${book.pageCount})`);
 
-        // Ajouter après les étoiles de notation ou le genre
-        const ratingElement = card.querySelector('.text-yellow-400'); // Trouve les étoiles
-        if (ratingElement) {
-            ratingElement.insertAdjacentElement('afterend', progressContainer);
+        const progressOuterContainer = createElementWithClasses('div', 'mt-2'); // Conteneur pour tout ce qui concerne la progression
+
+        // 1. Texte de progression
+        const progressTextContainer = createElementWithClasses('div', 'text-xs text-gray-600');
+        const currentPageForDisplay = book.currentPage || 0;
+        const totalPagesForDisplay = parseInt(book.pageCount, 10) || 0;
+        const percentageForDisplay = totalPagesForDisplay > 0 ? Math.round((currentPageForDisplay / totalPagesForDisplay) * 100) : 0;
+        progressTextContainer.textContent = `Progression : ${currentPageForDisplay} / ${totalPagesForDisplay} pages (${percentageForDisplay}%)`;
+        progressOuterContainer.appendChild(progressTextContainer);
+        console.log(`[${book.title}] - Texte de progression ajouté: ${progressTextContainer.textContent}`);
+
+        // 2. Barre de progression
+        const progressBarContainer = createElementWithClasses('div', 'w-full bg-gray-200 rounded-full h-1.5 mt-1 dark:bg-gray-700');
+        const progressBar = createElementWithClasses('div', 'bg-blue-600 h-1.5 rounded-full dark:bg-blue-500');
+        progressBar.style.width = `${percentageForDisplay}%`;
+        progressBarContainer.appendChild(progressBar);
+        progressOuterContainer.appendChild(progressBarContainer);
+        console.log(`[${book.title}] - Barre de progression ajoutée (largeur: ${percentageForDisplay}%).`);
+
+        // 3. Boutons d'action pour la progression
+        const progressActions = createElementWithClasses('div', 'mt-1 flex items-center space-x-2');
+        console.log(`[${book.title}] - Création du conteneur 'progressActions'.`);
+
+        // Utilise les valeurs spécifiques à CE livre pour les listeners et conditions
+        const currentBookPageForButtons = book.currentPage || 0;
+        const totalBookPagesForButtons = parseInt(book.pageCount, 10) || 0;
+
+        // Bouton "+1 Page"
+        // Ce bouton s'affiche toujours si pageCount > 0, mais sera désactivé logiquement dans son listener si current >= total
+        if (totalBookPagesForButtons > 0) {
+            const incrementPageButton = createElementWithClasses('button', 'increment-page-btn text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-1.5 py-0.5 rounded');
+            incrementPageButton.textContent = "+1 Page";
+            incrementPageButton.title = "Augmenter la page actuelle de 1";
+            incrementPageButton.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                console.log(`Clic +1 Page pour: ${book.title}. Page actuelle avant clic: ${currentBookPageForButtons}, Total: ${totalBookPagesForButtons}`);
+                if (currentBookPageForButtons < totalBookPagesForButtons) {
+                    await updateBookProgress(book, currentBookPageForButtons + 1, totalBookPagesForButtons);
+                } else {
+                    displayError("Vous êtes déjà à la dernière page !");
+                }
+            });
+            progressActions.appendChild(incrementPageButton);
+            console.log(`[${book.title}] - Bouton '+1 Page' créé et ajouté à 'progressActions'.`);
         } else {
-             const genreElement = card.querySelector('p.text-xs.text-gray-500:last-of-type'); // Trouve le genre ou autre dernier élément
-              if (genreElement) genreElement.insertAdjacentElement('afterend', progressContainer);
-              else textInfo.appendChild(progressContainer); // Fallback
+            console.log(`[${book.title}] - Bouton '+1 Page' NON créé (totalBookPagesForButtons <= 0).`);
         }
+
+        // Bouton "Terminé"
+        // S'affiche seulement si le livre n'est pas déjà considéré comme à la dernière page
+        if (currentBookPageForButtons < totalBookPagesForButtons && totalBookPagesForButtons > 0) {
+            console.log(`[${book.title}] - Condition pour bouton 'Terminé' VRAIE (page ${currentBookPageForButtons}/${totalBookPagesForButtons}). Création...`);
+            const markAsReadButton = createElementWithClasses('button', 'mark-as-read-card-btn text-xs bg-green-100 hover:bg-green-200 text-green-700 px-1.5 py-0.5 rounded');
+            markAsReadButton.textContent = "Terminé";
+            markAsReadButton.title = "Marquer comme terminé";
+            markAsReadButton.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                console.log(`Clic 'Terminé' pour: ${book.title}`);
+                await updateBookProgress(book, totalBookPagesForButtons, totalBookPagesForButtons, 'Terminé');
+            });
+            progressActions.appendChild(markAsReadButton);
+            console.log(`[${book.title}] - Bouton 'Terminé' créé et ajouté à 'progressActions'.`);
+        } else {
+             console.log(`[${book.title}] - Bouton 'Terminé' NON créé (condition fausse : page ${currentBookPageForButtons}/${totalBookPagesForButtons}).`);
+        }
+
+        // Ajoute le conteneur des boutons (progressActions) au conteneur général de progression (progressOuterContainer)
+        // SEULEMENT si progressActions contient effectivement des enfants (des boutons)
+        if (progressActions.hasChildNodes()) {
+            progressOuterContainer.appendChild(progressActions);
+            console.log(`[${book.title}] - 'progressActions' (avec enfants) AJOUTÉ à 'progressOuterContainer'.`);
+        } else {
+            console.log(`[${book.title}] - 'progressActions' est VIDE, non ajouté à 'progressOuterContainer'.`);
+        }
+        // --- Fin Boutons d'action ---
+
+        // Insertion de tout le bloc de progression (progressOuterContainer) dans la carte
+        const ratingElement = card.querySelector('.text-yellow-400'); // Cherche l'élément de notation
+        if (ratingElement) {
+            ratingElement.insertAdjacentElement('afterend', progressOuterContainer);
+            console.log(`[${book.title}] - 'progressOuterContainer' inséré après les étoiles de notation.`);
+        } else {
+            const genreElement = card.querySelector('p.text-xs.text-gray-500:last-of-type'); // Cherche le dernier paragraphe de genre/info
+            if (genreElement) {
+                genreElement.insertAdjacentElement('afterend', progressOuterContainer);
+                console.log(`[${book.title}] - 'progressOuterContainer' inséré après l'élément genre.`);
+            } else {
+                // Fallback : si ni notation ni genre, on ajoute à la fin de textInfo
+                if (textInfo) {
+                    textInfo.appendChild(progressOuterContainer);
+                    console.log(`[${book.title}] - 'progressOuterContainer' ajouté à la fin de 'textInfoDiv'.`);
+                } else {
+                    card.appendChild(progressOuterContainer); // En dernier recours, ajoute directement à la carte
+                    console.warn(`[${book.title}] - 'textInfoDiv' non trouvé, 'progressOuterContainer' ajouté directement à la carte.`);
+                }
+            }
+        }
+    } else {
+        console.log(`[${book.title}] - PAS d'affichage de progression/boutons (Condition Principale FAUSSE: Statut: ${book.status}, PageCount: ${book.pageCount})`);
     }
 
-    content.appendChild(textInfo); // Ajoute le bloc d'infos principales AU CONTENEUR SCROLLABLE
+
 
     // --- Section Infos Secondaires & Tags ---
     const secondaryInfo = document.createElement('div');
