@@ -226,56 +226,74 @@ function hideNoteModal() {
 
 
 // --------- Gestion des Livres (API, Logique d'Affichage) ---------
-let currentStatusFilter = "Tous"; let currentGenreFilter = "Tous"; let currentTagFilter = null;
-let currentPublisherFilter = ""; let currentPage = 1; const booksPerPage = 12;
+let currentStatusFilter = "Tous";
+ let currentGenreFilter = "Tous";
+  let currentTagFilter = null;
+let currentPublisherFilter = ""; 
+let currentPage = 1; 
+const booksPerPage = 12;
 
-async function fetchBooks() {
+async function fetchBooks(isInitialLoad = false) {
     try {
         showLoading();
         let url = '/api/books?';
         url += `page=${currentPage}&limit=${booksPerPage}&`;
-        if (currentStatusFilter !== "Tous") url += `status=${encodeURIComponent(currentStatusFilter)}&`;
-        if (currentGenreFilter !== "Tous") url += `genre=${encodeURIComponent(currentGenreFilter)}&`;
-        if (currentTagFilter) url += `tags=${encodeURIComponent(currentTagFilter)}&`;
-        if (currentPublisherFilter) url += `publisher=${encodeURIComponent(currentPublisherFilter)}&`;
+         // --- Section des Filtres ---
+        if (currentStatusFilter !== "Tous") { url += `status=${encodeURIComponent(currentStatusFilter)}&`; }
+        if (currentGenreFilter !== "Tous") { url += `genre=${encodeURIComponent(currentGenreFilter)}&`; }
+        if (currentTagFilter) { url += `tags=${encodeURIComponent(currentTagFilter)}&`; }
+        if (currentPublisherFilter) { url += `publisher=${encodeURIComponent(currentPublisherFilter)}&`; }
+
         const sortSelect = document.getElementById('sort-select');
-        if (sortSelect && sortSelect.value) url += `sortBy=${sortSelect.value}&`;
-        if (url.endsWith('&')) url = url.slice(0, -1);
+        if (sortSelect && sortSelect.value) { url += `sortBy=${sortSelect.value}&`; }
+        
+        if (url.endsWith('&')) { url = url.slice(0, -1); }
+
         console.log("FETCHBOOKS - URL d'appel:", url);
         const response = await fetch(url, { method: 'GET', headers: getAuthHeaders() });
         console.log("FETCHBOOKS - Statut de la réponse:", response.status, response.statusText);
-        const responseBodyText = await response.text(); // Lire en texte d'abord
-        // console.log("FETCHBOOKS - Corps brut de la réponse:", responseBodyText); // Peut être très long
-
+        
         if (!response.ok) {
             if (response.status === 401) {
-                displayError("Session expirée ou non autorisé. Veuillez vous reconnecter.");
-                localStorage.removeItem('authToken'); localStorage.removeItem('userInfo');
-                updateAuthStateUI(); displayBooks([]); updatePaginationControls(0);
+                console.warn("FETCHBOOKS - Non autorisé (token invalide/expiré ou manquant).");
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userInfo');
+                updateAuthStateUI();
+                displayBooks([]); // Affiche "Veuillez vous connecter..." ou "Aucun livre..."
+                updatePaginationControls(0);
                 const menuEtagere = document.getElementById('menu-etagere');
-                if (menuEtagere) menuEtagere.innerHTML = '';
-                return;
+                if (menuEtagere) menuEtagere.innerHTML = ''; // Vide les étagères
+                
+                // N'affiche le message d'erreur QUE si ce n'est pas le chargement initial silencieux
+                if (!isInitialLoad) {
+                    displayError("Session expirée ou non autorisé. Veuillez vous connecter.");
+                }
+                return; // Arrête le traitement ici pour un 401
             }
-            let errorDetail = `Erreur HTTP: ${response.status}`; // Message par défaut
-            if (responseBodyText) { // S'il y a un corps de réponse
-                try {
-                    const errorJson = JSON.parse(responseBodyText);
-                    errorDetail = errorJson.message || JSON.stringify(errorJson);
-                } catch(e) { errorDetail = responseBodyText.substring(0, 200); } // Prend les 200 premiers chars si pas JSON
-            }
+            // Pour les autres erreurs, lire le corps et lancer
+            const responseBodyText = await response.text();
+            console.log("FETCHBOOKS - Corps brut de l'erreur:", responseBodyText);
+            let errorDetail = responseBodyText;
+            try { const errorJson = JSON.parse(responseBodyText); errorDetail = errorJson.message || JSON.stringify(errorJson); } catch(e) {}
             throw new Error(`Erreur HTTP: ${response.status} - ${errorDetail}`);
         }
+
+        const responseBodyText = await response.text(); // Lire la réponse en texte si OK
         const data = JSON.parse(responseBodyText);
         console.log("FETCHBOOKS - Données JSON parsées (data):", data);
         console.log("FETCHBOOKS - data.books (avant appel à displayBooks):", data.books ? data.books.length : data.books);
+
         displayBooks(data.books);
         updatePaginationControls(data.totalBooks);
+
     } catch (error) {
         console.error("Erreur DANS fetchBooks:", error);
         if (!error.message || !error.message.includes("Session expirée")) {
              displayError(error.message || "Impossible de récupérer les livres.");
         }
-        displayBooks([]); updatePaginationControls(0);
+        // Assurer un état propre même en cas d'erreur non-401
+        displayBooks([]); 
+        updatePaginationControls(0);
     } finally {
         hideLoading();
     }
@@ -752,21 +770,25 @@ async function updateBookProgress(book, newCurrentPage, totalPages, newStatus = 
 }
 
 // --------- Fonctions pour gérer les étagères (API, Affichage) ---------
-async function fetchEtageres() {
-    console.log("--- Attempting fetchEtageres ---");
+async function fetchEtageres(isInitialLoad = false) {
+    console.log("--- Attempting fetchEtageres --- Initial load:", isInitialLoad);
     try {
         const response = await fetch('/api/etageres', {
             method: 'GET',
-            headers: getAuthHeaders() // Envoi du token
+            headers: getAuthHeaders()
         });
+        console.log("FETCHETAGERES - Statut de la réponse:", response.status, response.statusText);
+
         if (!response.ok) {
             if (response.status === 401) {
-                console.warn("Accès non autorisé pour récupérer les étagères (fetchEtageres).");
-                // Optionnel: déclencher une déconnexion UI si 401
-                // localStorage.removeItem('authToken');
-                // localStorage.removeItem('userInfo');
-                // updateAuthStateUI();
-                // displayError("Votre session a peut-être expiré. Veuillez vous reconnecter.");
+                console.warn("FETCHETAGERES - Non autorisé.");
+                // Si c'est un chargement initial, on ne fait rien de plus, fetchBooks gérera la déconnexion UI.
+                // Si ce n'est pas un chargement initial, on pourrait aussi déconnecter l'utilisateur.
+                // Pour l'instant, on retourne juste un tableau vide.
+                if (!isInitialLoad) {
+                    // Déclencher une déconnexion plus globale si nécessaire, ou afficher un message.
+                    // displayError("Accès aux étagères non autorisé. Veuillez vous reconnecter.");
+                }
                 return [];
             }
             throw new Error(`Erreur HTTP: ${response.status}`);
@@ -776,10 +798,13 @@ async function fetchEtageres() {
         return etageres;
     } catch (error) {
         console.error("Erreur lors de la récupération des étagères:", error);
-        displayError("Impossible de charger les étagères.");
-        return []; // Retourne un tableau vide en cas d'erreur pour éviter des erreurs en aval
+        if (!isInitialLoad) { // N'affiche l'erreur que si ce n'est pas un chargement silencieux
+            displayError("Impossible de charger les étagères.");
+        }
+        return [];
     }
 }
+
 
 async function deleteEtagere(etagereId) {
     console.log(`Tentative de suppression de l'étagère ID: ${etagereId}`);
@@ -912,6 +937,7 @@ function displayEtageres(etageres) {
 
             li.addEventListener('click', () => {
                 currentGenreFilter = etagere.name;
+                 console.log("FILTRE GENRE CLIQUÉ - currentGenreFilter mis à :", currentGenreFilter);
                 applyFilterOrSort();
                 document.querySelectorAll('#menu-etagere li').forEach(item => item.classList.remove('bg-gray-600', 'text-white'));
                 li.classList.add('bg-gray-600', 'text-white');
@@ -969,6 +995,8 @@ async function populateGenreDropdown(genreNameToSelect = null) {
 }
 
 function applyFilterOrSort() {
+        console.log("APPLYFILTERORSORT - Appelée. currentPage mis à 1.");
+    console.log("APPLYFILTERORSORT - Filtres AVANT fetchBooks: Status=", currentStatusFilter, "Genre=", currentGenreFilter, "Tag=", currentTagFilter, "Publisher=", currentPublisherFilter, "Sort=", document.getElementById('sort-select')?.value);
     console.log("applyFilterOrSort appelée, réinitialisation page et fetch...");
     currentPage = 1;
     fetchBooks();
@@ -978,6 +1006,7 @@ function applyFilterOrSort() {
 document.addEventListener('DOMContentLoaded', () => {
 
     console.log("DOM prêt."); // Log initial
+
 
     // --- Récupération des Éléments DOM Principaux ---
     // Authentification & Modales Auth
@@ -1071,12 +1100,28 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Initialisation ---
-    updateAuthStateUI();
-    fetchBooks();
-    fetchEtageres().then(etageres => {
-        displayEtageres(etageres);
-        populateGenreDropdown(); // Peuple le dropdown initialement
-    });
+   updateAuthStateUI(); // Met à jour l'UI en fonction de l'état de connexion initial
+
+    const token = localStorage.getItem('authToken');
+    if (token) {
+        console.log("Token trouvé au chargement, tentative de récupération des données utilisateur.");
+        fetchBooks(true); // true indique que c'est un chargement initial "silencieux" pour le message d'erreur 401
+        fetchEtageres(true).then(etageres => { // true également pour fetchEtageres
+            displayEtageres(etageres);
+            populateGenreDropdown();
+        });
+    } else {
+        console.log("Aucun token au chargement. Affichage de l'état déconnecté.");
+        // Assurer que l'affichage est celui d'un utilisateur déconnecté
+        // displayBooks et updatePaginationControls sont appelés dans updateAuthStateUI si token est null
+        // ou si fetchBooks rencontre un 401 lors d'un chargement initial.
+        // On peut s'assurer ici que la liste des étagères est vide aussi.
+        const menuEtagere = document.getElementById('menu-etagere');
+        if (menuEtagere) menuEtagere.innerHTML = ''; // Vide les étagères
+        displayBooks([]); // Affiche "Veuillez vous connecter pour voir vos livres."
+        updatePaginationControls(0); // Cache la pagination
+        populateGenreDropdown();
+    }
 
     // --- Gestion Formulaire Inscription ---
     if (registerForm && registerUsernameInput && registerEmailInput && registerPasswordInput && registerErrorMessage && registerModal) {
