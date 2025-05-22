@@ -29,7 +29,8 @@ router.post('/', async (req, res) => {
     } catch (error) {
         console.error("Erreur lors de la création de l'étagère:", error);
         if (error.code === 11000) { // Gestion du cas où le nom existe déjà
-            return res.status(409).json({ message: `L'étagère nommée "${trimmedName}" existe déjà pour vous. Veuillez choisir un autre nom.` });
+              const originalNameAttempt = req.body.name || "Nom inconnu"; // Pour éviter une autre erreur si name est undefined
+        return res.status(409).json({ message: `L'étagère nommée "${originalNameAttempt.trim()}" existe déjà pour vous. Veuillez choisir un autre nom.` });
         }
         res.status(500).json({ message: "Erreur lors de la création de l'étagère." });
     }
