@@ -810,17 +810,25 @@ function prefillBookForm(bookData) {
     console.log("Pré-remplissage du formulaire avec:", bookData);
 
     document.getElementById('book-title').value = bookData.title || '';
-    // Gère le cas où l'auteur de l'API est un tableau
     document.getElementById('book-author').value = Array.isArray(bookData.author) ? bookData.author.join(', ') : (bookData.author || '');
     document.getElementById('book-coverUrl').value = bookData.coverUrl || '';
     document.getElementById('book-publisher').value = bookData.publisher || '';
     document.getElementById('book-publishedDate').value = bookData.publishedDate || '';
     document.getElementById('book-pageCount').value = bookData.pageCount || '';
-    document.getElementById('book-genre').value = bookData.genre || '';
-    document.getElementById('book-isbn').value = bookData.isbn || ''; // Met aussi à jour l'ISBN si trouvé via titre par ex.
+    document.getElementById('book-isbn').value = bookData.isbn || ''; // Met aussi à jour l'ISBN
 
-    // Optionnel : Mettre à jour le menu déroulant genre 
-     populateGenreDropdown(bookData.genre); 
+    // Appelle populateGenreDropdown pour peupler ET essayer de sélectionner le genre
+    // Il est important que populateGenreDropdown soit appelé avant de définir la valeur du select
+    // si le genre de l'API pourrait ne pas exister dans la liste actuelle.
+    // Si populateGenreDropdown est async, attendez-le si nécessaire.
+    // Mais si bookData.genre est une chaîne, on peut juste essayer de la définir.
+    // La version que nous avons faite pour populateGenreDropdown(genreNameToSelect) gère la pré-sélection.
+    populateGenreDropdown(bookData.genre || ''); // Appelle pour peupler et pré-sélectionner
+
+    // On peut aussi forcer la valeur après le peuplement si populateGenreDropdown n'est pas async
+    // ou si on veut s'assurer que c'est la valeur de l'API qui est sélectionnée
+    // si elle existe dans les options.
+    // document.getElementById('book-genre').value = bookData.genre || '';
 }
 
 async function updateBookProgress(book, newCurrentPage, totalPages, newStatus = null) {
