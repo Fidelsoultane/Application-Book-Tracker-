@@ -971,7 +971,7 @@ function applyFilterOrSort() {
 }
 
 // --------- Initialisation et Écouteurs d'Événements (DOMContentLoaded) ---------
-// --------- Initialisation et Écouteurs d'Événements (DOMContentLoaded) ---------
+
 document.addEventListener('DOMContentLoaded', () => {
 
     console.log("DOM prêt."); // Log initial
@@ -1023,17 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchApiButton = document.getElementById('api-search-button');
     const searchApiResultsContainer = document.getElementById('api-search-results');
 
-    // Recherche ISBN
-    const checkIsbnButton = document.getElementById('check-isbn-button');
-    const isbnInputInBookForm = document.getElementById('book-isbn');
-
-    // Modale Ajout Genre (depuis formulaire livre)
-    const addGenreModal = document.getElementById('add-genre-modal');
-    const addNewGenreButtonFromBookForm = document.getElementById('add-new-genre-button');
-    const cancelNewGenreModalButton = document.getElementById('cancel-new-genre-button');
-    const saveNewGenreModalButton = document.getElementById('save-new-genre-button');
-    const newGenreModalInput = document.getElementById('new-genre-modal-input');
-    const addGenreModalError = document.getElementById('add-genre-modal-error');
+  
 
     // Formulaire d'ajout d'étagère (sidebar)
     const addEtagereFormSidebar = document.getElementById('add-etagere-form');
