@@ -27,319 +27,323 @@
 <body class="bg-principal">
 
     <nav class="bg-etagere p-4 text-text-light shadow-md">
-        <div class="container mx-auto flex items-center justify-between">
-            
-            <h1 class="text-xl font-bold text-secondary">Book Tracker</h1>
-            
-            <div id="auth-links" class="space-x-4">
-                 <button id="login-show-button" class="bg-secondary hover:bg-accent text-white font-semibold py-1 px-3 rounded">Connexion</button>
-                 <button id="register-show-button" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1 px-3 rounded">Inscription</button>
-            </div>
-            
-             <div id="user-info" class="hidden items-center space-x-4">
-                <span id="user-greeting" class="text-text-light">Bonjour, Utilisateur!</span>
-                <button id="logout-button" class="bg-red-500 hover:bg-red-700 text-white font-semibold py-1 px-3 rounded">Déconnexion</button>
+        <div class="container mx-auto flex flex-wrap items-center justify-between"> 
+            <h1 class="text-xl font-bold text-secondary mb-2 sm:mb-0">Book Tracker</h1> 
+
+           
+            <div class="flex flex-col items-center space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
+                <div id="auth-links" class="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 items-center">
+                    <button id="login-show-button" class="bg-secondary hover:bg-accent text-white font-semibold py-1 px-3 rounded w-full sm:w-auto">Connexion</button>
+                    <button id="register-show-button" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1 px-3 rounded w-full sm:w-auto">Inscription</button>
+                </div>
+                <div id="user-info" class="hidden flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 items-center">
+                    <span id="user-greeting" class="text-text-light">Bonjour, Utilisateur!</span>
+                    <button id="logout-button" class="bg-red-500 hover:bg-red-700 text-white font-semibold py-1 px-3 rounded w-full sm:w-auto">Déconnexion</button>
+                </div>
             </div>
         </div>
     </nav>
 
-<div id="contenu-principal-global" class="flex">
-    <nav id="menu-lateral" class="w-64 bg-gray-800 text-gray-100 h-screen">
-        <div class="p-4">
-            <h2 class="text-secondary text-2xl font-bold">Étagères</h2>
-            
+   
+    <div id="contenu-principal-global" class="flex flex-col md:flex-row">
+
+        <nav id="menu-lateral" class="w-full md:w-64 bg-gray-800 text-gray-100 md:h-screen flex-shrink-0 p-4">
+            <div>
+                <h2 class="text-secondary text-2xl font-bold mb-4">Étagères</h2>
                 <button id="manage-etageres-button" class="bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200 mb-4 w-full text-left">
                     Ajouter une étagère
                 </button>
-            
                 <form id="add-etagere-form" class="mb-4 hidden">
                     <label for="etagere-name" class="block text-sm font-medium text-gray-300 mb-1">Nom de la nouvelle étagère :</label>
                     <input type="text" id="etagere-name" placeholder="Ex: Science-Fiction" required class="input-field w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary bg-gray-700 text-gray-100">
                     <div class="mt-2 flex justify-end space-x-2">
-                         <button type="button" id="cancel-add-etagere" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded text-xs">Annuler</button>
-                         <button type="submit" class="bg-secondary hover:bg-accent text-text-light font-semibold py-1 px-2 rounded text-xs">Ajouter</button>
+                        <button type="button" id="cancel-add-etagere" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded text-xs">Annuler</button>
+                        <button type="submit" class="bg-secondary hover:bg-accent text-text-light font-semibold py-1 px-2 rounded text-xs">Ajouter</button>
                     </div>
                 </form>
-            
-            <ul id="menu-etagere" class="bg-etagere">
+                <ul id="menu-etagere" class="bg-etagere">
                 </ul>
-        </div>
-    </nav>
+            </div>
+        </nav>
 
-    <main id="contenu-principal" class="flex-1 p-5">
-        <h1 class="text-secondary text-2xl font-bold mb-4">Bienvenue sur Book Tracker</h1>
+        <main id="contenu-principal" class="flex-1 p-3 sm:p-5"> 
+            <h1 class="text-secondary text-xl sm:text-2xl font-bold mb-4">Bienvenue sur Book Tracker</h1>
 
-        <div id="api-search-section" class="mb-6 p-4 bg-white shadow rounded-md">
-            <h3 class="text-lg font-semibold text-etagere mb-2">Rechercher un livre par titre (API)</h3>
-            <div class="flex space-x-2">
-                <input type="search" id="api-search-input" placeholder="Entrez un titre ou des mots-clés..." class="input-field flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                <button id="api-search-button" class="bg-accent hover:bg-secondary text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
-                    <i class="fas fa-search"></i> Rechercher </button>
-            </div>
-            <div id="api-search-results" class="mt-4 border-t pt-4 hidden">
-                <p id="api-search-message" class="text-center text-gray-500">En attente de recherche...</p>
-                </div>
-        </div>
-
-        <form id="book-form" class="mb-8 p-6 bg-white shadow-md rounded-lg max-w-md mx-auto hidden">
-            <h2 id="form-title" class="text-secondary text-2xl font-bold mb-4">Ajouter un nouveau livre</h2>
-            <input type="hidden" id="book-id">
-            <div class="mb-4">
-                <label for="book-isbn" class="block text-etagere text-sm font-bold mb-1">ISBN:</label>
-                <input type="text" id="book-isbn" placeholder="ISBN du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                <button type="button" id="check-isbn-button" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors duration-200 flex-shrink-0" title="Vérifier l'ISBN et pré-remplir">
-                    Vérifier
-                </button>
-            </div>
-            <div class="mb-4">
-                <label for="book-title" class="block text-etagere text-sm font-bold mb-1">Titre:</label>
-                <input type="text" id="book-title" placeholder="Titre du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-            <div class="mb-4">
-                <label for="book-author" class="block text-etagere text-sm font-bold mb-1">Auteur:</label>
-                <input type="text" id="book-author" placeholder="Auteur du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-            <div class="mb-4">
-                <label for="book-coverUrl" class="block text-etagere text-sm font-bold mb-1">URL de la couverture:</label>
-                <input type="text" id="book-coverUrl" placeholder="URL de l'image de couverture" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-            <div class="mb-4">
-                <label for="book-publisher" class="block text-etagere text-sm font-bold mb-1">Éditeur:</label>
-                <input type="text" id="book-publisher" placeholder="Éditeur"
-                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-             <div class="mb-4">
-                <label for="book-publishedDate" class="block text-etagere text-sm font-bold mb-1">Date de publication:</label>
-                <input type="text" id="book-publishedDate" placeholder="Date de publication"
-                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-            <div class="mb-4">
-                <label for="book-pageCount" class="block text-etagere text-sm font-bold mb-1">Nombre de pages:</label>
-                <input type="number" id="book-pageCount" placeholder="Nombre de pages"
-                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-           
-            <div class="mb-4">
-                <label for="book-currentPage" class="block text-etagere text-sm font-bold mb-1">Page actuelle (si "En cours") :</label>
-                <input type="number" id="book-currentPage" placeholder="ex: 125" min="0" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-            <div class="mb-4">
-                <label for="book-genre" class="block text-etagere text-sm font-bold mb-1">Genre (Étagère):</label>
-                <div class="flex items-center space-x-2"> 
-                    <select id="book-genre" class="input-field flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary bg-white">
-                        <option value="">-- Sélectionner un genre --</option>
-                    </select>
-                    <button type="button" id="add-new-genre-button" class="bg-green-500 hover:bg-green-700 text-white font-bold p-1 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0" title="Ajouter un nouveau genre">
-                        <i class="fas fa-plus text-xs"></i> 
+            <div id="api-search-section" class="mb-6 p-3 sm:p-4 bg-white shadow rounded-md">
+                <h3 class="text-lg font-semibold text-etagere mb-2">Rechercher un livre par titre (API)</h3>
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <input type="search" id="api-search-input" placeholder="Entrez un titre ou des mots-clés..." class="input-field flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                    <button id="api-search-button" class="bg-accent hover:bg-secondary text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 w-full sm:w-auto">
+                        <i class="fas fa-search"></i> Rechercher
                     </button>
                 </div>
-            </div>
-            <div class="mb-6">
-                <label for="book-status" class="block text-etagere text-sm font-bold mb-1">Statut de lecture:</label>
-                <select id="book-status" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                    <option value="À lire">À lire</option>
-                    <option value="En cours">En cours</option>
-                    <option value="Terminé">Terminé</option>
-                    <option value="Souhaité">Souhaité</option>
-                </select>
-            </div>
-
-            <div class="mb-4">
-                <label class="block text-etagere text-sm font-bold mb-1">Votre Note :</label>
-                <div id="rating-input-container" class="flex items-center text-gray-400 text-2xl">
-                    <i class="far fa-star cursor-pointer hover:text-yellow-400" data-value="1" title="Noter 1/5"></i>
-                    <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="2" title="Noter 2/5"></i>
-                    <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="3" title="Noter 3/5"></i>
-                    <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="4" title="Noter 4/5"></i>
-                    <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="5" title="Noter 5/5"></i>
-                    <button type="button" id="clear-rating-button" class="ml-3 text-xs text-red-500 hover:text-red-700" title="Effacer la note">(Effacer)</button>
+                <div id="api-search-results" class="mt-4 border-t pt-4 hidden">
+                    <p id="api-search-message" class="text-center text-gray-500">En attente de recherche...</p>
                 </div>
-                <input type="hidden" id="book-rating-value" value="0">
             </div>
 
-            <div class="mb-4">
-                <label for="book-startDate" class="block text-etagere text-sm font-bold mb-1">Date de début de lecture:</label>
-                <input type="date" id="book-startDate"
-                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
+            <form id="book-form" class="mb-8 p-4 sm:p-6 bg-white shadow-md rounded-lg w-full max-w-md sm:max-w-2xl mx-auto hidden">
+                <h2 id="form-title" class="text-secondary text-xl sm:text-2xl font-bold mb-4">Ajouter un nouveau livre</h2>
+                <input type="hidden" id="book-id">
 
-            <div class="mb-4">
-                <label for="book-endDate" class="block text-etagere text-sm font-bold mb-1">Date de fin de
-                    lecture:</label>
-                <input type="date" id="book-endDate"
-                       class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
+                
+                <div class="mb-4">
+                    <label for="book-isbn" class="block text-etagere text-sm font-bold mb-1">ISBN:</label>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:space-x-2">
+                        <input type="text" id="book-isbn" placeholder="ISBN du livre" class="input-field flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary mb-2 sm:mb-0">
+                        <button type="button" id="check-isbn-button" class="bg-blue-500 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors duration-200 flex-shrink-0" title="Vérifier l'ISBN et pré-remplir">
+                            Vérifier
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="book-title" class="block text-etagere text-sm font-bold mb-1">Titre:</label>
+                    <input type="text" id="book-title" placeholder="Titre du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div class="mb-4">
+                    <label for="book-author" class="block text-etagere text-sm font-bold mb-1">Auteur:</label>
+                    <input type="text" id="book-author" placeholder="Auteur du livre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                 <div class="mb-4">
+                    <label for="book-coverUrl" class="block text-etagere text-sm font-bold mb-1">URL de la couverture:</label>
+                    <input type="text" id="book-coverUrl" placeholder="URL de l'image de couverture" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div class="mb-4">
+                    <label for="book-publisher" class="block text-etagere text-sm font-bold mb-1">Éditeur:</label>
+                    <input type="text" id="book-publisher" placeholder="Éditeur" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div class="mb-4">
+                    <label for="book-publishedDate" class="block text-etagere text-sm font-bold mb-1">Date de publication:</label>
+                    <input type="text" id="book-publishedDate" placeholder="Date de publication" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div class="mb-4">
+                    <label for="book-pageCount" class="block text-etagere text-sm font-bold mb-1">Nombre de pages:</label>
+                    <input type="number" id="book-pageCount" placeholder="Nombre de pages" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div class="mb-4">
+                    <label for="book-currentPage" class="block text-etagere text-sm font-bold mb-1">Page actuelle (si "En cours") :</label>
+                    <input type="number" id="book-currentPage" placeholder="ex: 125" min="0" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
 
-            <div class="mb-4">
-                <label for="book-tags" class="block text-etagere text-sm font-bold mb-1">Tags (séparés par des virgules):</label>
-                <input type="text" id="book-tags" placeholder="tag1, tag2, tag3" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
 
-            <div class="mb-4">
-                <label for="book-notes" class="block text-etagere text-sm font-bold mb-1">Notes personnelles :</label>
-                <textarea id="book-notes" placeholder="Vos critiques, citations préférées, etc." rows="4" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"></textarea>
-            </div>
+                <div class="mb-4">
+                    <label for="book-genre" class="block text-etagere text-sm font-bold mb-1">Genre (Étagère):</label>
+                    <div class="flex items-center space-x-2">
+                        <select id="book-genre" class="input-field flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary bg-white">
+                            <option value="">-- Sélectionner un genre --</option>
+                        </select>
+                        <button type="button" id="add-new-genre-button" class="bg-green-500 hover:bg-green-700 text-white font-bold p-1 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0" title="Ajouter un nouveau genre">
+                            <i class="fas fa-plus text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label for="book-status" class="block text-etagere text-sm font-bold mb-1">Statut de lecture:</label>
+                    <select id="book-status" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                        <option value="À lire">À lire</option>
+                        <option value="En cours">En cours</option>
+                        <option value="Terminé">Terminé</option>
+                        <option value="Souhaité">Souhaité</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-etagere text-sm font-bold mb-1">Votre Note :</label>
+                    <div id="rating-input-container" class="flex items-center text-gray-400 text-2xl">
+                        <i class="far fa-star cursor-pointer hover:text-yellow-400" data-value="1" title="Noter 1/5"></i>
+                        <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="2" title="Noter 2/5"></i>
+                        <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="3" title="Noter 3/5"></i>
+                        <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="4" title="Noter 4/5"></i>
+                        <i class="far fa-star cursor-pointer hover:text-yellow-400 ml-1" data-value="5" title="Noter 5/5"></i>
+                        <button type="button" id="clear-rating-button" class="ml-3 text-xs text-red-500 hover:text-red-700" title="Effacer la note">(Effacer)</button>
+                    </div>
+                    <input type="hidden" id="book-rating-value" value="0">
+                </div>
+                
+                 <div class="mb-4">
+                    <label for="book-startDate" class="block text-etagere text-sm font-bold mb-1">Date de début de lecture:</label>
+                    <input type="date" id="book-startDate" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div class="mb-4">
+                    <label for="book-endDate" class="block text-etagere text-sm font-bold mb-1">Date de fin de lecture:</label>
+                    <input type="date" id="book-endDate" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div class="mb-4">
+                    <label for="book-tags" class="block text-etagere text-sm font-bold mb-1">Tags (séparés par des virgules):</label>
+                    <input type="text" id="book-tags" placeholder="tag1, tag2, tag3" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                 <div class="mb-4">
+                    <label for="book-notes" class="block text-etagere text-sm font-bold mb-1">Notes personnelles :</label>
+                    <textarea id="book-notes" placeholder="Vos critiques, citations préférées, etc." rows="4" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"></textarea>
+                </div>
 
-            <div class="flex items-center justify-center">
-                <button type="submit" class="submit-button bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200">Enregistrer</button>
-                <button type="button" id="cancel-button" class="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 ml-2">Annuler</button>
-            </div>
-        </form>
+                <div class="flex items-center justify-center">
+                    <button type="submit" class="submit-button bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200">Enregistrer</button>
+                    <button type="button" id="cancel-button" class="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 ml-2">Annuler</button>
+                </div>
+            </form>
 
-        <button id="add-book-button" class="bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200 mb-4">
-            Ajouter un livre
-        </button>
-
-         <div class="mb-4 flex justify-center space-x-2">
-            <button data-status="Tous" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">Tous mes livres</button>
-            <button data-status="À lire" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">À lire</button>
-            <button data-status="En cours" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">En cours</button>
-            <button data-status="Terminé" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">Terminé</button>
-            <button data-status="Souhaité" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">Souhaité</button>
-        </div>
-
-        <div class="mb-4 flex justify-center items-center space-x-4">
-            <div>
-                <label for="sort-select" class="block text-etagere text-sm font-bold mb-1">Trier par :</label>
-                <select id="sort-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-                    <option value="">Choisir</option> <option value="createdAt:desc">Date d'ajout (plus récent)</option>
-                    <option value="createdAt:asc">Date d'ajout (plus ancien)</option>
-                    <option value="title:asc">Titre (A-Z)</option>
-                    <option value="title:desc">Titre (Z-A)</option>
-                    <option value="author:asc">Auteur (A-Z)</option> <option value="author:desc">Auteur (Z-A)</option> <option value="publishedDate:desc">Publication (plus récent)</option> <option value="publishedDate:asc">Publication (plus ancien)</option> </select>
-            </div>
-        
-            <div>
-                <label for="filter-publisher" class="block text-etagere text-sm font-bold mb-1">Filtrer par Éditeur :</label>
-                <input type="text" id="filter-publisher" placeholder="Nom de l'éditeur" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-        </div>
-
-        <div id="active-tag-filter-display" class="mb-3 text-sm text-gray-700 hidden bg-blue-100 border border-blue-300 p-2 rounded inline-flex items-center">
-            <span>Filtre Tag Actif : </span>
-            <span id="active-tag-name" class="font-semibold mx-1"></span> <button id="clear-tag-filter-button" class="ml-2 text-red-500 hover:text-red-700 font-bold" title="Annuler le filtre tag">&times;</button> </div>
-
-        <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
-        <div id="book-list" class="book-list flex flex-row flex-wrap justify-start items-start gap-4 px-4 md:px-6 lg:px-8 max-w-screen-lg mx-auto mt-8">
-            </div>
-    </main>
-</div>
-
-<div id="note-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
-    <div class="relative mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
-        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-            <h3 id="note-modal-title" class="text-xl font-medium text-gray-900">Notes pour : Livre</h3>
-            <button id="note-modal-close-button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
-                <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                <span class="sr-only">Fermer</span>
+            <button id="add-book-button" class="bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200 mb-4 mx-auto block"> 
+                Ajouter un livre
             </button>
-        </div>
-        <div class="mt-4">
-            <p id="note-modal-content" class="text-base leading-relaxed text-gray-600 whitespace-pre-wrap"></p> </div>
+
+            
+            <div class="mb-4 flex flex-wrap justify-center gap-2"> 
+                <button data-status="Tous" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">Tous mes livres</button>
+                <button data-status="À lire" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">À lire</button>
+                <button data-status="En cours" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">En cours</button>
+                <button data-status="Terminé" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">Terminé</button>
+                <button data-status="Souhaité" class="filter-button bg-text-light hover:bg-gray-300 text-etagere font-semibold py-2 px-4 rounded-full transition-colors duration-200">Souhaité</button>
+            </div>
+
+            <div class="mb-4 flex flex-col sm:flex-row sm:flex-wrap justify-center items-center gap-4"> 
+                <div class="w-full sm:w-auto">
+                    <label for="sort-select" class="block text-etagere text-sm font-bold mb-1">Trier par :</label>
+                    <select id="sort-select" class="input-field w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                        <option value="">Choisir</option>
+                        <option value="createdAt:desc">Date d'ajout (plus récent)</option>
+                         <option value="createdAt:asc">Date d'ajout (plus ancien)</option>
+                         <option value="title:asc">Titre (A-Z)</option>
+                         <option value="title:desc">Titre (Z-A)</option>
+                         <option value="author:asc">Auteur (A-Z)</option>
+                         <option value="author:desc">Auteur (Z-A)</option>
+                         <option value="publishedDate:desc">Publication (plus récent)</option>
+                         <option value="publishedDate:asc">Publication (plus ancien)</option>
+                    </select>
+                </div>
+                <div class="w-full sm:w-auto">
+                    <label for="filter-publisher" class="block text-etagere text-sm font-bold mb-1">Filtrer par Éditeur :</label>
+                    <input type="text" id="filter-publisher" placeholder="Nom de l'éditeur" class="input-field w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+            </div>
+
+            <div id="active-tag-filter-display" class="mb-3 text-sm text-gray-700 hidden bg-blue-100 border border-blue-300 p-2 rounded inline-flex items-center">
+                <span>Filtre Tag Actif : </span>
+                <span id="active-tag-name" class="font-semibold mx-1"></span>
+                <button id="clear-tag-filter-button" class="ml-2 text-red-500 hover:text-red-700 font-bold" title="Annuler le filtre tag">&times;</button>
+            </div>
+
+            <p id="loading-message" class="hidden text-center">Chargement des livres...</p>
+
+            <div id="book-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 place-items-center md:place-items-start">
+                
+            </div>
+        </main>
     </div>
-</div>
 
-<div id="pagination-controls" class="mt-8 flex justify-center items-center space-x-4">
-    <button id="prev-page" class="bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-        Précédent
-    </button>
-    <span id="page-info" class="text-gray-700">Page 1 sur 1</span>
-    <button id="next-page" class="bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-        Suivant
-    </button>
-</div>
+    <div id="note-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
+        <div class="relative mx-auto p-5 border w-11/12 sm:w-full max-w-md shadow-lg rounded-md bg-white">
+             <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <h3 id="note-modal-title" class="text-xl font-medium text-gray-900">Notes pour : Livre</h3>
+                <button id="note-modal-close-button" type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+                    <i class="fas fa-times w-5 h-5"></i><span class="sr-only">Fermer</span>
+                </button>
+            </div>
+            <div class="mt-4">
+                <p id="note-modal-content" class="text-base leading-relaxed text-gray-600 whitespace-pre-wrap"></p>
+            </div>
+        </div>
+    </div>
 
-<div id="add-genre-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
-    <div class="relative mx-auto p-5 border w-full max-w-sm shadow-lg rounded-md bg-white"> <div class="mt-3 text-center">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Ajouter un Nouveau Genre</h3>
-            <div class="mt-2 px-7 py-3">
+    <div id="pagination-controls" class="mt-8 flex justify-center items-center space-x-4">
+        <button id="prev-page" class="bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            Précédent
+        </button>
+        <span id="page-info" class="text-gray-700">Page 1 sur 1</span>
+        <button id="next-page" class="bg-secondary hover:bg-accent text-text-light font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            Suivant
+        </button>
+    </div>
+
+    <div id="add-genre-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
+        <form id="add-genre-form-modal" class="relative mx-auto p-5 border w-11/12 sm:w-full max-w-sm shadow-lg rounded-md bg-white">
+             <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <h3 class="text-xl font-medium text-gray-900">Ajouter un Nouveau Genre</h3>
+                <button type="button" class="modal-close-button text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-id="add-genre-modal" aria-label="Fermer">
+                    <i class="fas fa-times w-5 h-5"></i><span class="sr-only">Fermer</span>
+                </button>
+            </div>
+            <div class="mt-4 space-y-4">
                 <input type="text" id="new-genre-modal-input" placeholder="Nom du nouveau genre" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
                 <p id="add-genre-modal-error" class="text-red-500 text-xs mt-1 h-4 text-left"></p>
             </div>
-            <div class="flex justify-end items-center px-4 py-3 space-x-2">
-                <button id="cancel-new-genre-button" class="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md w-auto shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            <div class="flex justify-end items-center px-1 py-3 space-x-3 mt-4">
+                <button type="button" id="cancel-new-genre-button" class="modal-close-button bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm" data-modal-id="add-genre-modal">
                     Annuler
                 </button>
-                <button id="save-new-genre-button" class="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
+                <button type="submit" id="save-new-genre-button" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">
                     Enregistrer
                 </button>
             </div>
-        </div>
+        </form>
     </div>
-</div>
 
-<div id="register-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
-    <form id="register-form" class="relative mx-auto p-5 border w-full max-w-sm shadow-lg rounded-md bg-white">
-        
-        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-            <h3 class="text-xl font-medium text-gray-900">Inscription</h3>
-            <button type="button" class="modal-close-button text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-id="register-modal" aria-label="Fermer">
-                <i class="fas fa-times w-5 h-5"></i> 
-                <span class="sr-only">Fermer la modale</span>
-            </button>
-        </div>
-
-        
-        <div class="mt-4 space-y-4"> 
-            <div>
-                <label for="register-username" class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur :</label>
-                <input type="text" id="register-username" name="username" placeholder="Choisissez un nom d'utilisateur" required minlength="3" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-            <div>
-                <label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">Adresse Email :</label>
-                <input type="email" id="register-email" name="email" placeholder="votre.email@example.com" required class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-            <div>
-                <label for="register-password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe :</label>
-                <input type="password" id="register-password" name="password" placeholder="Minimum 6 caractères" required minlength="6" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-            
-            <p id="register-error-message" class="text-red-600 text-xs h-4 text-left"></p>
-        </div>
-
-        <div class="flex justify-end items-center px-1 py-3 space-x-3 mt-4"> 
-            <button type="button" class="modal-close-button bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm" data-modal-id="register-modal">
-                Annuler
-            </button>
-            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">
-                S'inscrire
-            </button>
-        </div>
-    </form>
-</div>
-
-<div id="login-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
-    <form id="login-form" class="relative mx-auto p-5 border w-full max-w-sm shadow-lg rounded-md bg-white">
-        <div class="flex justify-between items-center pb-3">
-             <h3 class="text-xl font-medium text-gray-900">Connexion</h3>
-             <button type="button" class="modal-close-button text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-id="login-modal">
-                 <i class="fas fa-times w-5 h-5"></i><span class="sr-only">Fermer</span>
-             </button>
-         </div>
-        <div class="mt-2 space-y-3">
-             <div>
-                <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="login-email" name="email" required class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-             <div>
-                <label for="login-password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
-                <input type="password" id="login-password" name="password" required class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
-            </div>
-             <p id="login-error-message" class="text-red-500 text-xs h-4"></p> 
-        </div>
-        <div class="flex justify-end items-center px-4 py-3 space-x-2 mt-4">
-             <button type="button" class="modal-close-button bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded" data-modal-id="login-modal">
-                 Annuler
-             </button>
-             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                 Se Connecter
-             </button>
-        </div>
-    </form>
-</div>
-
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <div id="register-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
+        <form id="register-form" class="relative mx-auto p-5 border w-11/12 sm:w-full max-w-sm shadow-lg rounded-md bg-white">
     
-<script src="js/index.js" type="module"></script>
+             <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <h3 class="text-xl font-medium text-gray-900">Inscription</h3>
+                <button type="button" class="modal-close-button text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-id="register-modal" aria-label="Fermer">
+                    <i class="fas fa-times w-5 h-5"></i><span class="sr-only">Fermer</span>
+                </button>
+            </div>
+            <div class="mt-4 space-y-4">
+                <div>
+                    <label for="register-username" class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur :</label>
+                    <input type="text" id="register-username" name="username" placeholder="Choisissez un nom d'utilisateur" required minlength="3" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div>
+                    <label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">Adresse Email :</label>
+                    <input type="email" id="register-email" name="email" placeholder="votre.email@example.com" required class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div>
+                    <label for="register-password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe :</label>
+                    <input type="password" id="register-password" name="password" placeholder="Minimum 6 caractères" required minlength="6" class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <p id="register-error-message" class="text-red-600 text-xs h-4 text-left"></p>
+            </div>
+            <div class="flex justify-end items-center px-1 py-3 space-x-3 mt-4">
+                <button type="button" class="modal-close-button bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm" data-modal-id="register-modal">
+                    Annuler
+                </button>
+                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">
+                    S'inscrire
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="login-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden z-50">
+        <form id="login-form" class="relative mx-auto p-5 border w-11/12 sm:w-full max-w-sm shadow-lg rounded-md bg-white">
+            
+            <div class="flex justify-between items-center pb-3">
+                <h3 class="text-xl font-medium text-gray-900">Connexion</h3>
+                <button type="button" class="modal-close-button text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-id="login-modal">
+                    <i class="fas fa-times w-5 h-5"></i><span class="sr-only">Fermer</span>
+                </button>
+            </div>
+            <div class="mt-2 space-y-3">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="login-email" name="email" required class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                    <input type="password" id="login-password" name="password" required class="input-field w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary">
+                </div>
+                <p id="login-error-message" class="text-red-500 text-xs h-4"></p>
+            </div>
+            <div class="flex justify-end items-center px-4 py-3 space-x-2 mt-4">
+                <button type="button" class="modal-close-button bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded" data-modal-id="login-modal">
+                    Annuler
+                </button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Se Connecter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="js/index.js" type="module"></script>
 </body>
 </html>
