@@ -1,10 +1,11 @@
 
 /// index.js - Version Complète (Mai 2025)
 
+
 // --------- Fonctions Utilitaires de Base ---------
 function createElementWithClasses(tag, classNames) {
     const element = document.createElement(tag);
-    if (classNames) element.className = classNames; // Vérifie si classNames est fourni
+    if (classNames) element.className = classNames;
     return element;
 }
 
@@ -42,13 +43,13 @@ function getAuthHeaders() {
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    console.log('getAuthHeaders RETURNING headers:', headers);
+    console.log('getAuthHeaders RETURNING headers:', JSON.stringify(headers)); // Log l'objet entier
     return headers;
 }
 
 // --------- Création des Cartes de Livre ---------
 function createBookCard(book) {
-    console.log(`CREATEBOOKCARD - Appel pour livre: ${book ? book.title : 'Livre UNDEFINED'}, Statut: ${book ? book.status : 'N/A'}, PageCount: ${book ? book.pageCount : 'N/A'}, CurrentPage: ${book ? book.currentPage : 'N/A'}`);
+    console.log(`CREATEBOOKCARD - Appel pour livre: ${book?.title}, Statut: ${book?.status}, PageCount: ${book?.pageCount}, CurrentPage: ${book?.currentPage}`);
 
     const card = createElementWithClasses('div', 'book-card w-64 h-[30rem] bg-white rounded-lg shadow-lg overflow-hidden flex flex-col transition-shadow duration-300 hover:shadow-xl relative');
     card.dataset.bookId = book._id;
@@ -56,7 +57,7 @@ function createBookCard(book) {
     const imgContainer = createElementWithClasses('div', 'h-48 w-full flex items-center justify-center bg-gray-100 flex-shrink-0');
     const img = createElementWithClasses('img', 'book-cover object-contain h-full w-full');
     let coverUrlForCard = book.coverUrl || 'images/default-book-cover.png';
-    if (coverUrlForCard && coverUrlForCard.startsWith('http://')) { // Correction Mixed Content
+    if (coverUrlForCard && coverUrlForCard.startsWith('http://')) {
         coverUrlForCard = coverUrlForCard.replace(/^http:\/\//i, 'https://');
     }
     img.src = coverUrlForCard;
@@ -67,13 +68,13 @@ function createBookCard(book) {
     const content = createElementWithClasses('div', 'p-4 flex-grow flex flex-col justify-between overflow-y-auto');
     const textInfo = document.createElement('div');
 
-    const title = createElementWithClasses('h3', 'text-lg font-bold text-etagere mb-1');
-    title.textContent = book.title || 'Titre inconnu';
-    textInfo.appendChild(title);
+    const titleElement = createElementWithClasses('h3', 'text-lg font-bold text-etagere mb-1');
+    titleElement.textContent = book.title || 'Titre inconnu';
+    textInfo.appendChild(titleElement);
 
-    const author = createElementWithClasses('p', 'text-sm text-gray-700 mb-2');
-    author.textContent = Array.isArray(book.author) ? book.author.join(', ') : (book.author || 'Auteur inconnu');
-    textInfo.appendChild(author);
+    const authorElement = createElementWithClasses('p', 'text-sm text-gray-700 mb-2');
+    authorElement.textContent = Array.isArray(book.author) ? book.author.join(', ') : (book.author || 'Auteur inconnu');
+    textInfo.appendChild(authorElement);
 
     const statusContainer = createElementWithClasses('div', 'flex items-center text-xs text-accent mb-1');
     const statusText = document.createElement('span');
@@ -90,98 +91,82 @@ function createBookCard(book) {
     textInfo.appendChild(statusContainer);
 
     if (book.genre) {
-        const genre = createElementWithClasses('p', 'text-xs text-gray-500 mb-2');
-        genre.textContent = `Genre : ${book.genre}`;
-        textInfo.appendChild(genre);
+        const genreElement = createElementWithClasses('p', 'text-xs text-gray-500 mb-2');
+        genreElement.textContent = `Genre : ${book.genre}`;
+        textInfo.appendChild(genreElement);
     }
 
     if (book.rating !== undefined && book.rating !== null && book.rating > 0) {
-        const ratingContainer = createElementWithClasses('div', 'text-yellow-400 mt-1 mb-2');
-        ratingContainer.title = `Note : ${book.rating} / 5`;
+        const cardRatingContainer = createElementWithClasses('div', 'card-rating-interactive text-gray-300 mt-1 mb-2 cursor-pointer');
+        cardRatingContainer.title = `Note : ${book.rating || 0} / 5`;
+        cardRatingContainer.dataset.bookId = book._id;
+        cardRatingContainer.dataset.currentRating = book.rating || 0;
         for (let i = 1; i <= 5; i++) {
             const starIcon = createElementWithClasses('i', 'fa-star mr-0.5');
-            starIcon.classList.toggle('fas', i <= book.rating);
-            starIcon.classList.toggle('far', i > book.rating);
-            ratingContainer.appendChild(starIcon);
+            starIcon.dataset.value = i;
+            starIcon.classList.toggle('fas', i <= (book.rating || 0));
+            starIcon.classList.toggle('text-yellow-400', i <= (book.rating || 0));
+            starIcon.classList.toggle('far', i > (book.rating || 0));
+            cardRatingContainer.appendChild(starIcon);
         }
-        textInfo.appendChild(ratingContainer);
+        textInfo.appendChild(cardRatingContainer);
+        // Écouteurs pour rendre les étoiles interactives sur la carte (si vous voulez implémenter cette fonctionnalité)
+        // cardRatingContainer.addEventListener('mouseover', ...);
+        // cardRatingContainer.addEventListener('mouseout', ...);
+        // cardRatingContainer.addEventListener('click', ...);
     }
 
-    // --- Affichage de la Progression ---
     if (book.status === 'En cours' && book.pageCount && parseInt(book.pageCount, 10) > 0) {
         console.log(`[${book.title}] - CONDITION VRAIE: Affichage progression et boutons (Statut: ${book.status}, PageCount: ${book.pageCount})`);
         const progressOuterContainer = createElementWithClasses('div', 'mt-2');
-
         const progressTextContainer = createElementWithClasses('div', 'text-xs text-gray-600');
         const currentPageForDisplay = book.currentPage || 0;
         const totalPagesForDisplay = parseInt(book.pageCount, 10) || 0;
         const percentageForDisplay = totalPagesForDisplay > 0 ? Math.round((currentPageForDisplay / totalPagesForDisplay) * 100) : 0;
         progressTextContainer.textContent = `Progression : ${currentPageForDisplay} / ${totalPagesForDisplay} pages (${percentageForDisplay}%)`;
         progressOuterContainer.appendChild(progressTextContainer);
-        console.log(`[${book.title}] - Texte de progression ajouté: ${progressTextContainer.textContent}`);
-
+        // console.log(`[${book.title}] - Texte de progression ajouté: ${progressTextContainer.textContent}`);
         const progressBarContainer = createElementWithClasses('div', 'w-full bg-gray-200 rounded-full h-1.5 mt-1 dark:bg-gray-700');
         const progressBar = createElementWithClasses('div', 'bg-blue-600 h-1.5 rounded-full dark:bg-blue-500');
         progressBar.style.width = `${percentageForDisplay}%`;
         progressBarContainer.appendChild(progressBar);
         progressOuterContainer.appendChild(progressBarContainer);
-        console.log(`[${book.title}] - Barre de progression ajoutée (largeur: ${percentageForDisplay}%).`);
-
+        // console.log(`[${book.title}] - Barre de progression ajoutée (largeur: ${percentageForDisplay}%).`);
         const progressActions = createElementWithClasses('div', 'mt-1 flex items-center space-x-2');
-        console.log(`[${book.title}] - Création du conteneur 'progressActions'.`);
-
+        // console.log(`[${book.title}] - Création du conteneur 'progressActions'.`);
         const currentBookPageForButtons = book.currentPage || 0;
         const totalBookPagesForButtons = parseInt(book.pageCount, 10) || 0;
-
         if (totalBookPagesForButtons > 0) {
             const incrementPageButton = createElementWithClasses('button', 'increment-page-btn text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-1.5 py-0.5 rounded');
             incrementPageButton.textContent = "+1 Page";
             incrementPageButton.title = "Augmenter la page actuelle de 1";
             incrementPageButton.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                console.log(`Clic +1 Page pour: ${book.title}. Page actuelle avant clic: ${currentBookPageForButtons}, Total: ${totalBookPagesForButtons}`);
                 if (currentBookPageForButtons < totalBookPagesForButtons) {
                     await updateBookProgress(book, currentBookPageForButtons + 1, totalBookPagesForButtons);
-                } else {
-                    displayError("Vous êtes déjà à la dernière page !");
-                }
+                } else { displayError("Vous êtes déjà à la dernière page !"); }
             });
             progressActions.appendChild(incrementPageButton);
-            console.log(`[${book.title}] - Bouton '+1 Page' créé et ajouté à 'progressActions'.`);
-        } else {
-            console.log(`[${book.title}] - Bouton '+1 Page' NON créé (totalBookPagesForButtons <= 0).`);
+            // console.log(`[${book.title}] - Bouton '+1 Page' créé et ajouté à 'progressActions'.`);
         }
-
         if (currentBookPageForButtons < totalBookPagesForButtons && totalBookPagesForButtons > 0) {
-            console.log(`[${book.title}] - Condition pour bouton 'Terminé' VRAIE (page ${currentBookPageForButtons}/${totalBookPagesForButtons}). Création...`);
             const markAsReadButton = createElementWithClasses('button', 'mark-as-read-card-btn text-xs bg-green-100 hover:bg-green-200 text-green-700 px-1.5 py-0.5 rounded');
             markAsReadButton.textContent = "Terminé";
             markAsReadButton.title = "Marquer comme terminé";
             markAsReadButton.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                console.log(`Clic 'Terminé' pour: ${book.title}`);
                 await updateBookProgress(book, totalBookPagesForButtons, totalBookPagesForButtons, 'Terminé');
             });
             progressActions.appendChild(markAsReadButton);
-            console.log(`[${book.title}] - Bouton 'Terminé' créé et ajouté à 'progressActions'.`);
-        } else {
-             console.log(`[${book.title}] - Bouton 'Terminé' NON créé (condition fausse : page ${currentBookPageForButtons}/${totalBookPagesForButtons}).`);
+            // console.log(`[${book.title}] - Bouton 'Terminé' créé et ajouté à 'progressActions'.`);
         }
-
         if (progressActions.hasChildNodes()) {
             progressOuterContainer.appendChild(progressActions);
-            console.log(`[${book.title}] - 'progressActions' (avec enfants) AJOUTÉ à 'progressOuterContainer'.`);
-        } else {
-            console.log(`[${book.title}] - 'progressActions' est VIDE, non ajouté à 'progressOuterContainer'.`);
+            // console.log(`[${book.title}] - 'progressActions' (avec enfants) AJOUTÉ à 'progressOuterContainer'.`);
         }
-
-        // Insertion de tout le bloc de progression (progressOuterContainer) dans textInfo
-        if (textInfo) { // textInfo est défini plus haut dans cette fonction
+        if (textInfo) {
             textInfo.appendChild(progressOuterContainer);
-            console.log(`[${book.title}] - 'progressOuterContainer' ajouté à la fin de 'textInfo'.`);
-        } else { // Fallback très improbable si textInfo n'existait pas
-            card.appendChild(progressOuterContainer);
-            console.warn(`[${book.title}] - 'textInfo' non trouvé, 'progressOuterContainer' ajouté directement à la carte (Fallback).`);
+            // console.log(`[${book.title}] - 'progressOuterContainer' ajouté à la fin de 'textInfo'.`);
         }
     } else {
         console.log(`[${book.title}] - PAS d'affichage de progression/boutons (Condition Principale FAUSSE: Statut: ${book.status}, PageCount: ${book.pageCount})`);
@@ -190,43 +175,17 @@ function createBookCard(book) {
 
     const secondaryInfo = document.createElement('div');
     secondaryInfo.className = 'border-t border-gray-200 pt-2 mt-2';
-    if (book.publisher) {
-        const publisherEl = createElementWithClasses('p', 'text-xs text-gray-500');
-        publisherEl.textContent = `Éditeur: ${book.publisher}`;
-        secondaryInfo.appendChild(publisherEl);
-    }
-    if (book.publishedDate) {
-        const publishedDateEl = createElementWithClasses('p', 'text-xs text-gray-500');
-        publishedDateEl.textContent = `Publication: ${book.publishedDate}`;
-        secondaryInfo.appendChild(publishedDateEl);
-    }
-    if (book.pageCount) { // Affiche pageCount ici même si utilisé pour la progression
-        const pageCountEl = createElementWithClasses('p', 'text-xs text-gray-500');
-        pageCountEl.textContent = `Pages: ${book.pageCount}`;
-        secondaryInfo.appendChild(pageCountEl);
-    }
-    if (book.isbn) {
-        const isbnEl = createElementWithClasses('p', 'text-xs text-gray-500');
-        isbnEl.textContent = `ISBN: ${book.isbn}`;
-        secondaryInfo.appendChild(isbnEl);
-    }
-    if (book.startDate) {
-        const startDateEl = createElementWithClasses('p', 'text-xs text-gray-500 mt-1');
-        startDateEl.textContent = `Début : ${new Date(book.startDate).toLocaleDateString()}`;
-        secondaryInfo.appendChild(startDateEl);
-    }
-    if (book.endDate) {
-        const endDateEl = createElementWithClasses('p', 'text-xs text-gray-500');
-        endDateEl.textContent = `Fin : ${new Date(book.endDate).toLocaleDateString()}`;
-        secondaryInfo.appendChild(endDateEl);
-    }
+    if (book.publisher) { const el = createElementWithClasses('p', 'text-xs text-gray-500'); el.textContent = `Éditeur: ${book.publisher}`; secondaryInfo.appendChild(el); }
+    if (book.publishedDate) { const el = createElementWithClasses('p', 'text-xs text-gray-500'); el.textContent = `Publication: ${book.publishedDate}`; secondaryInfo.appendChild(el); }
+    if (book.pageCount) { const el = createElementWithClasses('p', 'text-xs text-gray-500'); el.textContent = `Pages: ${book.pageCount}`; secondaryInfo.appendChild(el); }
+    if (book.isbn) { const el = createElementWithClasses('p', 'text-xs text-gray-500'); el.textContent = `ISBN: ${book.isbn}`; secondaryInfo.appendChild(el); }
+    if (book.startDate) { const el = createElementWithClasses('p', 'text-xs text-gray-500 mt-1'); el.textContent = `Début : ${new Date(book.startDate).toLocaleDateString()}`; secondaryInfo.appendChild(el); }
+    if (book.endDate) { const el = createElementWithClasses('p', 'text-xs text-gray-500'); el.textContent = `Fin : ${new Date(book.endDate).toLocaleDateString()}`; secondaryInfo.appendChild(el); }
     if (book.tags && book.tags.length > 0) {
         const tagsContainer = createElementWithClasses('div', 'mt-2 flex flex-wrap');
         book.tags.forEach(tag => {
-            const tagElement = createElementWithClasses('a', 'tag-link bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-xs mr-1 mb-1 cursor-pointer hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400');
-            tagElement.textContent = tag;
-            tagElement.dataset.tag = tag;
-            tagElement.href = "#";
+            const tagElement = createElementWithClasses('a', 'tag-link bg-blue-100 text-blue-800 rounded-full px-2 py-1 text-xs mr-1 mb-1 cursor-pointer hover:bg-blue-200');
+            tagElement.textContent = tag; tagElement.dataset.tag = tag; tagElement.href = "#";
             tagsContainer.appendChild(tagElement);
         });
         secondaryInfo.appendChild(tagsContainer);
@@ -236,18 +195,12 @@ function createBookCard(book) {
 
     const actionsContainer = createElementWithClasses('div', 'absolute top-2 right-2 flex space-x-1');
     const editButton = createElementWithClasses('button', 'edit-button bg-blue-500 hover:bg-blue-700 text-white font-bold p-1 rounded text-xs leading-none');
-    editButton.innerHTML = '<i class="fas fa-pencil-alt w-3 h-3"></i>';
-    editButton.title = "Modifier";
+    editButton.innerHTML = '<i class="fas fa-pencil-alt w-3 h-3"></i>'; editButton.title = "Modifier";
     editButton.addEventListener('click', (e) => { e.stopPropagation(); editBook(book); });
     actionsContainer.appendChild(editButton);
-
     const deleteButton = createElementWithClasses('button', 'delete-button bg-red-500 hover:bg-red-700 text-white font-bold p-1 rounded text-xs leading-none');
-    deleteButton.innerHTML = '<i class="fas fa-trash w-3 h-3"></i>';
-    deleteButton.title = "Supprimer";
-    deleteButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (confirm(`Êtes-vous sûr de vouloir supprimer "${book.title}" ?`)) { deleteBook(book._id); }
-    });
+    deleteButton.innerHTML = '<i class="fas fa-trash w-3 h-3"></i>'; deleteButton.title = "Supprimer";
+    deleteButton.addEventListener('click', (e) => { e.stopPropagation(); if (confirm(`Supprimer "${book.title}"?`)) deleteBook(book._id); });
     actionsContainer.appendChild(deleteButton);
     card.appendChild(actionsContainer);
 
@@ -273,35 +226,26 @@ function hideNoteModal() {
 
 
 // --------- Gestion des Livres (API, Logique d'Affichage) ---------
-let currentStatusFilter = "Tous";
-let currentGenreFilter = "Tous";
-let currentTagFilter = null;
-let currentPublisherFilter = "";
-let currentPage = 1;
-const booksPerPage = 12;
+let currentStatusFilter = "Tous"; let currentGenreFilter = "Tous"; let currentTagFilter = null;
+let currentPublisherFilter = ""; let currentPage = 1; const booksPerPage = 12;
 
 async function fetchBooks() {
     try {
         showLoading();
-
-        let url = '/api/books/?'; // Commence par '?'
-
-        // --- Ajout des paramètres de pagination --- (VÉRIFIEZ CES LIGNES)
+        let url = '/api/books?';
         url += `page=${currentPage}&limit=${booksPerPage}&`;
-        if (currentStatusFilter !== "Tous") { url += `status=${encodeURIComponent(currentStatusFilter)}&`; }
-        if (currentGenreFilter !== "Tous") { url += `genre=${encodeURIComponent(currentGenreFilter)}&`; }
-        if (currentTagFilter) { url += `tags=${encodeURIComponent(currentTagFilter)}&`; }
-        if (currentPublisherFilter) { url += `publisher=${encodeURIComponent(currentPublisherFilter)}&`; }
+        if (currentStatusFilter !== "Tous") url += `status=${encodeURIComponent(currentStatusFilter)}&`;
+        if (currentGenreFilter !== "Tous") url += `genre=${encodeURIComponent(currentGenreFilter)}&`;
+        if (currentTagFilter) url += `tags=${encodeURIComponent(currentTagFilter)}&`;
+        if (currentPublisherFilter) url += `publisher=${encodeURIComponent(currentPublisherFilter)}&`;
         const sortSelect = document.getElementById('sort-select');
-        if (sortSelect && sortSelect.value) { url += `sortBy=${sortSelect.value}&`; }
-        if (url.endsWith('&')) { url = url.slice(0, -1); }
-
-        console.log("Fetching URL:", url); // Doit maintenant inclure page et limit
-
-        const response = await fetch(url, { 
-            method: 'GET', 
-            headers: getAuthHeaders() 
-        });
+        if (sortSelect && sortSelect.value) url += `sortBy=${sortSelect.value}&`;
+        if (url.endsWith('&')) url = url.slice(0, -1);
+        console.log("FETCHBOOKS - URL d'appel:", url);
+        const response = await fetch(url, { method: 'GET', headers: getAuthHeaders() });
+        console.log("FETCHBOOKS - Statut de la réponse:", response.status, response.statusText);
+        const responseBodyText = await response.text(); // Lire en texte d'abord
+        // console.log("FETCHBOOKS - Corps brut de la réponse:", responseBodyText); // Peut être très long
 
         if (!response.ok) {
             if (response.status === 401) {
@@ -310,11 +254,20 @@ async function fetchBooks() {
                 updateAuthStateUI(); displayBooks([]); updatePaginationControls(0);
                 const menuEtagere = document.getElementById('menu-etagere');
                 if (menuEtagere) menuEtagere.innerHTML = '';
-                return; // Arrête le traitement
+                return;
             }
-            throw new Error(`Erreur HTTP: ${response.status}`);
+            let errorDetail = `Erreur HTTP: ${response.status}`; // Message par défaut
+            if (responseBodyText) { // S'il y a un corps de réponse
+                try {
+                    const errorJson = JSON.parse(responseBodyText);
+                    errorDetail = errorJson.message || JSON.stringify(errorJson);
+                } catch(e) { errorDetail = responseBodyText.substring(0, 200); } // Prend les 200 premiers chars si pas JSON
+            }
+            throw new Error(`Erreur HTTP: ${response.status} - ${errorDetail}`);
         }
-        const data = await response.json();
+        const data = JSON.parse(responseBodyText);
+        console.log("FETCHBOOKS - Données JSON parsées (data):", data);
+        console.log("FETCHBOOKS - data.books (avant appel à displayBooks):", data.books ? data.books.length : data.books);
         displayBooks(data.books);
         updatePaginationControls(data.totalBooks);
     } catch (error) {
@@ -747,6 +700,57 @@ function updateAuthStateUI() {
     console.log("UI mise à jour pour l'état d'authentification.");
 }
 
+async function updateBookProgress(book, newCurrentPage, totalPages, newStatus = null) {
+    console.log(`Début updateBookProgress pour: ${book.title}, Nouvelle page: ${newCurrentPage}, Statut voulu: ${newStatus}`);
+
+    const updateData = {
+        currentPage: newCurrentPage
+    };
+
+    if (newStatus) {
+        updateData.status = newStatus;
+        if (newStatus === 'Terminé') {
+            updateData.currentPage = totalPages;
+            updateData.endDate = new Date().toISOString().split('T')[0];
+            if (!book.startDate && totalPages > 0) {
+                updateData.startDate = updateData.endDate;
+            }
+        } else if (newStatus !== 'Terminé') {
+            updateData.endDate = null;
+        }
+    } else if (newCurrentPage >= totalPages && totalPages > 0) {
+        updateData.currentPage = totalPages;
+        updateData.status = 'Terminé';
+        updateData.endDate = new Date().toISOString().split('T')[0];
+        if (!book.startDate) {
+            updateData.startDate = updateData.endDate;
+        }
+    }
+
+    console.log("Données envoyées à l'API pour mise à jour progression:", updateData);
+
+    try {
+        const response = await fetch(`/api/books/${book._id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(updateData)
+        });
+
+        if (!response.ok) {
+            let errorMsg = `Erreur HTTP: ${response.status}`;
+            try { const errorData = await response.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* Ignore */ }
+            throw new Error(errorMsg);
+        }
+
+        displaySuccessMessage("Progression mise à jour !");
+        fetchBooks(); // Recharge tous les livres
+
+    } catch (error) {
+        console.error("Erreur lors de la mise à jour de la progression:", error);
+        displayError(error.message || "Impossible de mettre à jour la progression.");
+    }
+}
+
 // --------- Fonctions pour gérer les étagères (API, Affichage) ---------
 async function fetchEtageres() {
     console.log("--- Attempting fetchEtageres ---");
@@ -971,7 +975,6 @@ function applyFilterOrSort() {
 }
 
 // --------- Initialisation et Écouteurs d'Événements (DOMContentLoaded) ---------
-
 document.addEventListener('DOMContentLoaded', () => {
 
     console.log("DOM prêt."); // Log initial
@@ -983,29 +986,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginShowButton = document.getElementById('login-show-button');
     const registerShowButton = document.getElementById('register-show-button');
     const logoutButton = document.getElementById('logout-button');
+    const userGreetingSpan = document.getElementById('user-greeting'); // Pour le message d'accueil
+
     const registerModal = document.getElementById('register-modal');
-    const loginModal = document.getElementById('login-modal');
     const registerForm = document.getElementById('register-form');
     const registerUsernameInput = document.getElementById('register-username');
     const registerEmailInput = document.getElementById('register-email');
     const registerPasswordInput = document.getElementById('register-password');
     const registerErrorMessage = document.getElementById('register-error-message');
+
+    const loginModal = document.getElementById('login-modal');
     const loginForm = document.getElementById('login-form');
     const loginEmailInput = document.getElementById('login-email');
     const loginPasswordInput = document.getElementById('login-password');
     const loginErrorMessage = document.getElementById('login-error-message');
 
     // Formulaire Livre Principal
-    const bookForm = document.getElementById('book-form');
-    const addBookButton = document.getElementById('add-book-button');
-    const cancelButtonBookForm = document.getElementById('cancel-button');
+    const bookForm = document.getElementById('book-form'); // Formulaire principal
+    const addBookButton = document.getElementById('add-book-button'); // Bouton principal "Ajouter un livre"
+    const cancelButtonBookForm = document.getElementById('cancel-button'); // Bouton "Annuler" du formulaire de livre
 
     // Filtres & Tri
     const filterButtons = document.querySelectorAll('.filter-button');
     const sortSelect = document.getElementById('sort-select');
     const publisherInput = document.getElementById('filter-publisher');
     let publisherFilterTimeout;
-    const bookListElementForTags = document.getElementById('book-list');
+    const bookListElementForTags = document.getElementById('book-list'); // Utilisé pour la délégation d'event sur les tags
     const activeTagDisplay = document.getElementById('active-tag-filter-display');
     const activeTagName = document.getElementById('active-tag-name');
     const clearTagFilterButton = document.getElementById('clear-tag-filter-button');
@@ -1022,8 +1028,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchApiInput = document.getElementById('api-search-input');
     const searchApiButton = document.getElementById('api-search-button');
     const searchApiResultsContainer = document.getElementById('api-search-results');
+    // const searchMessageElement = document.getElementById('api-search-message'); // Géré dynamiquement
 
-  
+    // Recherche ISBN
+    const checkIsbnButton = document.getElementById('check-isbn-button');
+    const isbnInputInBookForm = document.getElementById('book-isbn');
+
+    // Modale Ajout Genre (depuis formulaire livre)
+    const addGenreModal = document.getElementById('add-genre-modal');
+    const addNewGenreButtonFromBookForm = document.getElementById('add-new-genre-button'); // Bouton "+" à côté du select genre
+    const cancelNewGenreModalButton = document.getElementById('cancel-new-genre-button'); // Bouton "Annuler" dans la modale de genre
+    const saveNewGenreModalButton = document.getElementById('save-new-genre-button');   // Bouton "Enregistrer" dans la modale de genre
+    const newGenreModalInput = document.getElementById('new-genre-modal-input');
+    const addGenreModalError = document.getElementById('add-genre-modal-error');
 
     // Formulaire d'ajout d'étagère (sidebar)
     const addEtagereFormSidebar = document.getElementById('add-etagere-form');
@@ -1039,8 +1056,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tous les boutons de fermeture de modale génériques
     const modalCloseButtons = document.querySelectorAll('.modal-close-button');
 
-
-    // --- Fonctions Utilitaires Locales à DOMContentLoaded (si nécessaire, sinon globales) ---
+    // --- Fonctions Utilitaires Locales pour Modales ---
     const openModal = (modalElement) => {
         if (modalElement) modalElement.classList.remove('hidden');
     };
@@ -1048,22 +1064,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modalElement) {
             modalElement.classList.add('hidden');
             const form = modalElement.querySelector('form');
-            if (form) form.reset();
+            if (form) form.reset(); // Vide les champs du formulaire
             const errorMsg = modalElement.querySelector('[id$="-error-message"]'); // Cible les p#...-error-message
-            if (errorMsg) errorMsg.textContent = '';
+            if (errorMsg) errorMsg.textContent = ''; // Vide le message d'erreur
         }
     };
 
     // --- Initialisation ---
-    updateAuthStateUI(); // Met à jour l'UI en fonction de l'état de connexion initial
-    fetchBooks();        // Charge les livres initiaux (enverra le token si présent)
-    fetchEtageres().then(etageres => { // Charge les étagères initiales
+    updateAuthStateUI();
+    fetchBooks();
+    fetchEtageres().then(etageres => {
         displayEtageres(etageres);
-        populateGenreDropdown(); // Peuple le dropdown une fois les étagères chargées
+        populateGenreDropdown(); // Peuple le dropdown initialement
     });
 
-
-    // --- Gestion de la Soumission du Formulaire d'Inscription ---
+    // --- Gestion Formulaire Inscription ---
     if (registerForm && registerUsernameInput && registerEmailInput && registerPasswordInput && registerErrorMessage && registerModal) {
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -1071,46 +1086,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = registerUsernameInput.value.trim();
             const email = registerEmailInput.value.trim();
             const password = registerPasswordInput.value.trim();
-
-            if (!username || !email || !password) {
-                registerErrorMessage.textContent = "Tous les champs sont requis."; return;
-            }
-            if (password.length < 6) {
-                registerErrorMessage.textContent = "Le mot de passe doit contenir au moins 6 caractères."; return;
-            }
+            if (!username || !email || !password) { registerErrorMessage.textContent = "Tous les champs sont requis."; return; }
+            if (password.length < 6) { registerErrorMessage.textContent = "Le mot de passe doit contenir au moins 6 caractères."; return; }
             try {
                 const response = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, email, password }),
                 });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || `Erreur HTTP: ${response.status}`);
                 displaySuccessMessage(data.message || "Inscription réussie ! Vous pouvez maintenant vous connecter.");
                 closeModal(registerModal);
-                if (loginModal) openModal(loginModal); // Ouvre la modale de connexion après inscription
+                if (loginModal) openModal(loginModal);
             } catch (error) {
-                console.error("Erreur lors de la tentative d'inscription:", error);
+                console.error("Erreur lors de l'inscription:", error);
                 registerErrorMessage.textContent = error.message || "Impossible de s'inscrire.";
             }
         });
     } else { console.error("Éléments du formulaire d'inscription manquants."); }
 
-    // --- Gestion de la Soumission du Formulaire de Connexion ---
+    // --- Gestion Formulaire Connexion ---
     if (loginForm && loginEmailInput && loginPasswordInput && loginErrorMessage && loginModal) {
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             loginErrorMessage.textContent = '';
             const email = loginEmailInput.value.trim();
             const password = loginPasswordInput.value.trim();
-
-            if (!email || !password) {
-                loginErrorMessage.textContent = 'Email et mot de passe sont requis.'; return;
-            }
+            if (!email || !password) { loginErrorMessage.textContent = 'Email et mot de passe sont requis.'; return; }
             try {
                 const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
                 });
                 const data = await response.json();
@@ -1119,31 +1124,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.token) {
                     localStorage.setItem('authToken', data.token);
                     localStorage.setItem('userInfo', JSON.stringify({ userId: data.userId, username: data.username }));
-                    console.log("Token stocké dans localStorage.");
-                    console.log("UserInfo stocké:", { userId: data.userId, username: data.username });
-                } else {
-                    throw new Error("Problème lors de la connexion, token manquant.");
-                }
+                    console.log("Token et UserInfo stockés dans localStorage.");
+                } else { throw new Error("Token manquant après login."); }
                 updateAuthStateUI();
                 closeModal(loginModal);
-                currentPage = 1;
-                fetchBooks();
-                fetchEtageres().then(displayEtageres);
+                currentPage = 1; fetchBooks(); fetchEtageres().then(displayEtageres);
             } catch (error) {
-                console.error("Erreur lors de la tentative de connexion:", error);
+                console.error("Erreur lors de la connexion:", error);
                 loginErrorMessage.textContent = error.message || "Impossible de se connecter.";
-                localStorage.removeItem('authToken'); // S'assurer qu'aucun token invalide ne reste
-                localStorage.removeItem('userInfo');
-                updateAuthStateUI(); // Mettre à jour l'UI vers l'état déconnecté
+                localStorage.removeItem('authToken'); localStorage.removeItem('userInfo');
+                updateAuthStateUI();
             }
         });
     } else { console.error("Éléments du formulaire de connexion manquants."); }
 
-    // --- Gestion Boutons Ouverture Modales Auth ---
+    // --- Ouverture Modales Auth ---
     if (loginShowButton && loginModal) loginShowButton.addEventListener('click', () => openModal(loginModal));
     if (registerShowButton && registerModal) registerShowButton.addEventListener('click', () => openModal(registerModal));
 
-    // --- Gestion Boutons Fermeture Modales (X et Annuler) ---
+    // --- Fermeture Générique des Modales (Boutons X et Annuler) ---
     modalCloseButtons.forEach(button => {
         button.addEventListener('click', () => {
             const modalId = button.dataset.modalId;
@@ -1154,42 +1153,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Gestion Fermeture Modales (clic sur fond) ---
-    // Assurez-vous que addGenreModal et noteModal sont bien définis ici
+    // --- Fermeture Générique des Modales (Clic sur fond) ---
     [loginModal, registerModal, addGenreModal, noteModal].forEach(modalElem => {
-        if (modalElem) { // Vérifie si l'élément modal existe avant d'ajouter l'écouteur
+        if (modalElem) {
             modalElem.addEventListener('click', (event) => {
                 if (event.target === modalElem) closeModal(modalElem);
             });
         }
     });
 
-    // --- Gestion Bouton Déconnexion ---
+    // --- Bouton Déconnexion ---
     if (logoutButton) {
         logoutButton.addEventListener('click', () => {
             console.log("Déconnexion demandée.");
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userInfo');
+            localStorage.removeItem('authToken'); localStorage.removeItem('userInfo');
             updateAuthStateUI();
-            displayBooks([]);
-            const menuEtagere = document.getElementById('menu-etagere');
-            if (menuEtagere) menuEtagere.innerHTML = '';
+            displayBooks([]); // Vide les livres
+            const menuEtagere = document.getElementById('menu-etagere'); if (menuEtagere) menuEtagere.innerHTML = '';
             const bookList = document.getElementById('book-list');
             if (bookList) bookList.innerHTML = '<p class="text-center text-gray-500 col-span-full">Veuillez vous connecter pour voir vos livres.</p>';
+            // Réinitialisation des filtres
             currentStatusFilter = "Tous"; currentGenreFilter = "Tous"; currentTagFilter = null; currentPublisherFilter = ""; currentPage = 1;
             const sortSelectEl = document.getElementById('sort-select'); if (sortSelectEl) sortSelectEl.selectedIndex = 0;
             const publisherInputEl = document.getElementById('filter-publisher'); if (publisherInputEl) publisherInputEl.value = "";
             const activeTagDisplayEl = document.getElementById('active-tag-filter-display'); if (activeTagDisplayEl) activeTagDisplayEl.classList.add('hidden');
-            displaySuccessMessage("Vous avez été déconnecté avec succès.");
-            // Après déconnexion, les fetchBooks/Etageres initiaux devraient redonner 401
-            // et l'UI devrait refléter l'absence de données.
-            // On peut explicitement appeler fetchBooks pour actualiser l'affichage à "pas de données"
-            fetchBooks();
-            fetchEtageres().then(displayEtageres);
+            displaySuccessMessage("Vous avez été déconnecté.");
+            fetchBooks(); fetchEtageres().then(displayEtageres); // Pour recharger l'état "vide" ou "public"
         });
     } else { console.error("Bouton de déconnexion #logout-button non trouvé."); }
 
-    // --- Gestion Formulaire Livre ---
+    // --- Formulaire Livre Principal ---
     if (bookForm) bookForm.addEventListener('submit', handleFormSubmit);
     if (addBookButton && bookForm) {
         addBookButton.addEventListener('click', async () => {
@@ -1197,12 +1190,18 @@ document.addEventListener('DOMContentLoaded', () => {
             await populateGenreDropdown();
             bookForm.classList.remove('hidden');
             addBookButton.classList.add('hidden');
+            document.getElementById('form-title').textContent = "Ajouter un nouveau livre";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
     if (cancelButtonBookForm && bookForm && addBookButton) {
         cancelButtonBookForm.addEventListener('click', () => {
             bookForm.classList.add('hidden');
             addBookButton.classList.remove("hidden");
+            const searchResultsContainer = document.getElementById('api-search-results');
+            if (searchResultsContainer) { searchResultsContainer.classList.add('hidden'); searchResultsContainer.innerHTML = ''; }
+            const searchInputApiEl = document.getElementById('api-search-input');
+            if (searchInputApiEl) searchInputApiEl.value = '';
         });
     }
 
@@ -1210,14 +1209,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filterButtons.length > 0) {
         filterButtons.forEach(button => {
             button.addEventListener('click', (event) => {
-                filterButtons.forEach(btn => btn.classList.remove('bg-gray-600', 'text-white'));
-                event.currentTarget.classList.add('bg-gray-600', 'text-white');
+                filterButtons.forEach(btn => btn.classList.remove('bg-gray-600', 'text-white', 'font-semibold'));
+                event.currentTarget.classList.add('bg-gray-600', 'text-white', 'font-semibold');
                 currentStatusFilter = event.currentTarget.dataset.status;
                 applyFilterOrSort();
             });
         });
-    } else { console.warn("Aucun bouton de filtre de statut trouvé.");}
-
+    } else { console.warn("Aucun bouton de filtre de statut trouvé."); }
 
     // --- Tri ---
     if (sortSelect) sortSelect.addEventListener('change', applyFilterOrSort);
@@ -1232,7 +1230,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addEtagereFormSidebar.classList.add('hidden');
             etagereNameInputSidebar.value = '';
         });
-         addEtagereFormSidebar.addEventListener('submit', async (event) => {
+        addEtagereFormSidebar.addEventListener('submit', async (event) => {
             event.preventDefault();
             const name = etagereNameInputSidebar.value.trim();
             if (!name) { displayError("Le nom de l'étagère ne peut pas être vide."); return; }
@@ -1241,16 +1239,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 displaySuccessMessage(`Étagère "${newEtagere.name}" ajoutée.`);
                 etagereNameInputSidebar.value = '';
                 addEtagereFormSidebar.classList.add('hidden');
-                fetchEtageres().then(etageres => {
-                     displayEtageres(etageres);
-                     populateGenreDropdown(newEtagere.name); // Met à jour aussi le dropdown
-                });
+                const etageres = await fetchEtageres(); // Récupère la liste à jour
+                displayEtageres(etageres);      // Met à jour la sidebar
+                populateGenreDropdown(newEtagere.name); // Met à jour le dropdown et sélectionne
             }
         });
     } else { console.warn("Éléments pour l'ajout d'étagère sidebar manquants."); }
 
-
-    // --- Filtre Tag (Délégation) ---
+    // --- Filtre Tag (Délégation sur #book-list) ---
     if (bookListElementForTags && activeTagDisplay && activeTagName) {
         bookListElementForTags.addEventListener('click', (event) => {
             const tagLink = event.target.closest('a.tag-link');
@@ -1262,62 +1258,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyFilterOrSort();
             }
         });
-    }
+    } else { console.warn("Élément #book-list ou pour affichage tag actif manquant.");}
+
     if (clearTagFilterButton && activeTagDisplay) {
         clearTagFilterButton.addEventListener('click', () => {
             currentTagFilter = null;
             activeTagDisplay.classList.add('hidden');
             applyFilterOrSort();
         });
-    }
+    } else { console.warn("Bouton de suppression du filtre tag ou zone d'affichage manquante."); }
 
     // --- Filtre Éditeur ---
     if (publisherInput) {
         publisherInput.addEventListener('input', (event) => {
             clearTimeout(publisherFilterTimeout);
             publisherFilterTimeout = setTimeout(() => {
-                currentPublisherFilter = event.target.value.trim(); // Ajout trim()
+                currentPublisherFilter = event.target.value.trim();
                 applyFilterOrSort();
             }, 500);
         });
     }
 
-    // --- Modale Note (Fermeture) ---
+    // --- Modale Note (Fermeture via bouton X dans la modale) ---
     if (noteModalCloseButton) noteModalCloseButton.addEventListener('click', hideNoteModal);
-    // Fermeture en cliquant sur le fond est gérée par la boucle [loginModal, registerModal, addGenreModal, noteModal]
+    // La fermeture via clic sur fond est déjà gérée plus haut pour toutes les modales
 
     // --- Pagination ---
     if (prevButton) prevButton.addEventListener('click', () => { if (currentPage > 1) { currentPage--; fetchBooks(); } });
-    if (nextButton) nextButton.addEventListener('click', () => { currentPage++; fetchBooks(); });
+    if (nextButton) nextButton.addEventListener('click', () => { /* la désactivation est dans updatePaginationControls */ currentPage++; fetchBooks(); });
 
     // --- Recherche API Titre ---
     if (searchApiButton && searchApiInput && searchApiResultsContainer) {
         searchApiButton.addEventListener('click', async () => {
             const query = searchApiInput.value.trim();
             if (!query) { displayError("Veuillez entrer un titre pour la recherche API."); return; }
-            if (searchApiResultsContainer.querySelector('#api-search-message')) {
-                 searchApiResultsContainer.querySelector('#api-search-message').textContent = 'Recherche en cours...';
-                 searchApiResultsContainer.querySelector('#api-search-message').classList.remove('hidden');
-            } else { // Au cas où l'élément message aurait été vidé complètement
-                let msgElem = document.createElement('p');
-                msgElem.id = 'api-search-message';
-                msgElem.className = 'text-center text-gray-500';
-                msgElem.textContent = 'Recherche en cours...';
-                searchApiResultsContainer.innerHTML = ''; // Vide avant d'ajouter le message
+            let msgElem = searchApiResultsContainer.querySelector('#api-search-message');
+            if (!msgElem) {
+                msgElem = document.createElement('p'); msgElem.id = 'api-search-message';
+                msgElem.className = 'text-center text-gray-500'; searchApiResultsContainer.innerHTML = '';
                 searchApiResultsContainer.appendChild(msgElem);
             }
+            msgElem.textContent = 'Recherche en cours...'; msgElem.classList.remove('hidden');
             searchApiResultsContainer.classList.remove('hidden');
             const results = await searchBooksAPI(query);
             displayAPISearchResults(results);
         });
-        searchApiInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') { event.preventDefault(); if(searchApiButton) searchApiButton.click(); }
-        });
-        searchApiInput.addEventListener('input', () => { // Pour vider les résultats quand on efface
-            if (searchApiInput.value.trim() === '') {
-                searchApiResultsContainer.classList.add('hidden');
-                searchApiResultsContainer.innerHTML = '';
-            }
+        searchApiInput.addEventListener('keypress', (event) => { if (event.key === 'Enter') { event.preventDefault(); if(searchApiButton) searchApiButton.click(); } });
+        searchApiInput.addEventListener('input', () => {
+            if (searchApiInput.value.trim() === '') { searchApiResultsContainer.classList.add('hidden'); searchApiResultsContainer.innerHTML = ''; }
         });
     } else { console.error("Éléments pour recherche API titre manquants."); }
 
@@ -1326,60 +1314,18 @@ document.addEventListener('DOMContentLoaded', () => {
         searchApiResultsContainer.addEventListener('click', async (event) => {
             const addButton = event.target.closest('button.add-from-api-button');
             if (addButton) {
-                console.log("Bouton 'Ajouter' d'un résultat API cliqué.");
-                event.preventDefault(); // Au cas où ce serait un lien stylé en bouton
-
-                // 1. Récupérer les données stockées dans les attributs data-* du bouton cliqué
-                const bookDataFromAPI = {
-                    title: addButton.dataset.title || '',
-                    author: addButton.dataset.author || '',
-                    coverUrl: addButton.dataset.coverUrl || '',
-                    publisher: addButton.dataset.publisher || '',
-                    publishedDate: addButton.dataset.publishedDate || '',
-                    pageCount: addButton.dataset.pageCount || '',
-                    genre: addButton.dataset.genre || '',
-                    isbn: addButton.dataset.isbn || ''
-                    // Note: status, startDate, endDate, tags, notes ne sont pas pré-remplis depuis l'API ici
-                };
-                console.log("Données récupérées du bouton pour pré-remplissage:", bookDataFromAPI);
-
-                  //  Réinitialiser le formulaire principal
-                  resetForm();
-
-                  //  PEUPLER LE DROPDOWN GENRE AVANT DE PRÉ-SÉLECTIONNER (NOUVEAU)
-                  await populateGenreDropdown(bookDataFromAPI.genre); // Appelle et attend que le dropdown soit peuplé
-                                                                      // Passe le genre de l'API pour essayer de le pré-sélectionner
-
-                // 2. Pré-remplir le formulaire principal (#book-form)
-                resetForm(); // Commence par réinitialiser le formulaire (efface aussi l'ID caché)
-                document.getElementById('book-title').value = bookDataFromAPI.title;
-                document.getElementById('book-author').value = bookDataFromAPI.author;
-                document.getElementById('book-coverUrl').value = bookDataFromAPI.coverUrl;
-                document.getElementById('book-publisher').value = bookDataFromAPI.publisher;
-                document.getElementById('book-publishedDate').value = bookDataFromAPI.publishedDate;
-                document.getElementById('book-pageCount').value = bookDataFromAPI.pageCount;
-                document.getElementById('book-genre').value = bookDataFromAPI.genre;
-                document.getElementById('book-isbn').value = bookDataFromAPI.isbn;
-                // Laisse status, startDate, endDate, tags, notes vides pour l'utilisateur
-
-                // 3. Modifier le titre du formulaire (optionnel)
-                 const formTitle = document.getElementById('form-title');
-                 if(formTitle) formTitle.textContent = "Vérifier et Ajouter le livre";
-
-                // 4. Afficher le formulaire principal
-                const bookForm = document.getElementById('book-form');
+                event.preventDefault();
+                const bookDataFromAPI = {};
+                Object.keys(addButton.dataset).forEach(key => bookDataFromAPI[key] = addButton.dataset[key]);
+                console.log("Pré-remplissage depuis API avec:", bookDataFromAPI);
+                resetForm(); // Réinitialise et s'assure que le bon titre de formulaire est là
+                await populateGenreDropdown(bookDataFromAPI.genre); // Peuple d'abord, puis pré-remplit
+                prefillBookForm(bookDataFromAPI); // prefillBookForm met à jour la valeur de genre si elle existe
+                document.getElementById('form-title').textContent = "Vérifier et Ajouter le livre";
                 if (bookForm) bookForm.classList.remove('hidden');
-                 const addBookButtonMain = document.getElementById("add-book-button");
-                 if (addBookButtonMain) addBookButtonMain.classList.add("hidden"); // Cache le bouton principal "Ajouter"
-
-                // 5. Cacher/Vider les résultats de la recherche API
-                searchResultsContainerElement.classList.add('hidden');
-                searchResultsContainerElement.innerHTML = ''; // Vide le contenu
-
-                // 6. Faire défiler vers le formulaire (optionnel)
-                if (bookForm) {
-                    window.scrollTo({ top: bookForm.offsetTop - 20, behavior: 'smooth' });
-                }
+                const mainAddBtn = document.getElementById("add-book-button"); if(mainAddBtn) mainAddBtn.classList.add("hidden");
+                searchApiResultsContainer.classList.add('hidden'); searchApiResultsContainer.innerHTML = '';
+                if (bookForm) window.scrollTo({ top: bookForm.offsetTop - 20, behavior: 'smooth' });
             }
         });
     }
@@ -1405,104 +1351,48 @@ document.addEventListener('DOMContentLoaded', () => {
         ratingInputContainerForm.addEventListener('click', (event) => {
             if (event.target.tagName === 'I') {
                 const clickedValue = parseInt(event.target.dataset.value);
-                bookRatingValueInputForm.value = clickedValue;
-                updateStarInputDisplay(clickedValue);
+                if (bookRatingValueInputForm.value == clickedValue) { // Si on clique sur la même étoile déjà sélectionnée
+                    bookRatingValueInputForm.value = 0; // On désélectionne (note à 0)
+                    updateStarInputDisplay(0);
+                } else {
+                    bookRatingValueInputForm.value = clickedValue;
+                    updateStarInputDisplay(clickedValue);
+                }
             }
         });
+        if(clearRatingButtonForm) {
+            clearRatingButtonForm.addEventListener('click', () => {
+                if(bookRatingValueInputForm) bookRatingValueInputForm.value = 0;
+                updateStarInputDisplay(0);
+            });
+        }
+    } else { console.error("Éléments pour notation par étoiles (formulaire) non trouvés."); }
 
-         // Bouton Effacer la note
-         if(clearRatingButton) {
-             clearRatingButton.addEventListener('click', () => {
-                 ratingValueInput.value = 0; // Remet la valeur cachée à 0
-                 updateStarInputDisplay(0); // Met à jour l'affichage (toutes vides)
-             });
-         }
-
-    } else {
-        console.error("Conteneur de notation ou input caché introuvable.");
-    }
-
-    // index.js (DANS document.addEventListener('DOMContentLoaded', ...))
-
-    // --- Gestion du bouton "Vérifier ISBN" dans le formulaire ---
-    const checkIsbnButton = document.getElementById('check-isbn-button');
-    const isbnInputInForm = document.getElementById('book-isbn'); // Input ISBN dans le formulaire
-
-    if (checkIsbnButton && isbnInputInForm) {
-        checkIsbnButton.addEventListener('click', async () => {
-            const isbnValue = isbnInputInForm.value.trim();
-            if (!isbnValue) {
-                displayError("Veuillez entrer un ISBN à vérifier.");
-                isbnInputInForm.focus();
-                return;
-            }
-
-            // Indicateur de chargement simple sur le bouton
-            checkIsbnButton.textContent = "Vérif...";
-            checkIsbnButton.disabled = true;
-
-            const fetchedData = await fetchBookDataFromISBN(isbnValue); // Appelle l'API
-
-            checkIsbnButton.textContent = "Vérifier"; // Rétablit le texte
-            checkIsbnButton.disabled = false; // Réactive
-
-            if (fetchedData) {
-                // Pré-remplit le formulaire avec les données trouvées
-                prefillBookForm(fetchedData);
-                displaySuccessMessage("Informations du livre trouvées et pré-remplies !");
-            }
-            // Si fetchedData est null, fetchBookDataFromISBN a déjà affiché l'erreur
+    // --- Modale Ajout Genre (depuis formulaire livre) ---
+    if (addGenreModal && addNewGenreButtonFromBookForm && cancelNewGenreModalButton && saveNewGenreModalButton && newGenreModalInput && addGenreModalError && bookForm) {
+        addNewGenreButtonFromBookForm.addEventListener('click', () => {
+            if (bookForm.classList.contains('hidden')) { return; }
+            newGenreModalInput.value = ''; addGenreModalError.textContent = '';
+            addGenreModal.classList.remove('hidden'); newGenreModalInput.focus();
         });
-    } else {
-         console.error("Bouton ou input ISBN pour la vérification non trouvé.");
-    }
-
-    const addGenreModal = document.getElementById('add-genre-modal');
-    const addNewGenreButton = document.getElementById('add-new-genre-button');
-    const cancelNewGenreButton = document.getElementById('cancel-new-genre-button');
-    const saveNewGenreButton = document.getElementById('save-new-genre-button');
-    const newGenreModalInput = document.getElementById('new-genre-modal-input');
-    const addGenreModalError = document.getElementById('add-genre-modal-error');
-    const bookFormElement = document.getElementById('book-form'); // Pour savoir si le formulaire principal est visible
-
-    if (addGenreModal && addNewGenreButton && cancelNewGenreButton && saveNewGenreButton && newGenreModalInput && addGenreModalError && bookFormElement) {
-
-        // Ouvrir la modale
-        addNewGenreButton.addEventListener('click', () => {
-            // Ne pas ouvrir si le formulaire principal n'est pas visible
-            if (bookFormElement.classList.contains('hidden')) return;
-
-            newGenreModalInput.value = ''; // Vide le champ
-            addGenreModalError.textContent = ''; // Vide message erreur
-            addGenreModal.classList.remove('hidden'); // Affiche la modale
-            newGenreModalInput.focus(); // Met le focus dans le champ
-        });
-
-        // Fonction pour fermer la modale
-        const closeGenreModal = () => {
-            addGenreModal.classList.add('hidden');
-        };
-
-        // Fermer la modale (Annuler)
-        cancelNewGenreButton.addEventListener('click', closeGenreModal);
-
-        // Enregistrer le nouveau genre
-        saveNewGenreButton.addEventListener('click', async () => {
+        // Fermeture via Annuler (gérée par .modal-close-button) et clic sur fond déjà gérée
+        saveNewGenreModalButton.addEventListener('click', async () => {
             const newGenreName = newGenreModalInput.value.trim();
             addGenreModalError.textContent = '';
             if (!newGenreName) { addGenreModalError.textContent = "Le nom du genre ne peut pas être vide."; return; }
             saveNewGenreModalButton.disabled = true; saveNewGenreModalButton.textContent = 'Sauvegarde...';
-            console.log("SAVE GENRE MODAL (formulaire livre): Token in localStorage:", localStorage.getItem('authToken'));
             try {
-                const addedGenre = await createEtagere({ name: newGenreName }); // createEtagere utilise getAuthHeaders
-                if (!addedGenre) throw new Error(addGenreModalError.textContent || "Erreur lors de la création du genre."); // Utilise le message d'erreur s'il a été défini dans createEtagere via displayError
+                const addedGenre = await createEtagere({ name: newGenreName });
+                if (!addedGenre) { // createEtagere renvoie null en cas d'erreur déjà affichée
+                    throw new Error(addGenreModalError.textContent || "Le serveur a retourné une erreur pour la création du genre.");
+                }
                 closeModal(addGenreModal);
                 displaySuccessMessage(`Genre "${addedGenre.name}" ajouté !`);
                 await populateGenreDropdown(addedGenre.name); // Met à jour et sélectionne
-                fetchEtageres().then(displayEtageres); // Met à jour la sidebar
+                fetchEtageres().then(displayEtageres);       // Met à jour la sidebar
             } catch (error) {
                 console.error("Erreur lors de l'ajout du genre (modale formulaire livre):", error);
-                addGenreModalError.textContent = error.message; // Affiche l'erreur dans la modale
+                addGenreModalError.textContent = error.message;
             } finally {
                 saveNewGenreModalButton.disabled = false; saveNewGenreModalButton.textContent = 'Enregistrer';
             }
@@ -1511,6 +1401,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (event.key === 'Enter') { event.preventDefault(); saveNewGenreModalButton.click(); }
         });
     } else { console.warn("Éléments pour modale d'ajout de genre (formulaire livre) non trouvés."); }
+
+     if (cancelNewGenreModalButton) { // Vérifier si le bouton existe
+            cancelNewGenreModalButton.addEventListener('click', () => {
+                console.log("Bouton Annuler (modale ajout genre) cliqué."); // Log pour débogage
+                closeModal(addGenreModal); // Devrait fermer la modale
+            });
+        }
 
     // --- Bouton Vérifier ISBN (dans formulaire livre) ---
     if (checkIsbnButton && isbnInputInBookForm) {
@@ -1521,11 +1418,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const fetchedData = await fetchBookDataFromISBN(isbnValue);
             checkIsbnButton.textContent = "Vérifier"; checkIsbnButton.disabled = false;
             if (fetchedData) {
-                // populateGenreDropdown est appelé dans prefillBookForm
-                prefillBookForm(fetchedData);
-                displaySuccessMessage("Informations du livre trouvées !");
+                resetForm(); // Réinitialise avant de pré-remplir
+                await populateGenreDropdown(fetchedData.genre); // S'assure que le genre est dans la liste
+                prefillBookForm(fetchedData); // prefillBookForm va essayer de sélectionner le genre
+                displaySuccessMessage("Informations du livre trouvées et pré-remplies !");
             }
         });
     } else { console.error("Éléments pour vérification ISBN non trouvés."); }
 
-}); 
+    console.log("Tous les écouteurs d'événements principaux sont attachés.");
+}); // FIN de DOMContentLoaded
