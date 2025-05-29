@@ -91,7 +91,7 @@ describe('Routes /api/auth', () => {
             testUser = await User.create({
                 username: 'loginUser',
                 email: 'login@example.com',
-                password: hashedPassword
+                password: plainPassword
             });
         });
 

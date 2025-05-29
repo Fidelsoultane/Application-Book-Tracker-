@@ -25,7 +25,7 @@ beforeAll(async () => {
     const user = await User.create({
         username: 'etagereTestUser',
         email: 'etageretest@example.com',
-        password: hashedPassword
+        password: password
     });
     testUserId = user._id.toString();
 

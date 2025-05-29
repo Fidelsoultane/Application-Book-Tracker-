@@ -1211,10 +1211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     } else {
         console.log("Aucun token au chargement. Affichage de l'état déconnecté.");
-        // Assurer que l'affichage est celui d'un utilisateur déconnecté
-        // displayBooks et updatePaginationControls sont appelés dans updateAuthStateUI si token est null
-        // ou si fetchBooks rencontre un 401 lors d'un chargement initial.
-        // On peut s'assurer ici que la liste des étagères est vide aussi.
+      
         const menuEtagere = document.getElementById('menu-etagere');
         if (menuEtagere) menuEtagere.innerHTML = ''; // Vide les étagères
         displayBooks([]); // Affiche "Veuillez vous connecter pour voir vos livres."
@@ -1321,8 +1318,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const sortSelectEl = document.getElementById('sort-select'); if (sortSelectEl) sortSelectEl.selectedIndex = 0;
             const publisherInputEl = document.getElementById('filter-publisher'); if (publisherInputEl) publisherInputEl.value = "";
             const activeTagDisplayEl = document.getElementById('active-tag-filter-display'); if (activeTagDisplayEl) activeTagDisplayEl.classList.add('hidden');
+             updatePaginationControls(0); // Cache la pagination
             displaySuccessMessage("Vous avez été déconnecté.");
-            fetchBooks(); fetchEtageres().then(displayEtageres); // Pour recharger l'état "vide" ou "public"
+            
         });
     } else { console.error("Bouton de déconnexion #logout-button non trouvé."); }
 

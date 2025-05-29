@@ -26,7 +26,7 @@ beforeAll(async () => {
     await User.create({ // Crée directement l'utilisateur pour le test
         username: 'bookTestUser',
         email: 'booktest@example.com',
-        password: hashedPassword
+        password: password
     });
 
     // Se connecter avec cet utilisateur pour obtenir un token
