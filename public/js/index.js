@@ -110,10 +110,45 @@ function createBookCard(book) {
             cardRatingContainer.appendChild(starIcon);
         }
         textInfo.appendChild(cardRatingContainer);
-        // Écouteurs pour rendre les étoiles interactives sur la carte (si vous voulez implémenter cette fonctionnalité)
-        // cardRatingContainer.addEventListener('mouseover', ...);
-        // cardRatingContainer.addEventListener('mouseout', ...);
-        // cardRatingContainer.addEventListener('click', ...);
+        // Écouteurs d'événements pour les étoiles de la carte
+    cardRatingContainer.addEventListener('mouseover', (event) => {
+        if (event.target.tagName === 'I' && event.target.classList.contains('fa-star')) {
+            const hoverValue = parseInt(event.target.dataset.value);
+            const starsInCard = cardRatingContainer.querySelectorAll('i.fa-star');
+            starsInCard.forEach(star => {
+                const starValue = parseInt(star.dataset.value);
+                star.classList.toggle('fas', starValue <= hoverValue);
+                star.classList.toggle('text-yellow-400', starValue <= hoverValue);
+                star.classList.toggle('far', starValue > hoverValue);
+                // On ne remet text-gray-300 que si l'étoile n'est pas sous hoverValue
+                star.classList.toggle('text-gray-300', starValue > hoverValue);
+            });
+        }
+    });
+
+    cardRatingContainer.addEventListener('mouseout', () => {
+        const currentRating = parseInt(cardRatingContainer.dataset.currentRating);
+        const starsInCard = cardRatingContainer.querySelectorAll('i.fa-star');
+        starsInCard.forEach(star => {
+            const starValue = parseInt(star.dataset.value);
+            star.classList.toggle('fas', starValue <= currentRating);
+            star.classList.toggle('text-yellow-400', starValue <= currentRating);
+            star.classList.toggle('far', starValue > currentRating);
+            star.classList.toggle('text-gray-300', starValue > currentRating);
+        });
+    });
+
+    cardRatingContainer.addEventListener('click', async (event) => {
+        if (event.target.tagName === 'I' && event.target.classList.contains('fa-star')) {
+            event.stopPropagation();
+            const newRating = parseInt(event.target.dataset.value);
+            const currentStoredRating = parseInt(cardRatingContainer.dataset.currentRating);
+            const finalRating = (newRating === currentStoredRating) ? 0 : newRating;
+
+            console.log(`Clic sur étoile carte: livre ID ${book._id}, nouvelle note voulue ${finalRating}`);
+            await updateBookRating(book, finalRating, cardRatingContainer);
+        }
+    });
     }
 
     if (book.status === 'En cours' && book.pageCount && parseInt(book.pageCount, 10) > 0) {
@@ -791,6 +826,45 @@ async function updateBookProgress(book, newCurrentPage, totalPages, newStatus = 
     } catch (error) {
         console.error("Erreur lors de la mise à jour de la progression:", error);
         displayError(error.message || "Impossible de mettre à jour la progression.");
+    }
+}
+
+async function updateBookRating(book, newRating, cardRatingContainerElement) {
+    console.log(`Mise à jour notation pour: ${book.title}, Nouvelle note: ${newRating}`);
+    const updateData = { rating: newRating };
+
+    try {
+        const response = await fetch(`/api/books/${book._id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(updateData)
+        });
+
+        if (!response.ok) {
+            let errorMsg = `Erreur HTTP: ${response.status}`;
+            try { const errorData = await response.json(); errorMsg = errorData.message || errorMsg; } catch (e) {/* Ignore */}
+            throw new Error(errorMsg);
+        }
+        const updatedBook = await response.json(); // Récupère le livre mis à jour avec la nouvelle note
+        displaySuccessMessage("Notation mise à jour !");
+
+        if (cardRatingContainerElement) {
+            cardRatingContainerElement.dataset.currentRating = updatedBook.rating || 0;
+            const starsInCard = cardRatingContainerElement.querySelectorAll('i.fa-star');
+            starsInCard.forEach(star => {
+                const starValue = parseInt(star.dataset.value);
+                star.classList.toggle('fas', starValue <= (updatedBook.rating || 0));
+                star.classList.toggle('text-yellow-400', starValue <= (updatedBook.rating || 0));
+                star.classList.toggle('far', starValue > (updatedBook.rating || 0));
+                star.classList.toggle('text-gray-300', starValue > (updatedBook.rating || 0));
+            });
+            cardRatingContainerElement.title = `Note : ${updatedBook.rating || 0} / 5`;
+        } else {
+            fetchBooks(); // Fallback si le conteneur n'est pas passé (ne devrait pas arriver)
+        }
+    } catch (error) {
+        console.error("Erreur lors de la mise à jour de la notation:", error);
+        displayError(error.message || "Impossible de mettre à jour la notation.");
     }
 }
 
