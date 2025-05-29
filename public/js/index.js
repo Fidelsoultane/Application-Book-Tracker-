@@ -132,41 +132,67 @@ function createBookCard(book) {
         progressBarContainer.appendChild(progressBar);
         progressOuterContainer.appendChild(progressBarContainer);
         // console.log(`[${book.title}] - Barre de progression ajoutée (largeur: ${percentageForDisplay}%).`);
-        const progressActions = createElementWithClasses('div', 'mt-1 flex items-center space-x-2');
-        // console.log(`[${book.title}] - Création du conteneur 'progressActions'.`);
-        const currentBookPageForButtons = book.currentPage || 0;
-        const totalBookPagesForButtons = parseInt(book.pageCount, 10) || 0;
-        if (totalBookPagesForButtons > 0) {
-            const incrementPageButton = createElementWithClasses('button', 'increment-page-btn text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-1.5 py-0.5 rounded');
-            incrementPageButton.textContent = "+1 Page";
-            incrementPageButton.title = "Augmenter la page actuelle de 1";
-            incrementPageButton.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                if (currentBookPageForButtons < totalBookPagesForButtons) {
-                    await updateBookProgress(book, currentBookPageForButtons + 1, totalBookPagesForButtons);
-                } else { displayError("Vous êtes déjà à la dernière page !"); }
-            });
-            progressActions.appendChild(incrementPageButton);
-            // console.log(`[${book.title}] - Bouton '+1 Page' créé et ajouté à 'progressActions'.`);
-        }
-        if (currentBookPageForButtons < totalBookPagesForButtons && totalBookPagesForButtons > 0) {
-            const markAsReadButton = createElementWithClasses('button', 'mark-as-read-card-btn text-xs bg-green-100 hover:bg-green-200 text-green-700 px-1.5 py-0.5 rounded');
-            markAsReadButton.textContent = "Terminé";
-            markAsReadButton.title = "Marquer comme terminé";
-            markAsReadButton.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                await updateBookProgress(book, totalBookPagesForButtons, totalBookPagesForButtons, 'Terminé');
-            });
-            progressActions.appendChild(markAsReadButton);
-            // console.log(`[${book.title}] - Bouton 'Terminé' créé et ajouté à 'progressActions'.`);
-        }
-        if (progressActions.hasChildNodes()) {
-            progressOuterContainer.appendChild(progressActions);
-            // console.log(`[${book.title}] - 'progressActions' (avec enfants) AJOUTÉ à 'progressOuterContainer'.`);
-        }
+
+         // --- Boutons d'action pour la progression ---
+    const progressActions = createElementWithClasses('div', 'mt-1 flex items-center space-x-2');
+    console.log(`[${book.title}] - Création du conteneur 'progressActions'.`);
+
+    const currentBookPageForButtons = book.currentPage || 0;
+    const totalBookPagesForButtons = parseInt(book.pageCount, 10) || 0;
+
+    // Bouton "+1 Page"
+    
+    if (currentBookPageForButtons < totalBookPagesForButtons && totalBookPagesForButtons > 0) {
+        const incrementPageButton = createElementWithClasses('button', 'increment-page-btn text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-1.5 py-0.5 rounded');
+        incrementPageButton.textContent = "+1 Page";
+        incrementPageButton.title = "Augmenter la page actuelle de 1";
+        incrementPageButton.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            console.log(`Clic +1 Page pour: ${book.title}. Page actuelle avant clic: ${currentBookPageForButtons}, Total: ${totalBookPagesForButtons}`);
+            // La condition externe if (currentBookPageForButtons < totalBookPagesForButtons) rend cette vérification interne redondante
+            // mais on la garde par sécurité pour la logique de l'appel.
+            if (currentBookPageForButtons < totalBookPagesForButtons) { 
+                await updateBookProgress(book, currentBookPageForButtons + 1, totalBookPagesForButtons);
+            } else {
+                // Ce displayError ne devrait plus être atteint si le bouton disparaît correctement.
+                displayError("Vous êtes déjà à la dernière page !"); 
+            }
+        });
+        progressActions.appendChild(incrementPageButton);
+        console.log(`[${book.title}] - Bouton '+1 Page' créé et ajouté à 'progressActions'.`);
+    } else {
+        console.log(`[${book.title}] - Bouton '+1 Page' NON créé (current: ${currentBookPageForButtons}, total: ${totalBookPagesForButtons}).`);
+    }
+
+    // Bouton "Terminé"
+    // S'affiche si le statut est "En cours" et qu'il y a des pages, 
+    // même si on est à la dernière page (pour permettre de confirmer le statut).
+    if (book.status === 'En cours' && totalBookPagesForButtons > 0) { // CONDITION MODIFIÉE ICI
+        console.log(`[${book.title}] - Condition pour bouton 'Terminé' VRAIE (statut: ${book.status}, page ${currentBookPageForButtons}/${totalBookPagesForButtons}). Création...`);
+        const markAsReadButton = createElementWithClasses('button', 'mark-as-read-card-btn text-xs bg-green-100 hover:bg-green-200 text-green-700 px-1.5 py-0.5 rounded');
+        markAsReadButton.textContent = "Terminé";
+        markAsReadButton.title = "Marquer comme terminé";
+        markAsReadButton.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            console.log(`Clic 'Terminé' pour: ${book.title}`);
+            await updateBookProgress(book, totalBookPagesForButtons, totalBookPagesForButtons, 'Terminé');
+        });
+        progressActions.appendChild(markAsReadButton);
+        console.log(`[${book.title}] - Bouton 'Terminé' créé et ajouté à 'progressActions'.`);
+    } else {
+         console.log(`[${book.title}] - Bouton 'Terminé' NON créé (condition fausse : statut ${book.status}, page ${currentBookPageForButtons}/${totalBookPagesForButtons}).`);
+    }
+
+    // Ajoute le conteneur des boutons (progressActions) au conteneur général de progression (progressOuterContainer)
+    // SEULEMENT si progressActions contient effectivement des enfants (des boutons)
+    if (progressActions.hasChildNodes()) {
+        progressOuterContainer.appendChild(progressActions);
+        console.log(`[${book.title}] - 'progressActions' (avec enfants) AJOUTÉ à 'progressOuterContainer'.`);
+    } else {
+        console.log(`[${book.title}] - 'progressActions' est VIDE, non ajouté à 'progressOuterContainer'.`);
+    }
         if (textInfo) {
             textInfo.appendChild(progressOuterContainer);
-            // console.log(`[${book.title}] - 'progressOuterContainer' ajouté à la fin de 'textInfo'.`);
         }
     } else {
         console.log(`[${book.title}] - PAS d'affichage de progression/boutons (Condition Principale FAUSSE: Statut: ${book.status}, PageCount: ${book.pageCount})`);
@@ -246,7 +272,7 @@ async function fetchBooks(isInitialLoad = false) {
 
         const sortSelect = document.getElementById('sort-select');
         if (sortSelect && sortSelect.value) { url += `sortBy=${sortSelect.value}&`; }
-        
+
         if (url.endsWith('&')) { url = url.slice(0, -1); }
 
         console.log("FETCHBOOKS - URL d'appel:", url);
@@ -358,7 +384,6 @@ async function editBook(book) {
     document.getElementById('book-genre').value = book.genre || '';
     document.getElementById('book-publisher').value = book.publisher || '';
     document.getElementById('book-publishedDate').value = book.publishedDate || '';
-    // document.getElementById('book-pageCount').value = book.pageCount || ''; // Redondant
     document.getElementById('book-tags').value = book.tags ? book.tags.join(', ') : '';
     document.getElementById('book-startDate').value = book.startDate ? new Date(book.startDate).toISOString().split('T')[0] : '';
     document.getElementById('book-endDate').value = book.endDate ? new Date(book.endDate).toISOString().split('T')[0] : '';
